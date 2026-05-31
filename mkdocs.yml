@@ -78,6 +78,8 @@ nav:
       - quiz/index.md
       - Core Concepts: quiz/core_concepts_quiz.html
       - Key Technologies: quiz/key_technologies_quiz.html
+      - networking essentials: quiz/networking_essentials_quiz.html
+      - api design quiz: quiz/api_design_quiz.html  
 #  - Easy:
 #    - easy/index.md
 #    - 01 · Hotel Booking Service: easy/01-hotel-booking.md

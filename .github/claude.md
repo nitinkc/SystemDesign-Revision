@@ -66,3 +66,4 @@ I want you to create an interactive quiz from the article below.
 
 ## Article to quiz-ify
 
+[PASTE YOUR ARTICLE TEXT HERE]
