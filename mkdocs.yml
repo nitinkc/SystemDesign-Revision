@@ -74,135 +74,139 @@ extra_css:
 
 nav:
   - Home: index.md
-  - Easy:
-    - easy/index.md
-    - 01 · Hotel Booking Service: easy/01-hotel-booking.md
-    - 02 · URL Shortening: easy/02-url-shortening.md
-    - 03 · Parking Lot System: easy/03-parking-lot.md
-    - 04 · Fitness Tracking App: easy/04-fitness-tracking.md
-    - 05 · Weather System: easy/05-weather-system.md
-    - 06 · Pastebin: easy/06-pastebin.md
-    - 07 · Nested Comments: easy/07-nested-comments.md
-    - 08 · Presence Indicator: easy/08-presence-indicator.md
-    - 09 · Vending Machine: easy/09-vending-machine.md
-    - 10 · Tagging Service: easy/10-tagging-service.md
-    - 11 · Craigslist: easy/11-craigslist.md
-    - 12 · Screenshot Capture: easy/12-screenshot-capture.md
-    - 13 · Network Analyzer: easy/13-network-analyzer.md
-    - 14 · Employee Swap: easy/14-employee-swap.md
-    - 15 · Conference Room: easy/15-conference-room.md
-    - 16 · Video View Count: easy/16-video-view-count.md
-  - Medium:
-    - medium/index.md
-    - 01 · Twitter: medium/01-twitter.md
-    - 02 · Messenger: medium/02-messenger.md
-    - 03 · Rate Limiter: medium/03-rate-limiter.md
-    - 04 · Netflix: medium/04-netflix.md
-    - 05 · Typeahead: medium/05-typeahead.md
-    - 06 · Twitter Search: medium/06-twitter-search.md
-    - 07 · Instagram: medium/07-instagram.md
-    - 08 · Chess: medium/08-chess.md
-    - 09 · Web Cache: medium/09-web-cache.md
-    - 10 · Task Scheduler: medium/10-task-scheduler.md
-    - 11 · E-commerce: medium/11-ecommerce.md
-    - 12 · Inventory Mgmt: medium/12-inventory.md
-    - 13 · Payment Service: medium/13-payment.md
-    - 14 · Spotify: medium/14-spotify.md
-    - 15 · Live Streaming: medium/15-live-streaming.md
-    - 16 · Video Conferencing: medium/16-conferencing.md
-    - 17 · Ebook Platform: medium/17-ebook.md
-    - 18 · Blockchain: medium/18-blockchain.md
-    - 19 · Web Analytics: medium/19-analytics.md
-    - 20 · Public Transport: medium/20-transport.md
-    - 21 · Translation Service: medium/21-translation.md
-    - 22 · Task Management: medium/22-task-mgmt.md
-    - 23 · Voting System: medium/23-voting.md
-    - 24 · Sports Scoring: medium/24-sports-scoring.md
-    - 25 · Podcast Hosting: medium/25-podcast.md
-    - 26 · Shopify: medium/26-shopify.md
-    - 27 · Digital Wallet: medium/27-wallet.md
-    - 28 · Code Deployment: medium/28-deployment.md
-    - 29 · Live Comments: medium/29-live-comments.md
-    - 30 · Distributed Counter: medium/30-counter.md
-    - 31 · Distributed Locking: medium/31-locking.md
-    - 32 · Reddit: medium/32-reddit.md
-    - 33 · CAPTCHA: medium/33-captcha.md
-    - 34 · Batch Auditing: medium/34-audit.md
-    - 35 · Unique ID Generator: medium/35-id-generator.md
-    - 36 · Coupon Service: medium/36-coupon.md
-    - 37 · Flash Sale: medium/37-flash-sale.md
-    - 38 · ATM Machine: medium/38-atm.md
-    - 39 · Meeting Calendar: medium/39-calendar.md
-    - 40 · Team Collaboration: medium/40-collaboration.md
-    - 41 · Webhook Notifications: medium/41-webhook.md
-    - 42 · Viewed Products: medium/42-viewed-products.md
-    - 43 · Recommendations: medium/43-recommendations.md
-    - 44 · Air Traffic Control: medium/44-traffic-control.md
-    - 45 · App Distribution: medium/45-app-distribution.md
-    - 46 · Competitive Programming: medium/46-programming.md
-    - 47 · Grocery Delivery: medium/47-grocery.md
-    - 48 · Movie Reviews: medium/48-reviews.md
-    - 49 · Meeting Scheduler: medium/49-scheduler.md
-    - 50 · Geospatial Images: medium/50-geospatial.md
-    - 51 · QR Code System: medium/51-qr-code.md
-    - 52 · Top K Analysis: medium/52-top-k.md
-    - 53 · Order Tracking: medium/53-tracking.md
-    - 54 · Spreadsheet: medium/54-spreadsheet.md
-    - 55 · Baggage Handling: medium/55-baggage.md
-  - Hard:
-    - hard/index.md
-    - 01 · Ticketmaster: hard/01-ticketmaster.md
-    - 02 · Dropbox: hard/02-dropbox.md
-    - 03 · Uber: hard/03-uber-backend.md
-    - 04 · Yelp: hard/04-yelp.md
-    - 05 · Facebook Newsfeed: hard/05-newsfeed.md
-    - 06 · Web Crawler: hard/06-web-crawler.md
-    - 07 · Google Maps: hard/07-google-maps.md
-    - 08 · Google Docs: hard/08-google-docs.md
-    - 09 · Trading Platform: hard/09-trading-platform.md
-    - 10 · Key-Value Store: hard/10-key-value-store.md
-    - 11 · CDN: hard/11-cdn.md
-    - 12 · P2P Network: hard/12-p2p-network.md
-    - 13 · Messaging System: hard/13-messaging-system.md
-    - 14 · Distributed File System: hard/14-distributed-file-system.md
-    - 15 · Log Analysis: hard/15-log-collection.md
-    - 16 · Load Balancer: hard/16-load-balancer.md
-    - 17 · Email Service: hard/17-email-service.md
-    - 18 · Food Delivery: hard/18-food-delivery.md
-    - 19 · Auction System: hard/19-auction.md
-    - 20 · Chatbot: hard/20-chatbot.md
-    - 21 · Push Notifications: hard/21-push-notifications.md
-    - 22 · Smart Home: hard/22-smart-home.md
-    - 23 · Identity Management: hard/23-identity-management.md
-    - 24 · Stock Trading: hard/24-stock-trading.md
-    - 25 · Google Search: hard/25-google-search.md
-    - 26 · Digital Transactions: hard/26-transaction-system.md
-    - 27 · Distributed Linked List: hard/27-distributed-linked-list.md
-    - 28 · Distributed Tracing: hard/28-tracing-system.md
-    - 29 · Wide Column DB: hard/29-wide-column-db.md
-    - 30 · Monitoring & Alerting: hard/30-metrics-monitoring.md
-    - 31 · Graph Search: hard/31-graph-search.md
-    - 32 · Resource Allocation: hard/32-resource-allocation.md
-    - 33 · Event Lifecycle: hard/33-event-lifecycle.md
-    - 34 · Wiki Crawler: hard/34-wiki-crawler.md
-    - 35 · Ad Click Aggregation: hard/35-ad-clicks.md
-    - 36 · Resource Pool Allocation: hard/36-resource-pool-allocation.md
-  - Advanced:
-    - advanced/index.md
-    - 01 · Cloud Infrastructure: advanced/01-cloud-infrastructure.md
-    - 02 · Container Orchestration: advanced/02-container-orchestration.md
-    - 03 · HPC Cluster: advanced/03-hpc-cluster.md
-    - 04 · Data Backup: advanced/04-data-backup.md
-    - 05 · Storage Gateway: advanced/05-storage-gateway.md
-    - 06 · Virtualization: advanced/06-virtualization.md
-    - 07 · Disaster Recovery: advanced/07-disaster-recovery.md
-    - 08 · Hybrid Cloud: advanced/08-hybrid-cloud.md
-    - 09 · Cloud Brokerage: advanced/09-cloud-brokerage.md
-    - 10 · Serverless Framework: advanced/10-serverless.md
-    - 11 · Graph Processing: advanced/11-graph-processing.md
-    - 12 · Big Data Pipeline: advanced/12-big-data-pipeline.md
-    - 13 · VR Streaming: advanced/13-vr-streaming.md
-    - 14 · Security Monitoring: advanced/14-security-monitoring.md
-    - 15 · Distributed OLTP: advanced/15-oltp-database.md
-    - 16 · DNS: advanced/16-dns.md
-  - Glossary: glossary.md
+  - Quiz :
+      - quiz/index.md
+      - Core Concepts: quiz/core_concepts_quiz.html
+      - Key Technologies: quiz/key_technologies_quiz.html
+#  - Easy:
+#    - easy/index.md
+#    - 01 · Hotel Booking Service: easy/01-hotel-booking.md
+#    - 02 · URL Shortening: easy/02-url-shortening.md
+#    - 03 · Parking Lot System: easy/03-parking-lot.md
+#    - 04 · Fitness Tracking App: easy/04-fitness-tracking.md
+#    - 05 · Weather System: easy/05-weather-system.md
+#    - 06 · Pastebin: easy/06-pastebin.md
+#    - 07 · Nested Comments: easy/07-nested-comments.md
+#    - 08 · Presence Indicator: easy/08-presence-indicator.md
+#    - 09 · Vending Machine: easy/09-vending-machine.md
+#    - 10 · Tagging Service: easy/10-tagging-service.md
+#    - 11 · Craigslist: easy/11-craigslist.md
+#    - 12 · Screenshot Capture: easy/12-screenshot-capture.md
+#    - 13 · Network Analyzer: easy/13-network-analyzer.md
+#    - 14 · Employee Swap: easy/14-employee-swap.md
+#    - 15 · Conference Room: easy/15-conference-room.md
+#    - 16 · Video View Count: easy/16-video-view-count.md
+#  - Medium:
+#    - medium/index.md
+#    - 01 · Twitter: medium/01-twitter.md
+#    - 02 · Messenger: medium/02-messenger.md
+#    - 03 · Rate Limiter: medium/03-rate-limiter.md
+#    - 04 · Netflix: medium/04-netflix.md
+#    - 05 · Typeahead: medium/05-typeahead.md
+#    - 06 · Twitter Search: medium/06-twitter-search.md
+#    - 07 · Instagram: medium/07-instagram.md
+#    - 08 · Chess: medium/08-chess.md
+#    - 09 · Web Cache: medium/09-web-cache.md
+#    - 10 · Task Scheduler: medium/10-task-scheduler.md
+#    - 11 · E-commerce: medium/11-ecommerce.md
+#    - 12 · Inventory Mgmt: medium/12-inventory.md
+#    - 13 · Payment Service: medium/13-payment.md
+#    - 14 · Spotify: medium/14-spotify.md
+#    - 15 · Live Streaming: medium/15-live-streaming.md
+#    - 16 · Video Conferencing: medium/16-conferencing.md
+#    - 17 · Ebook Platform: medium/17-ebook.md
+#    - 18 · Blockchain: medium/18-blockchain.md
+#    - 19 · Web Analytics: medium/19-analytics.md
+#    - 20 · Public Transport: medium/20-transport.md
+#    - 21 · Translation Service: medium/21-translation.md
+#    - 22 · Task Management: medium/22-task-mgmt.md
+#    - 23 · Voting System: medium/23-voting.md
+#    - 24 · Sports Scoring: medium/24-sports-scoring.md
+#    - 25 · Podcast Hosting: medium/25-podcast.md
+#    - 26 · Shopify: medium/26-shopify.md
+#    - 27 · Digital Wallet: medium/27-wallet.md
+#    - 28 · Code Deployment: medium/28-deployment.md
+#    - 29 · Live Comments: medium/29-live-comments.md
+#    - 30 · Distributed Counter: medium/30-counter.md
+#    - 31 · Distributed Locking: medium/31-locking.md
+#    - 32 · Reddit: medium/32-reddit.md
+#    - 33 · CAPTCHA: medium/33-captcha.md
+#    - 34 · Batch Auditing: medium/34-audit.md
+#    - 35 · Unique ID Generator: medium/35-id-generator.md
+#    - 36 · Coupon Service: medium/36-coupon.md
+#    - 37 · Flash Sale: medium/37-flash-sale.md
+#    - 38 · ATM Machine: medium/38-atm.md
+#    - 39 · Meeting Calendar: medium/39-calendar.md
+#    - 40 · Team Collaboration: medium/40-collaboration.md
+#    - 41 · Webhook Notifications: medium/41-webhook.md
+#    - 42 · Viewed Products: medium/42-viewed-products.md
+#    - 43 · Recommendations: medium/43-recommendations.md
+#    - 44 · Air Traffic Control: medium/44-traffic-control.md
+#    - 45 · App Distribution: medium/45-app-distribution.md
+#    - 46 · Competitive Programming: medium/46-programming.md
+#    - 47 · Grocery Delivery: medium/47-grocery.md
+#    - 48 · Movie Reviews: medium/48-reviews.md
+#    - 49 · Meeting Scheduler: medium/49-scheduler.md
+#    - 50 · Geospatial Images: medium/50-geospatial.md
+#    - 51 · QR Code System: medium/51-qr-code.md
+#    - 52 · Top K Analysis: medium/52-top-k.md
+#    - 53 · Order Tracking: medium/53-tracking.md
+#    - 54 · Spreadsheet: medium/54-spreadsheet.md
+#    - 55 · Baggage Handling: medium/55-baggage.md
+#  - Hard:
+#    - hard/index.md
+#    - 01 · Ticketmaster: hard/01-ticketmaster.md
+#    - 02 · Dropbox: hard/02-dropbox.md
+#    - 03 · Uber: hard/03-uber-backend.md
+#    - 04 · Yelp: hard/04-yelp.md
+#    - 05 · Facebook Newsfeed: hard/05-newsfeed.md
+#    - 06 · Web Crawler: hard/06-web-crawler.md
+#    - 07 · Google Maps: hard/07-google-maps.md
+#    - 08 · Google Docs: hard/08-google-docs.md
+#    - 09 · Trading Platform: hard/09-trading-platform.md
+#    - 10 · Key-Value Store: hard/10-key-value-store.md
+#    - 11 · CDN: hard/11-cdn.md
+#    - 12 · P2P Network: hard/12-p2p-network.md
+#    - 13 · Messaging System: hard/13-messaging-system.md
+#    - 14 · Distributed File System: hard/14-distributed-file-system.md
+#    - 15 · Log Analysis: hard/15-log-collection.md
+#    - 16 · Load Balancer: hard/16-load-balancer.md
+#    - 17 · Email Service: hard/17-email-service.md
+#    - 18 · Food Delivery: hard/18-food-delivery.md
+#    - 19 · Auction System: hard/19-auction.md
+#    - 20 · Chatbot: hard/20-chatbot.md
+#    - 21 · Push Notifications: hard/21-push-notifications.md
+#    - 22 · Smart Home: hard/22-smart-home.md
+#    - 23 · Identity Management: hard/23-identity-management.md
+#    - 24 · Stock Trading: hard/24-stock-trading.md
+#    - 25 · Google Search: hard/25-google-search.md
+#    - 26 · Digital Transactions: hard/26-transaction-system.md
+#    - 27 · Distributed Linked List: hard/27-distributed-linked-list.md
+#    - 28 · Distributed Tracing: hard/28-tracing-system.md
+#    - 29 · Wide Column DB: hard/29-wide-column-db.md
+#    - 30 · Monitoring & Alerting: hard/30-metrics-monitoring.md
+#    - 31 · Graph Search: hard/31-graph-search.md
+#    - 32 · Resource Allocation: hard/32-resource-allocation.md
+#    - 33 · Event Lifecycle: hard/33-event-lifecycle.md
+#    - 34 · Wiki Crawler: hard/34-wiki-crawler.md
+#    - 35 · Ad Click Aggregation: hard/35-ad-clicks.md
+#    - 36 · Resource Pool Allocation: hard/36-resource-pool-allocation.md
+#  - Advanced:
+#    - advanced/index.md
+#    - 01 · Cloud Infrastructure: advanced/01-cloud-infrastructure.md
+#    - 02 · Container Orchestration: advanced/02-container-orchestration.md
+#    - 03 · HPC Cluster: advanced/03-hpc-cluster.md
+#    - 04 · Data Backup: advanced/04-data-backup.md
+#    - 05 · Storage Gateway: advanced/05-storage-gateway.md
+#    - 06 · Virtualization: advanced/06-virtualization.md
+#    - 07 · Disaster Recovery: advanced/07-disaster-recovery.md
+#    - 08 · Hybrid Cloud: advanced/08-hybrid-cloud.md
+#    - 09 · Cloud Brokerage: advanced/09-cloud-brokerage.md
+#    - 10 · Serverless Framework: advanced/10-serverless.md
+#    - 11 · Graph Processing: advanced/11-graph-processing.md
+#    - 12 · Big Data Pipeline: advanced/12-big-data-pipeline.md
+#    - 13 · VR Streaming: advanced/13-vr-streaming.md
+#    - 14 · Security Monitoring: advanced/14-security-monitoring.md
+#    - 15 · Distributed OLTP: advanced/15-oltp-database.md
+#    - 16 · DNS: advanced/16-dns.md
+#  - Glossary: glossary.md

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design in a Hurry — Quiz</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; color: #1a1a1a; }
+.container { width: 100%; max-width: 680px; }
+header { margin-bottom: 2rem; }
+header h1 { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+header p { font-size: 14px; color: #666; margin-top: 4px; }
+.card { background: #fff; border-radius: 12px; border: 0.5px solid #ddd; padding: 1.75rem; }
+.progress-bar-bg { height: 4px; background: #e8e6e0; border-radius: 2px; margin-bottom: 1.5rem; }
+.progress-bar-fill { height: 4px; background: #1D9E75; border-radius: 2px; transition: width 0.4s ease; }
+.meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+.meta-cat { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #555; background: #f0ede8; padding: 4px 10px; border-radius: 20px; }
+.meta-count { font-size: 13px; color: #888; }
+.question { font-size: 16px; font-weight: 500; color: #1a1a1a; line-height: 1.65; margin-bottom: 1.5rem; }
+.options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem; }
+.opt { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: background 0.15s, border-color 0.15s; font-size: 14px; color: #1a1a1a; line-height: 1.5; background: #fff; }
+.opt:hover { background: #f8f7f3; border-color: #bbb; }
+.opt.selected { border-color: #185FA5; background: #EAF2FB; color: #042C53; }
+.opt.correct { border-color: #0F6E56; background: #E1F5EE; color: #04342C; }
+.opt.wrong { border-color: #993C1D; background: #FAECE7; color: #4A1B0C; }
+.opt .letter { font-size: 12px; font-weight: 600; min-width: 22px; height: 22px; border-radius: 50%; background: #f0ede8; display: flex; align-items: center; justify-content: center; color: #777; flex-shrink: 0; margin-top: 1px; }
+.opt.selected .letter { background: #B5D4F4; color: #042C53; }
+.opt.correct .letter { background: #9FE1CB; color: #04342C; }
+.opt.wrong .letter { background: #F5C4B3; color: #4A1B0C; }
+.explanation { padding: 12px 14px; border-radius: 8px; font-size: 13px; line-height: 1.65; margin-bottom: 1.25rem; display: none; }
+.explanation.show { display: block; }
+.explanation.correct-exp { background: #E1F5EE; color: #085041; border-left: 3px solid #1D9E75; }
+.explanation.wrong-exp { background: #FAECE7; color: #4A1B0C; border-left: 3px solid #D85A30; }
+.actions { display: flex; gap: 10px; }
+.btn { padding: 9px 20px; font-size: 14px; border-radius: 8px; cursor: pointer; border: 1px solid #ddd; background: #fff; color: #1a1a1a; transition: background 0.15s; font-weight: 500; }
+.btn:hover { background: #f0ede8; }
+.btn-primary { background: #185FA5; color: #fff; border-color: #185FA5; }
+.btn-primary:hover { background: #0C447C; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.result-screen { display: none; text-align: center; }
+.result-score { font-size: 52px; font-weight: 600; color: #1a1a1a; margin-bottom: 0.4rem; }
+.result-pct { font-size: 18px; color: #1D9E75; font-weight: 500; margin-bottom: 0.5rem; }
+.result-label { font-size: 15px; color: #666; margin-bottom: 2rem; }
+.result-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 2rem; text-align: left; }
+.rb-card { background: #f8f7f3; border-radius: 8px; padding: 12px 14px; border: 0.5px solid #e0ddd8; }
+.rb-card .rb-num { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+.rb-card .rb-lbl { font-size: 12px; color: #777; margin-top: 3px; }
+.rb-card .rb-detail { font-size: 11px; color: #aaa; margin-top: 2px; }
+.section-title { font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #aaa; margin-bottom: 0.75rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>System Design in a Hurry — Quiz</h1>
+    <p>40 questions covering all key technologies. Shuffled each attempt.</p>
+  </header>
+
+  <div class="card" id="quiz">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog" style="width:0%"></div></div>
+    <div class="meta">
+      <span class="meta-cat" id="cat-label"></span>
+      <span class="meta-count" id="q-count"></span>
+    </div>
+    <div class="question" id="q-text"></div>
+    <div class="options" id="opts"></div>
+    <div class="explanation" id="exp"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-check" disabled onclick="checkAnswer()">Check answer</button>
+      <button class="btn" id="btn-next" style="display:none" onclick="nextQ()">Next →</button>
+    </div>
+  </div>
+
+  <div class="card result-screen" id="result">
+    <div class="result-score" id="r-score"></div>
+    <div class="result-pct" id="r-pct"></div>
+    <div class="result-label" id="r-label"></div>
+    <div class="section-title">Score by category</div>
+    <div class="result-breakdown" id="r-breakdown"></div>
+    <button class="btn btn-primary" onclick="restart()">Restart quiz</button>
+  </div>
+</div>
+
+<script>
+const qs = [
+  {cat:"Core Databases", q:"Which type of database is generally recommended for product design system design interviews?", opts:["NoSQL database like DynamoDB","Relational database like Postgres","Blob storage like S3","Search-optimized database like Elasticsearch"], ans:1, exp:"Relational databases are the default choice for product design interviews, while NoSQL is preferred for infrastructure design interviews."},
+  {cat:"Core Databases", q:"Which of the following is a yellow flag in a system design interview?", opts:["Explaining the ACID properties of Postgres","Saying 'I need NoSQL because I need scale and performance'","Describing your indexing strategy","Discussing sharding approaches"], ans:1, exp:"Broad statements like 'I need NoSQL for scale' reveal inexperience — relational databases also scale incredibly well when used correctly."},
+  {cat:"Core Databases", q:"A candidate says 'I need a relational DB because I have relationships in my data.' Why is this a yellow flag?", opts:["Relational databases don't support foreign keys","NoSQL databases can also handle relational data well, making this an oversimplification","NoSQL databases are always faster than relational databases","Relational databases can't scale beyond a single node"], ans:1, exp:"This is a yellow flag because NoSQL databases handle relational data well too. The statement reveals inexperience with broad generalizations rather than specific, context-driven reasoning."},
+  {cat:"Relational Databases", q:"What feature allows combining data from multiple tables in a relational database?", opts:["Indexes","Transactions","Joins","Sharding"], ans:2, exp:"SQL Joins combine data from multiple tables. They're powerful but can be a major performance bottleneck, so you should minimize them where possible."},
+  {cat:"Relational Databases", q:"What data structures are indexes most commonly implemented with?", opts:["Linked lists and arrays","B-Tree and Hash Table","Trie and Bloom Filter","Skip list and LSM Tree"], ans:1, exp:"Relational database indexes are most commonly implemented using B-Trees or Hash Tables."},
+  {cat:"Relational Databases", q:"What is a transaction in the context of relational databases?", opts:["A way to replicate data across nodes","A method to group multiple operations into a single atomic operation","A type of index for fast lookups","A technique for horizontal scaling"], ans:1, exp:"Transactions group multiple operations into a single atomic operation — either all succeed or all fail — preventing invalid data states."},
+  {cat:"NoSQL Databases", q:"Which of these is NOT a common NoSQL data model?", opts:["Key-value store","Document store","Relational table","Graph database"], ans:2, exp:"NoSQL databases come in key-value, document, column-family, and graph flavors. Relational tables are the domain of RDBMS, not NoSQL."},
+  {cat:"NoSQL Databases", q:"What scaling technique do NoSQL databases commonly use to distribute data?", opts:["Read replicas and vertical scaling","Master-slave replication only","Consistent hashing and/or sharding","Federation and connection pooling"], ans:2, exp:"NoSQL databases scale horizontally using consistent hashing and/or sharding to distribute data across many servers."},
+  {cat:"NoSQL Databases", q:"Which NoSQL database is considered a good choice specifically for write-heavy workloads?", opts:["DynamoDB","MongoDB","Cassandra","Redis"], ans:2, exp:"Cassandra is a good choice for write-heavy workloads due to its append-only storage model, though it comes with some tradeoffs in functionality."},
+  {cat:"Blob Storage", q:"Why should large binary files like videos and images NOT be stored directly in a traditional database?", opts:["Databases can't handle binary data at all","It is both expensive and inefficient","Databases lack encryption for binary files","Binary files can't be indexed"], ans:1, exp:"Storing large blobs in a traditional database is both expensive and inefficient. Blob storage services like S3 are specifically designed for this and are far more cost-effective."},
+  {cat:"Blob Storage", q:"What is a presigned URL used for in a blob storage workflow?", opts:["Encrypting data at rest","Granting temporary upload or download access to a blob","Routing traffic through a CDN","Chunking large files into parts"], ans:1, exp:"Presigned URLs grant temporary access to a blob — either for upload or download — without exposing permanent credentials."},
+  {cat:"Blob Storage", q:"What is the correct typical setup when using blob storage alongside a core database?", opts:["Store everything in blob storage and skip the database","Use the database as a pointer store (URL) for blobs in S3","Use the CDN as the primary storage layer","Store metadata in blob storage and blobs in the database"], ans:1, exp:"The standard pattern: a core database (Postgres/DynamoDB) holds pointers (URLs) to blobs in S3. This gives you fast indexed queries on metadata with cheap blob storage."},
+  {cat:"Blob Storage", q:"What technique allows resuming a failed large-file upload and uploading in parallel?", opts:["Presigned URLs","Erasure coding","Chunking / multipart upload","Lifecycle policies"], ans:2, exp:"Chunking (multipart upload) splits large files into smaller pieces, enabling parallel upload and resumption after failure. S3 supports this via its multipart upload API."},
+  {cat:"Search Databases", q:"Why is a LIKE '%search_term%' query problematic for full-text search at scale?", opts:["It requires ACID compliance","It requires a full table scan and doesn't use an index","It can only match exact strings","It locks the entire database"], ans:1, exp:"LIKE queries require a full table scan — the database checks every record — making them slow and unscalable for large text datasets."},
+  {cat:"Search Databases", q:"What data structure do search-optimized databases use to make full-text search fast?", opts:["B-Tree index","Bloom filter","Inverted index","Hash table"], ans:2, exp:"Inverted indexes map from words to the documents containing them, enabling instant lookup instead of scanning every document."},
+  {cat:"Search Databases", q:"What is 'stemming' in the context of search databases?", opts:["Breaking text into individual words","Reducing words to their root form so variants match","Measuring edit distance between words","Distributing documents across shards"], ans:1, exp:"Stemming reduces words to their root form — e.g. 'running' and 'runs' both reduce to 'run' — so different forms of the same word match."},
+  {cat:"Search Databases", q:"Which search database is considered the clear leader and is built on Apache Lucene?", opts:["Redis Search","Postgres GIN","Elasticsearch","Solr"], ans:2, exp:"Elasticsearch is the clear leader in search-optimized databases. It is distributed, RESTful, built on Apache Lucene, and used by companies like Netflix, Uber, and Yelp."},
+  {cat:"Search Databases", q:"What is fuzzy search and how is it typically implemented?", opts:["Searching only within a specific field; implemented with inverted indexes","Finding results similar to the search term despite misspellings; using edit distance algorithms","Searching across multiple tables; using SQL joins","Finding results matching a regex pattern; using tokenization"], ans:1, exp:"Fuzzy search finds results similar to the query even with misspellings. It uses edit distance — the number of character changes needed to transform one word into another."},
+  {cat:"API Gateway", q:"What is the primary role of an API gateway in a microservice architecture?", opts:["Storing session data for users","Routing incoming requests to the appropriate backend service","Replicating data across databases","Caching blob storage responses"], ans:1, exp:"The API gateway sits in front of your system, routes requests to the right backend service, and handles cross-cutting concerns like authentication, rate limiting, and logging."},
+  {cat:"API Gateway", q:"Which of the following is a cross-cutting concern typically handled by an API gateway?", opts:["Sharding database writes","Rate limiting","Blob chunking","Cache eviction"], ans:1, exp:"API gateways handle cross-cutting concerns including authentication, rate limiting, and logging — concerns that apply across many services."},
+  {cat:"Load Balancer", q:"What is the main purpose of a load balancer in a system design?", opts:["Encrypting data in transit","Distributing traffic across multiple machines to avoid hotspots","Caching database query results","Routing search queries to Elasticsearch"], ans:1, exp:"Load balancers distribute traffic across multiple machines (horizontal scaling) to prevent any single machine from being overloaded."},
+  {cat:"Load Balancer", q:"When should you prefer an L4 load balancer over an L7 load balancer?", opts:["When you need to route traffic to multiple services","When you have persistent connections like WebSockets","When you need to inspect HTTP headers","When you want more flexible routing rules"], ans:1, exp:"L4 load balancers work at the transport layer and are preferred for persistent connections like WebSockets. L7 load balancers are better for flexible HTTP routing."},
+  {cat:"Queues", q:"What is the primary function of a queue in a system design?", opts:["Serving as a buffer for bursty traffic and distributing work","Storing session data in memory","Providing full-text search capabilities","Replicating data across regions"], ans:0, exp:"Queues buffer bursty traffic (so requests aren't dropped) and distribute work across a pool of workers, smoothing load on the system."},
+  {cat:"Queues", q:"Why should you avoid adding a queue to a synchronous workload with strict latency requirements (e.g. <500ms)?", opts:["Queues don't support FIFO ordering","Adding a queue nearly guarantees breaking that latency constraint","Queues can't handle concurrent consumers","Queues are not durable"], ans:1, exp:"Queues introduce asynchrony. If you have strong latency SLAs, adding a queue will almost certainly violate them since messages wait before being processed."},
+  {cat:"Queues", q:"What is a dead letter queue used for?", opts:["Storing the most recently processed messages","Storing messages that cannot be processed for debugging and auditing","Providing priority ordering to queue consumers","Holding messages during peak traffic spikes"], ans:1, exp:"Dead letter queues store messages that failed to be processed, enabling debugging and auditing to understand why they failed."},
+  {cat:"Queues", q:"What is backpressure in the context of queues?", opts:["The lag between producer and consumer speed","Slowing or rejecting new messages when the queue is overwhelmed","Replicating queue data across nodes","Re-ordering messages based on priority"], ans:1, exp:"Backpressure slows down message production when the queue is overwhelmed, preventing the system from being crushed by more requests than it can handle."},
+  {cat:"Streams", q:"What key capability distinguishes streams from traditional message queues?", opts:["Streams are always faster than queues","Streams retain data for a configurable period, allowing consumers to re-read from past positions","Streams guarantee strict FIFO ordering","Streams don't require a partition key"], ans:1, exp:"Unlike queues that delete messages after consumption, streams retain data for a configurable period, enabling consumers to replay or re-read from any past position."},
+  {cat:"Streams", q:"What is event sourcing?", opts:["Emitting events when a cache is invalidated","Storing application state changes as a sequence of replayable events","Streaming video from blob storage via CDN","Partitioning events across multiple queues"], ans:1, exp:"Event sourcing stores every state change as an event. These events can be replayed to reconstruct application state at any point in time — useful for audit trails and rollbacks."},
+  {cat:"Streams", q:"What is 'windowing' in the context of stream processing?", opts:["Splitting a stream into multiple partitions","Grouping events together based on time or count for batch processing","Assigning consumer groups to stream partitions","Replicating stream data for fault tolerance"], ans:1, exp:"Windowing groups stream events by time or count — e.g. computing hourly delivery time averages — enabling batch-style aggregations over a continuous stream."},
+  {cat:"Streams", q:"What is the purpose of multiple consumer groups in a stream?", opts:["To increase write throughput","To allow different consumers to process the same stream data independently for different purposes","To replicate the stream across data centers","To enforce message ordering across partitions"], ans:1, exp:"Multiple consumer groups let different downstream processors independently consume the same stream — e.g. one group updates a dashboard while another writes to a DB for historical analysis."},
+  {cat:"Distributed Locks", q:"Why are standard database transaction locks insufficient for scenarios like temporarily holding a concert ticket for a user?", opts:["Transaction locks don't support key-value data","Transaction locks are not designed for longer-term locking across systems","Transaction locks are too slow for web applications","Transaction locks can't be replicated"], ans:1, exp:"Database transaction locks ensure consistency during a single operation but aren't designed for longer-term, cross-system locking like holding a ticket for 10 minutes while a user checks out."},
+  {cat:"Distributed Locks", q:"What is a key feature of distributed locks that prevents them from getting stuck indefinitely if a process crashes?", opts:["Deadlock detection","Lock expiry / TTL","Redlock algorithm","Atomic compare-and-swap"], ans:1, exp:"Distributed locks can be set to expire after a certain time (TTL). If the process that acquired the lock crashes, the lock auto-releases after the TTL."},
+  {cat:"Distributed Locks", q:"What is a deadlock in the context of distributed locks?", opts:["A situation where a lock is acquired by two processes simultaneously","A situation where two processes wait for each other to release locks, causing both to stall forever","A lock that expires before the operation completes","A lock held across too many partitions"], ans:1, exp:"Deadlocks occur when process A holds lock 1 and waits for lock 2, while process B holds lock 2 and waits for lock 1 — both stall indefinitely."},
+  {cat:"Distributed Cache", q:"Which of the following is a valid reason to use a distributed cache?", opts:["To persist user-uploaded files","To reduce the number of expensive database queries","To route requests to microservices","To provide full-text search capabilities"], ans:1, exp:"Caches reduce DB load by storing results of expensive queries in memory for fast retrieval, avoiding redundant computation or DB hits."},
+  {cat:"Distributed Cache", q:"What does the LRU eviction policy do?", opts:["Removes items in the order they were added","Removes the item accessed least frequently","Removes the item that was accessed least recently","Removes items randomly when the cache is full"], ans:2, exp:"LRU (Least Recently Used) evicts the item that hasn't been accessed for the longest time, keeping frequently accessed items in cache."},
+  {cat:"Distributed Cache", q:"What is a write-back cache?", opts:["Writes data simultaneously to the cache and the datastore","Writes data directly to the datastore, bypassing the cache","Writes data to the cache first, then asynchronously writes to the datastore","Only writes to the cache and never persists to disk"], ans:2, exp:"Write-back (write-behind) caches write to the cache first and flush to the datastore asynchronously. Faster writes, but risk of data loss if the cache fails before flushing."},
+  {cat:"Distributed Cache", q:"Which two technologies are the most common in-memory distributed caches?", opts:["Kafka and Kinesis","Postgres and DynamoDB","Redis and Memcached","Elasticsearch and Solr"], ans:2, exp:"Redis and Memcached are the dominant in-memory caches. Redis supports rich data structures (sorted sets, lists, etc.); Memcached is simpler."},
+  {cat:"CDN", q:"How does a CDN deliver content to users quickly across the globe?", opts:["By replicating the entire database to every region","By caching content on servers geographically close to users (edge locations)","By compressing responses at the origin server","By using L4 load balancers to route globally"], ans:1, exp:"CDNs cache content at edge servers geographically near users. Requests hit the nearest edge, reducing latency. Only cache misses go back to the origin."},
+  {cat:"CDN", q:"What type of content can CDNs cache beyond just static assets?", opts:["Database transactions","Dynamic content like API responses","Raw blob storage files only","WebSocket connections"], ans:1, exp:"CDNs can cache dynamic content like API responses, not just static assets. This is especially useful for content accessed frequently but changing infrequently."},
+  {cat:"CDN", q:"In a blob storage workflow, what role does a CDN typically play?", opts:["Blob storage origin replacing S3","A caching layer in front of blob storage to serve files from edge locations","A queue to handle upload bursts","A distributed lock for concurrent uploads"], ans:1, exp:"The CDN sits in front of blob storage (S3 acts as origin). Files are cached at edge locations globally, so users download from a nearby edge server, not the origin."}
+];
+
+let cur=0, score=0, chosen=null, catScores={};
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const shuffled = shuffle([...qs]);
+
+function render(){
+  const q=shuffled[cur];
+  document.getElementById('cat-label').textContent=q.cat;
+  document.getElementById('q-count').textContent=`Question ${cur+1} of ${shuffled.length}`;
+  document.getElementById('prog').style.width=(cur/shuffled.length*100)+'%';
+  document.getElementById('q-text').textContent=q.q;
+  const o=document.getElementById('opts'); o.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const d=document.createElement('div');
+    d.className='opt';
+    d.innerHTML=`<span class="letter">${'ABCD'[i]}</span><span>${opt}</span>`;
+    d.onclick=()=>select(i);
+    o.appendChild(d);
+  });
+  const exp=document.getElementById('exp');
+  exp.className='explanation'; exp.style.display='none';
+  document.getElementById('btn-check').disabled=true;
+  document.getElementById('btn-next').style.display='none';
+  chosen=null;
+}
+
+function select(i){
+  if(document.getElementById('btn-next').style.display!=='none') return;
+  chosen=i;
+  document.querySelectorAll('.opt').forEach((el,idx)=>{el.className=idx===i?'opt selected':'opt';});
+  document.getElementById('btn-check').disabled=false;
+}
+
+function checkAnswer(){
+  if(chosen===null) return;
+  const q=shuffled[cur];
+  const isCorrect=chosen===q.ans;
+  if(isCorrect) score++;
+  document.querySelectorAll('.opt').forEach((el,i)=>{
+    if(i===q.ans) el.className='opt correct';
+    else if(i===chosen&&!isCorrect) el.className='opt wrong';
+    else el.className='opt';
+  });
+  const exp=document.getElementById('exp');
+  exp.textContent=(isCorrect?'✓ Correct — ':'✗ Incorrect — ')+q.exp;
+  exp.className='explanation show '+(isCorrect?'correct-exp':'wrong-exp');
+  exp.style.display='block';
+  document.getElementById('btn-check').disabled=true;
+  document.getElementById('btn-next').style.display='inline-block';
+  if(!catScores[q.cat]) catScores[q.cat]={c:0,t:0};
+  catScores[q.cat].t++;
+  if(isCorrect) catScores[q.cat].c++;
+}
+
+function nextQ(){
+  cur++;
+  if(cur>=shuffled.length){showResult();return;}
+  render();
+}
+
+function showResult(){
+  document.getElementById('quiz').style.display='none';
+  const res=document.getElementById('result'); res.style.display='block';
+  const pct=Math.round(score/shuffled.length*100);
+  document.getElementById('r-score').textContent=`${score}/${shuffled.length}`;
+  document.getElementById('r-pct').textContent=`${pct}%`;
+  const labels=['Keep studying — you\'ll get there!','Getting there — review the weak areas.','Solid understanding of the fundamentals!','Excellent! You know your system design.','Near perfect — ready for the interview!'];
+  document.getElementById('r-label').textContent=pct<40?labels[0]:pct<60?labels[1]:pct<75?labels[2]:pct<90?labels[3]:labels[4];
+  const bd=document.getElementById('r-breakdown'); bd.innerHTML='';
+  Object.entries(catScores).forEach(([cat,s])=>{
+    const p=Math.round(s.c/s.t*100);
+    const card=document.createElement('div'); card.className='rb-card';
+    card.innerHTML=`<div class="rb-num">${p}%</div><div class="rb-lbl">${cat}</div><div class="rb-detail">${s.c}/${s.t} correct</div>`;
+    bd.appendChild(card);
+  });
+}
+
+function restart(){
+  cur=0; score=0; chosen=null; catScores={};
+  shuffle(shuffled);
+  document.getElementById('result').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
