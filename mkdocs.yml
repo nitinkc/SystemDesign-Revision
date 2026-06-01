@@ -1,6 +1,8 @@
 site_name: System Design Interview Prep
 site_description: Structured revision material for system design interviews - Quick reference summaries + deep dives
 site_author: Interview Prep Team
+docs_dir: docs
+repo_url: https://github.com/nitinkc/SystemDesign-Revision
 
 theme:
   name: material
@@ -74,6 +76,12 @@ extra_javascript:
   - js/mermaid-init.js
   - js/mathjax.js
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - js/interactive-core.js
+  - js/storage.js
+  - js/quiz-engine.js
+  - js/quiz-template-loader.js
+  - js/flashcard-engine.js
+  - js/flashcards-template-loader.js
 
 extra_css:
   - https://unpkg.com/mermaid@10/dist/mermaid.css
@@ -88,9 +96,10 @@ nav:
       - Core concepts - Networking Essentials: quiz/networking-essentials-quiz.md
       - Core concepts - API Design: quiz/api-design-quiz.md
       - Core concepts - Data Modeling: quiz/data-modeling-quiz-dark.md
+      - Technologies - Time Series DB: quiz/time-series-databases-quiz.md
   - Flashcards:
       - flashcards/index.md
-      - Data Modelling: flashcards/data-modeling-flashcards-dark.md
+      - Data Modelling: flashcards/data-modeling-flashcards.md
 
 #  - Easy:
 #    - easy/index.md

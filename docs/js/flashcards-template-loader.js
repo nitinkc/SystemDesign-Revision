@@ -8,11 +8,13 @@
     if (node) node.textContent = value;
   }
 
-  function applyTheme(accent) {
-    /* Theme classes are on the wrapper div in the template — only set CSS vars for custom accent */
-    var wrapper = document.querySelector('.sd-page.flashcards-page');
-    if (wrapper && accent) wrapper.style.setProperty('--fc-accent', accent);
-  }
+  /* Fixed theme constants — not sourced from JSON */
+  var THEME = {
+    accent:      '#8B83E6',
+    questionBg:  '#1A1D27',
+    answerBg:    '#1E2130',
+    typeColors:  { def: '#8B83E6', concept: '#34D399', tradeoff: '#F87171', app: '#60A5FA' }
+  };
 
   function getConfig() {
     var root = document.getElementById('sd-flashcards-root');
@@ -27,15 +29,13 @@
     text('fc-page-title', payload.title || 'Flashcards');
     text('fc-page-sub', payload.subtitle || 'Click to flip.');
 
-    applyTheme(payload.accent || '#8B83E6');
-
     FlashcardEngine.mount({
       cards: Array.isArray(payload.cards) ? payload.cards : [],
       storageKey: payload.storageKey || null,
-      fileBase: payload.fileBase || 'flashcards',
-      typeColors: payload.typeColors || { def: '#8B83E6', concept: '#34D399', tradeoff: '#F87171', app: '#60A5FA' },
-      questionBg: payload.questionBg || '#1A1D27',
-      answerBg: payload.answerBg || '#1E2130',
+      fileBase: payload.storageKey ? payload.storageKey.replace(/_progress$/, '').replace(/_/g, '-') : 'flashcards',
+      typeColors: THEME.typeColors,
+      questionBg: THEME.questionBg,
+      answerBg: THEME.answerBg,
       ids: {
         pills: 'pills',
         mainPanel: 'main-panel',

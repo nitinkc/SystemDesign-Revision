@@ -15,15 +15,15 @@
 
 ### Tech Stack
 
-| Layer | Technology |
-|:------|:-----------|
-| Site generator | MkDocs + Material theme |
-| Diagrams | Mermaid (fenced `mermaid` code blocks) |
-| Glossary | `docs/_abbreviations.md` — included via snippet at end of every page |
-| Math | MathJax (`docs/js/mathjax.js`) |
-| Styling | `docs/css/custom.css` |
-| Deploy | GitHub Actions `.github/workflows/deploy-docs.yml` |
-| Extensions | `toc`, `pymdownx.details`, `pymdownx.superfences`, `pymdownx.snippets` |
+| Layer          | Technology                                                             |
+|:---------------|:-----------------------------------------------------------------------|
+| Site generator | MkDocs + Material theme                                                |
+| Diagrams       | Mermaid (fenced `mermaid` code blocks)                                 |
+| Glossary       | `docs/_abbreviations.md` — included via snippet at end of every page   |
+| Math           | MathJax (`docs/js/mathjax.js`)                                         |
+| Styling        | `docs/css/custom.css`                                                  |
+| Deploy         | GitHub Actions `.github/workflows/deploy-docs.yml`                     |
+| Extensions     | `toc`, `pymdownx.details`, `pymdownx.superfences`, `pymdownx.snippets` |
 
 ---
 

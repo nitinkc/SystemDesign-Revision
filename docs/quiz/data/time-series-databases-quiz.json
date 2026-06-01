@@ -1,0 +1,367 @@
+{
+  "title": "Time Series Databases",
+  "subtitle": "30 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "time_series_databases_quiz_progress",
+  "questions": [
+    {
+      "cat": "Foundations & When to Use TSDBs",
+      "q": "A team is building a Top-K trending hashtags feature and considers using a time-series database. What does the article say about this?",
+      "opts": [
+        "A TSDB is ideal because it handles high-throughput writes natively",
+        "A TSDB can make this problem harder because it requires sorting and aggregating across many series",
+        "A TSDB is fine as long as hashtags are stored as tags, not fields",
+        "A TSDB should be used only if Postgres cannot handle the write volume"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly calls out the Top-K problem as a case where a TSDB seems helpful but can actually make things harder — TSDBs aren't designed for sorting and aggregating across a huge number of series. It's a cautionary example against reaching for specialized tools reflexively."
+    },
+    {
+      "cat": "Foundations & When to Use TSDBs",
+      "q": "According to the article, when should you reach for a time-series database over a general-purpose database?",
+      "opts": [
+        "Whenever you have data with timestamps",
+        "When your data has low cardinality and regular intervals",
+        "Only after you've encountered a true bottleneck that can't be solved with a general-purpose solution",
+        "As soon as write throughput exceeds 10,000 writes per second"
+      ],
+      "ans": 2,
+      "expl": "The article advises stretching general-purpose solutions first and only reaching for a TSDB when you encounter a bottleneck that can't be solved another way. The presence of time-series data alone is not sufficient justification."
+    },
+    {
+      "cat": "Foundations & When to Use TSDBs",
+      "q": "In the motivating example, what is the primary reason vanilla Postgres struggles with the cloud monitoring workload?",
+      "opts": [
+        "Postgres doesn't support DOUBLE PRECISION columns",
+        "Write throughput, query performance at scale, and storage inefficiency all combine to make it unworkable",
+        "Postgres lacks support for GROUP BY time queries",
+        "Postgres cannot store more than 1 billion rows per table"
+      ],
+      "ans": 1,
+      "expl": "The article identifies three compounding problems: 50,000 writes/second crushes a single Postgres instance, queries over ~30 billion rows become painfully slow even with indexes, and storage is wildly inefficient (50-100 bytes per point vs. the 16 bytes of actual information)."
+    },
+    {
+      "cat": "Append-Only Storage",
+      "q": "Why does append-only storage improve write performance compared to in-place updates?",
+      "opts": [
+        "It avoids the need for a write-ahead log",
+        "It eliminates random I/O by always writing sequentially to the end of a file",
+        "It compresses data automatically before writing",
+        "It reduces the number of fsync calls needed per write"
+      ],
+      "ans": 1,
+      "expl": "Traditional in-place updates require seeking to the row's location, reading the current data, modifying it, and writing back — all random I/O. Append-only storage eliminates all of that: every write goes to the end of the file sequentially. SSDs can handle hundreds of thousands of sequential writes per second vs. ~100-200 random ops/sec for spinning disks."
+    },
+    {
+      "cat": "Append-Only Storage",
+      "q": "What problem does append-only storage introduce that requires another mechanism to solve?",
+      "opts": [
+        "Data can never be deleted",
+        "Timestamps may become out of order",
+        "Data is not organized for efficient reading — that requires an additional layer",
+        "Sequential writes are slower than random writes on SSDs"
+      ],
+      "ans": 2,
+      "expl": "If you only append, data has no inherent organization for reads. The article poses this question explicitly: 'if we only append, how do we organize the data for reading?' — which motivates the introduction of LSM trees."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What is the core design goal of an LSM tree?",
+      "opts": [
+        "To compress data on disk using delta encoding",
+        "To transform expensive random writes into cheap sequential writes, then reorganize in the background",
+        "To keep all data in memory to avoid disk access entirely",
+        "To partition data by time so older partitions can be deleted cheaply"
+      ],
+      "ans": 1,
+      "expl": "The article defines LSM trees as transforming expensive random writes into cheap sequential writes, then periodically reorganizing the data in the background (compaction) to make reads more efficient. This separation of write path from read optimization is the key insight."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "Why is the memtable kept as a sorted data structure (e.g., a red-black tree)?",
+      "opts": [
+        "So that duplicate keys can be detected and rejected before flushing",
+        "So the resulting SSTable flush is a fast sequential write and supports efficient merging during compaction",
+        "So that range queries can be served entirely from memory without touching disk",
+        "So that Bloom filters can be constructed from it"
+      ],
+      "ans": 1,
+      "expl": "Keeping the memtable sorted means that when it's flushed, the resulting SSTable is already sorted — enabling a fast sequential write. Sorted files also allow binary search for point lookups, efficient range queries, and merge-sort-based compaction when multiple SSTables are combined."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What is compaction in the context of LSM trees?",
+      "opts": [
+        "Compressing timestamps using delta-of-delta encoding",
+        "Moving data from the memtable to disk when it reaches a size threshold",
+        "Merging smaller SSTables into larger ones in the background, removing duplicates and tombstones",
+        "Deleting time partitions older than the retention window"
+      ],
+      "ans": 2,
+      "expl": "Compaction is the background process that merges smaller SSTables into larger ones, removing duplicates and tombstones (delete markers). It keeps the number of files manageable so reads don't have to check too many files."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What is a key read-performance tradeoff of LSM trees?",
+      "opts": [
+        "LSM trees cannot serve range queries",
+        "A value may need to be looked up across multiple SSTables, increasing disk reads",
+        "The memtable must be scanned linearly for every read",
+        "LSM trees require locking the entire write path during compaction"
+      ],
+      "ans": 1,
+      "expl": "Because data is spread across multiple SSTables at different levels, a read may need to check several files to find the latest version of a value. This is the core read tradeoff — LSM trees trade some read performance for high write throughput."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What is write amplification in LSM trees?",
+      "opts": [
+        "Writing the same data point to both the WAL and the memtable",
+        "Data being rewritten multiple times as it moves through compaction levels",
+        "The overhead of writing Bloom filter entries alongside data",
+        "The cost of keeping the memtable sorted on every insert"
+      ],
+      "ans": 1,
+      "expl": "Write amplification refers to data being rewritten multiple times during compaction as smaller SSTables are merged into larger ones. The article identifies this as one of the costs of LSM trees alongside potential read performance degradation."
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "q": "What does delta encoding store instead of raw values?",
+      "opts": [
+        "The XOR of consecutive floating-point values",
+        "The difference between consecutive values rather than the absolute values",
+        "The ratio of each value to the first value in the series",
+        "A variable-length integer representation of each value"
+      ],
+      "ans": 1,
+      "expl": "Delta encoding stores differences between consecutive values (e.g., [45.2, +0.1, -0.2, +0.3]) instead of full absolute values. For slowly-changing metrics, these deltas are small numbers that can be stored with far fewer bits."
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "q": "Why does converting large absolute values into small deltas improve storage efficiency beyond just using fewer bits conceptually?",
+      "opts": [
+        "Small deltas can be indexed more efficiently",
+        "Variable-length encoding like varint stores small numbers in fewer bytes — e.g., 1 takes 1 byte vs. 8 for a raw double",
+        "Deltas are always integers, which compress better than floats",
+        "Small deltas allow run-length encoding to collapse entire blocks to a single value"
+      ],
+      "ans": 1,
+      "expl": "Variable-length encoding (varint) stores small numbers in fewer bytes. The number 1 might take 1 byte, while 1,000,000 takes 3 bytes. When deltas are tiny (like +1 or -2), you're storing 1-2 bytes instead of 8 bytes for a raw double — which is why turning large absolutes into small deltas matters so much."
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "q": "What compression technique does Facebook's Gorilla paper apply specifically to timestamps?",
+      "opts": [
+        "XOR-based compression",
+        "Varint encoding of absolute timestamp values",
+        "Delta-of-delta encoding",
+        "Run-length encoding of the full 64-bit timestamp"
+      ],
+      "ans": 2,
+      "expl": "Timestamps in time-series data are often regular (e.g., every 10 seconds). Delta-of-delta encoding takes the delta between timestamps, then stores the delta of those deltas. When timestamps are perfectly regular, the delta-of-delta is 0, compressing millions of timestamps to nearly zero overhead — as low as 1 bit per value on average per Gorilla."
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "q": "How does XOR-based float compression work?",
+      "opts": [
+        "It converts floats to integers and applies varint encoding",
+        "XORing two similar floats produces many leading zero bits; only the position and meaningful bits are stored",
+        "It stores the ratio of consecutive values as a smaller float",
+        "It maps float values to a lookup table of common metric readings"
+      ],
+      "ans": 1,
+      "expl": "When you XOR two similar floating-point numbers, most of the resulting bits are zero. By storing only the position of the first differing bit and the meaningful bits after it, each value is compressed significantly. This achieves ~1.37 bytes per value for typical time-series data vs. 8 bytes for a raw double."
+    },
+    {
+      "cat": "Time-Based Partitioning",
+      "q": "Why do time-series databases partition data by time windows?",
+      "opts": [
+        "To spread writes evenly across all servers",
+        "To localize writes to the current partition, make time-range reads efficient, and make retention trivial",
+        "To allow different compression algorithms to be applied per time window",
+        "To enable Bloom filters to operate at partition granularity"
+      ],
+      "ans": 1,
+      "expl": "Time-based partitioning has three key benefits: all incoming writes go to the current partition (no routing logic needed), queries can skip irrelevant partitions immediately, and retention is as simple as dropping old partition files — no expensive DELETE scans."
+    },
+    {
+      "cat": "Time-Based Partitioning",
+      "q": "A query asks for 'the last 2 hours of CPU data'. How does time-based partitioning help?",
+      "opts": [
+        "It pre-aggregates the data into 2-hour rollups automatically",
+        "The database can identify and scan only the partitions overlapping the 2-hour window, skipping all others",
+        "It ensures the 2-hour window fits within a single SSTable",
+        "It allows Bloom filters to eliminate individual data points outside the range"
+      ],
+      "ans": 1,
+      "expl": "Time-based partitioning means the database knows exactly which partitions overlap a given time range. In the article's diagram, four daily partitions are skipped and only the relevant one is scanned — without reading a single byte from the others."
+    },
+    {
+      "cat": "Bloom Filters",
+      "q": "What guarantee does a Bloom filter provide that makes it useful for skipping SSTables?",
+      "opts": [
+        "It guarantees a key is present if it reports 'maybe here'",
+        "It guarantees a key is absent if it reports 'not here' — false negatives never happen",
+        "It guarantees no false positives, so every 'maybe here' is a confirmed hit",
+        "It provides the exact block offset of a key within the SSTable"
+      ],
+      "ans": 1,
+      "expl": "A Bloom filter can say 'definitely not here' (no false negatives) or 'maybe here' (false positives are possible). This asymmetry is what makes it useful: when it says 'not here', the database can skip the SSTable with absolute certainty and zero disk I/O."
+    },
+    {
+      "cat": "Bloom Filters",
+      "q": "With a well-tuned Bloom filter using ~10 bits per key and a 1% false positive rate, what is the practical impact on a query across dozens of SSTables?",
+      "opts": [
+        "Every SSTable must still be checked since false positives can occur",
+        "What could be dozens of disk reads is reduced to just one or two",
+        "All SSTables are skipped and data is served from the memtable only",
+        "Compaction frequency is reduced because fewer files need merging"
+      ],
+      "ans": 1,
+      "expl": "With a 1% false positive rate, 99% of SSTables that don't contain the key are skipped entirely. For a database with millions of series across dozens of SSTables, this turns what could be dozens of disk reads into just one or two — a dramatic reduction in I/O."
+    },
+    {
+      "cat": "Downsampling & Rollups",
+      "q": "What is the core tradeoff of downsampling?",
+      "opts": [
+        "Higher write throughput in exchange for slower ingestion latency",
+        "Storage and write amplification in exchange for dramatically faster reads on historical data",
+        "Faster point lookups in exchange for slower range queries",
+        "Reduced cardinality in exchange for fewer series tracked"
+      ],
+      "ans": 1,
+      "expl": "Downsampling pre-computes aggregated rollups (min, max, sum, count) at coarser time resolutions. This costs additional storage and write amplification (data written again at each rollup level) but delivers dramatically faster reads on historical data — 288x less data for a monthly average at 5-min vs. 10-sec resolution."
+    },
+    {
+      "cat": "Downsampling & Rollups",
+      "q": "In an interview, your interviewer insists on 10-second resolution data stored for 1 year. What does the article say is the ideal candidate response?",
+      "opts": [
+        "Accept the requirement and scale storage horizontally to meet it",
+        "Reject the requirement and propose daily rollups only",
+        "Anticipate the storage problem, explain the challenge, and offer a tiered retention alternative — showing staff+ thinking",
+        "Ask for clarification on the exact query patterns before responding"
+      ],
+      "ans": 2,
+      "expl": "The article describes this as a negotiation opportunity: anticipate the future problem, explain the challenge (massive data volume), and offer an alternative (e.g., fine resolution for a week, 5-minute averages for a month). Even if the interviewer says no, they're noting your ability to think beyond rigid requirements — a hallmark of a staff+ candidate."
+    },
+    {
+      "cat": "Block-Level Metadata",
+      "q": "How does block-level metadata enable query optimization?",
+      "opts": [
+        "It caches the most recent query results to avoid re-reading the same blocks",
+        "It stores min/max timestamps and values per block, allowing the query engine to skip blocks that can't contain matching data",
+        "It maps tag values to block offsets, functioning as a secondary index",
+        "It tracks which blocks have been compacted so they don't need Bloom filter checks"
+      ],
+      "ans": 1,
+      "expl": "Block-level metadata records min/max timestamps and sometimes min/max values for each block. If a query asks for CPU > 10% and a block's metadata shows it only contains 0-5%, the entire block is skipped without being read. This adds another pruning layer on top of time-based partitioning."
+    },
+    {
+      "cat": "Data Model",
+      "q": "In a time-series database data model, what is the key distinction between tags and fields?",
+      "opts": [
+        "Tags store numeric values; fields store string metadata",
+        "Tags are indexed and used for filtering; fields are the actual measured values and are not indexed",
+        "Tags are stored in memory; fields are stored on disk",
+        "Tags are compressed with XOR encoding; fields use delta-of-delta"
+      ],
+      "ans": 1,
+      "expl": "Tags are indexed metadata used to filter series (e.g., host, region). Fields are the actual measured values (e.g., value=45.2) and are not indexed. Mixing these up — putting measured values in tags or filter metadata in fields — leads to poor query performance or cardinality explosion."
+    },
+    {
+      "cat": "Data Model",
+      "q": "What is a 'series' in a time-series database?",
+      "opts": [
+        "A single data point consisting of a timestamp and a value",
+        "A time-ordered sequence of values for one measurement",
+        "A unique combination of measurement name and all tag key-value pairs",
+        "A compressed block of data within an SSTable"
+      ],
+      "ans": 2,
+      "expl": "A series is defined by the unique combination of measurement + all tag key-value pairs. For example, cpu_usage,host=server-1,region=us-west,env=prod is one series. All data points for that specific combination are stored together in compressed blocks."
+    },
+    {
+      "cat": "Storage Engine",
+      "q": "What is the role of the Write-Ahead Log (WAL) in a time-series storage engine?",
+      "opts": [
+        "To sort incoming data before it enters the memtable",
+        "To provide durability — if the database crashes, uncommitted data can be recovered from the WAL",
+        "To apply delta encoding before data is written to disk",
+        "To track which SSTables have been compacted"
+      ],
+      "ans": 1,
+      "expl": "The WAL is the durability mechanism. Data is written to the WAL first, then to the in-memory buffer. If the process crashes before the memtable is flushed, the WAL allows the database to replay and recover any uncommitted writes."
+    },
+    {
+      "cat": "Storage Engine",
+      "q": "In the file structure described in the article, how does looking up data for a specific series scale with file size?",
+      "opts": [
+        "It requires a full scan of the file, so it scales linearly with file size",
+        "It requires two disk operations regardless of file size: seek to the index, then seek to the data",
+        "It requires one disk operation because the index is always cached in memory",
+        "It scales logarithmically because the index uses a B-tree structure"
+      ],
+      "ans": 1,
+      "expl": "Each file contains an index at the end that maps series keys to block offsets. Looking up a series is always two seeks: one to the index, one to the data block. This constant-time lookup is intentional — file size doesn't affect lookup complexity."
+    },
+    {
+      "cat": "Query Execution",
+      "q": "How does a time-series database exploit both time locality and series locality during query execution?",
+      "opts": [
+        "Time locality means recent data is in the memtable or recent files; series locality means related data points are stored contiguously",
+        "Time locality allows rollups to serve historical queries; series locality allows Bloom filters to skip SSTables",
+        "Time locality enables delta-of-delta compression; series locality enables XOR compression",
+        "Time locality is used for write routing; series locality is used for compaction scheduling"
+      ],
+      "ans": 0,
+      "expl": "Time locality: recent data is in memory or recent files, so recent queries hit fast storage. Series locality: all data points for a given series are stored physically together in blocks, so no random access is needed to gather values for a series across a time range. Both together minimize disk access."
+    },
+    {
+      "cat": "Query Execution",
+      "q": "During a multi-tag query, the database intersects results from the tag index before reading any disk blocks. Why is this important?",
+      "opts": [
+        "It allows the database to apply delta decoding before decompressing values",
+        "It reduces the set of series to read, so only blocks matching all tag conditions are fetched from disk",
+        "It allows the WAL to be bypassed for read-only queries",
+        "It ensures the Bloom filter is only consulted for the final matching series"
+      ],
+      "ans": 1,
+      "expl": "By intersecting tag index sets in memory (e.g., region=us-west ∩ env=prod), the database identifies the exact series to read before touching any data blocks. In the worked example, this meant reading only 2 of 4 blocks — skipping 50% of disk I/O entirely."
+    },
+    {
+      "cat": "Cardinality & Limits",
+      "q": "Why does high-cardinality data (like user_id with 10 million unique values) break time-series databases?",
+      "opts": [
+        "High-cardinality tags produce too many delta values for XOR compression to handle",
+        "Each unique tag combination creates a separate series, and the in-memory series index runs out of memory with billions of entries",
+        "High-cardinality fields prevent Bloom filters from achieving a low false positive rate",
+        "Time-based partitioning cannot route writes correctly when cardinality exceeds partition size"
+      ],
+      "ans": 1,
+      "expl": "Time-series databases maintain an in-memory index of all series. Each unique tag combination is a separate entry. A user_id tag with 10 million users combined with 1,000 hosts and 50 metrics creates 500 billion potential series — far more than can fit in memory. Queries also slow dramatically as the index balloons."
+    },
+    {
+      "cat": "Cardinality & Limits",
+      "q": "If you need to store a high-cardinality value like request_id, what does the article say you should do?",
+      "opts": [
+        "Shard the database so each shard handles a subset of request IDs",
+        "Store it as a field, not a tag — you can write it but lose the performance benefits of the TSDB for reading it",
+        "Hash the request_id into a low-cardinality bucket before storing",
+        "Use a separate Bloom filter per request_id to avoid index bloat"
+      ],
+      "ans": 1,
+      "expl": "High-cardinality values like user_id or request_id can only be stored as fields, not tags. You can write them, but you lose all the performance benefits of the time-series database when reading them — no indexed filtering, no efficient series lookup. The article notes this explicitly as a fundamental limitation."
+    },
+    {
+      "cat": "Cardinality & Limits",
+      "q": "What broader lesson does the cardinality problem illustrate about time-series databases?",
+      "opts": [
+        "TSDBs should always be paired with a general-purpose database for high-cardinality data",
+        "The performance of a TSDB depends on strong assumptions about data; violate those assumptions and the system becomes worse than a general-purpose database",
+        "Cardinality only matters for write performance, not read performance",
+        "The solution is always to shard by tag value to distribute the index across machines"
+      ],
+      "ans": 1,
+      "expl": "This is the article's key summary point: TSDBs make strong assumptions (low cardinality, regular data, small deltas). When those assumptions hold, you get 10-100x better performance. When they're violated, you lose all the benefits and end up worse than Postgres. Understanding this is what separates staff+ candidates from those who blindly reach for specialized tech."
+    }
+  ]
+}

@@ -1,18 +1,7 @@
 {
   "title": "Data Modeling — Flashcards",
-  "subtitle": "33 cards across 5 categories · Click to flip · Export to Anki / Quizlet",
-  "accent": "#8B83E6",
+  "subtitle": "34 cards across 5 categories · Click to flip · Export to Anki / Quizlet",
   "storageKey": "data_modeling_flashcards_dark_progress",
-  "fileBase": "data-modeling-flashcards-dark",
-  "questionBg": "#1A1D27",
-  "answerBg": "#1E2130",
-  "typeColors": {
-    "def": "#8B83E6",
-    "concept": "#34D399",
-    "tradeoff": "#F87171",
-    "app": "#60A5FA"
-  },
-  "persist": true,
   "cards": [
     {
       "cat": "Fundamentals",

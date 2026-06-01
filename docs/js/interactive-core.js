@@ -573,12 +573,13 @@
     function start() {
       var saved = load();
       if (saved && saved.deckMode) {
-        state.activeCat = saved.activeCat || 'All';
-        state.idx = saved.idx || 0;
-        state.revealed = !!saved.revealed;
+        // Always start from the full deck on page load to avoid stale category filters.
+        state.activeCat = 'All';
+        state.idx = 0;
+        state.revealed = false;
         state.known = saved.known || {};
         state.unknownSet = saved.unknownSet || {};
-        state.studyMode = saved.studyMode || 'all';
+        state.studyMode = 'all';
       } else {
         state.activeCat = 'All';
         state.idx = 0;
