@@ -1,3 +1,5 @@
+[https://nitinkc.github.io/SystemDesign-Revision/](https://nitinkc.github.io/SystemDesign-Revision/)
+
 # System Design Interview Prep — Quick Start Guide
 
 > **Goal:** Structured, last-minute-revision-friendly system design materials for interview candidates.  
