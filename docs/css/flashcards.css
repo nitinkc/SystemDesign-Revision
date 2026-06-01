@@ -1,0 +1,409 @@
+/* body-level padding removed — MkDocs handles layout */
+
+.flashcards-page .page-header,
+.flashcards-page .shell,
+.flashcards-page .card {
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.flashcards-page .page-header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.flashcards-page .shell,
+.flashcards-page .card {
+  border-radius: 12px;
+  padding: 1.75rem;
+}
+
+.theme-light.flashcards-page .shell,
+.theme-light.flashcards-page .card {
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.theme-dark.flashcards-page .shell,
+.theme-dark.flashcards-page .card {
+  background: #1a1d27;
+  border: 0.5px solid #2e3347;
+}
+
+.flashcards-page .pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.flashcards-page .pill {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  cursor: pointer;
+}
+
+.flashcards-page .pill.on {
+  background: var(--fc-accent, #534ab7);
+  border-color: var(--fc-accent, #534ab7);
+  color: #fff;
+}
+
+.flashcards-page .topstats,
+.flashcards-page .stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.flashcards-page .pbwrap,
+.flashcards-page #prog-wrap {
+  height: 5px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.flashcards-page .pbfill,
+.flashcards-page #prog-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--fc-accent, #534ab7);
+  transition: width 0.3s;
+}
+
+.flashcards-page .legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  margin-bottom: 14px;
+}
+
+.flashcards-page .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.flashcards-page .card,
+.flashcards-page .fc {
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.flashcards-page .card-header,
+.flashcards-page .fc-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.flashcards-page .side-label,
+.flashcards-page .fc-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.flashcards-page .cat-tag,
+.flashcards-page .fc-badge {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.flashcards-page .card-body,
+.flashcards-page .fc-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.flashcards-page .q-text,
+.flashcards-page .fc-q {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+.flashcards-page .a-text,
+.flashcards-page .fc-a {
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.flashcards-page .a-ex,
+.flashcards-page .fc-ex {
+  margin-top: 10px;
+  font-size: 13px;
+  border-left: 2px solid var(--fc-accent, #534ab7);
+  padding-left: 10px;
+}
+
+.flashcards-page .hint,
+.flashcards-page .fc-hint {
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.flashcards-page .rate-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.flashcards-page .btn,
+.flashcards-page button {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  cursor: pointer;
+}
+
+.flashcards-page .btn-know {
+  border-color: #0f6e56;
+  color: #085041;
+  background: #e1f5ee;
+}
+
+.flashcards-page .btn-nope {
+  border-color: #993c1d;
+  color: #4a1b0c;
+  background: #faece7;
+}
+
+.flashcards-page .btn-primary {
+  background: var(--fc-accent, #534ab7);
+  border-color: var(--fc-accent, #534ab7);
+  color: #fff;
+}
+
+.flashcards-page .nav,
+.flashcards-page .nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.flashcards-page .navcount,
+.flashcards-page .nav-count {
+  font-size: 13px;
+}
+
+.flashcards-page .exports,
+.flashcards-page .export-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flashcards-page #done-panel {
+  display: none;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.flashcards-page .done-score {
+  font-size: 42px;
+  font-weight: 600;
+}
+
+.flashcards-page .done-pct {
+  font-size: 18px;
+  margin: 4px 0 6px;
+}
+
+.flashcards-page .done-msg {
+  font-size: 15px;
+  margin: 6px 0 20px;
+}
+
+.flashcards-page .cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.flashcards-page .cat-box {
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.flashcards-page .cat-box-name {
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+
+.flashcards-page .cat-box-val {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.theme-light.flashcards-page .pill {
+  border-color: #ccc;
+  background: #fff;
+  color: #555;
+}
+
+.theme-light.flashcards-page .topstats,
+.theme-light.flashcards-page .stats-row,
+.theme-light.flashcards-page .legend,
+.theme-light.flashcards-page .navcount,
+.theme-light.flashcards-page .nav-count,
+.theme-light.flashcards-page .hint,
+.theme-light.flashcards-page .fc-hint,
+.theme-light.flashcards-page .cat-box-name {
+  color: #888;
+}
+
+.theme-light.flashcards-page .pbwrap,
+.theme-light.flashcards-page #prog-wrap {
+  background: #eee;
+}
+
+.theme-light.flashcards-page .card,
+.theme-light.flashcards-page .fc {
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.theme-light.flashcards-page .cat-tag,
+.theme-light.flashcards-page .fc-badge {
+  background: #eeedfe;
+  color: #3c3489;
+}
+
+.theme-light.flashcards-page .a-ex,
+.theme-light.flashcards-page .fc-ex {
+  color: #666;
+}
+
+.theme-light.flashcards-page .btn,
+.theme-light.flashcards-page button {
+  border-color: #ccc;
+  background: #fff;
+  color: #333;
+}
+
+.theme-light.flashcards-page .btn:hover,
+.theme-light.flashcards-page button:hover {
+  background: #f5f5f5;
+}
+
+.theme-light.flashcards-page .cat-box {
+  background: #f5f5f5;
+}
+
+.theme-light.flashcards-page .cat-box-val {
+  color: #26215c;
+}
+
+.theme-light.flashcards-page .done-score {
+  color: var(--fc-accent, #534ab7);
+}
+
+.theme-dark.flashcards-page .pill {
+  border-color: #2e3347;
+  background: #1a1d27;
+  color: #7b7f96;
+}
+
+.theme-dark.flashcards-page .topstats,
+.theme-dark.flashcards-page .stats-row,
+.theme-dark.flashcards-page .legend,
+.theme-dark.flashcards-page .navcount,
+.theme-dark.flashcards-page .nav-count,
+.theme-dark.flashcards-page .cat-box-name {
+  color: #7b7f96;
+}
+
+.theme-dark.flashcards-page .hint,
+.theme-dark.flashcards-page .fc-hint {
+  color: #3e4258;
+}
+
+.theme-dark.flashcards-page .pbwrap,
+.theme-dark.flashcards-page #prog-wrap {
+  background: #252840;
+}
+
+.theme-dark.flashcards-page .card,
+.theme-dark.flashcards-page .fc {
+  border: 1px solid #2e3347;
+  background: #1a1d27;
+}
+
+.theme-dark.flashcards-page .cat-tag,
+.theme-dark.flashcards-page .fc-badge {
+  background: #252840;
+  color: #a8a4e8;
+}
+
+.theme-dark.flashcards-page .q-text,
+.theme-dark.flashcards-page .fc-q {
+  color: #e8e9f0;
+}
+
+.theme-dark.flashcards-page .a-text,
+.theme-dark.flashcards-page .fc-a,
+.theme-dark.flashcards-page .a-ex,
+.theme-dark.flashcards-page .fc-ex {
+  color: #c8cad8;
+}
+
+.theme-dark.flashcards-page .btn,
+.theme-dark.flashcards-page button {
+  border-color: #2e3347;
+  background: #1a1d27;
+  color: #c8cad8;
+}
+
+.theme-dark.flashcards-page .btn:hover,
+.theme-dark.flashcards-page button:hover {
+  background: #252840;
+}
+
+.theme-dark.flashcards-page .btn-know {
+  border-color: #1d6b47;
+  color: #34d399;
+  background: #0d2e1f;
+}
+
+.theme-dark.flashcards-page .btn-nope {
+  border-color: #7a2e2e;
+  color: #f87171;
+  background: #2d1515;
+}
+
+.theme-dark.flashcards-page .cat-box {
+  background: #252840;
+}
+
+.theme-dark.flashcards-page .cat-box-val,
+.theme-dark.flashcards-page .done-score {
+  color: #a8a4e8;
+}
+

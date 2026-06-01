@@ -1,0 +1,283 @@
+{
+  "title": "Data Modeling",
+  "subtitle": "23 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "data_modeling_quiz_dark_progress",
+  "questions": [
+    {
+      "cat": "Fundamentals",
+      "q": "What is the primary goal of data modeling in a system design interview?",
+      "opts": [
+        "Produce a fully normalized schema diagram",
+        "Design a clear, functional schema aligned with system requirements",
+        "Choose the most exotic database type",
+        "Maximize the number of tables to enforce strict integrity"
+      ],
+      "ans": 1,
+      "exp": "The bar is to design something clear, functional, and aligned with requirements — not to normalize everything or produce a complete schema diagram."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "At which two stages of the Delivery framework does data modeling appear?",
+      "opts": [
+        "API Design and High-Level Design",
+        "Requirements Gathering and High-Level Design",
+        "Capacity Estimation and Low-Level Design",
+        "Database Selection and API Design"
+      ],
+      "ans": 1,
+      "exp": "Data modeling appears first during requirements gathering (identifying core entities) and again in High-Level Design when you sketch a schema alongside your database component."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "Which three factors most directly drive schema design decisions?",
+      "opts": [
+        "Team size, budget, and deadline",
+        "Data volume, access patterns, and consistency requirements",
+        "Database vendor, ORM choice, and team expertise",
+        "Normalization level, index count, and shard strategy"
+      ],
+      "ans": 1,
+      "exp": "Data volume, access patterns, and consistency requirements drive all schema design choices — from table structure to indexing to sharding."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "Why does the article caution against mentioning complex multi-table joins in interviews?",
+      "opts": [
+        "Interviewers don't know SQL JOIN syntax",
+        "They raise performance red flags without addressing caching or pre-computation",
+        "They are never supported in NoSQL",
+        "They indicate over-engineering"
+      ],
+      "ans": 1,
+      "exp": "Complex joins can become performance traps at scale. Mentioning them without addressing implications signals you haven't thought through real-world performance."
+    },
+    {
+      "cat": "Database Models",
+      "q": "Which database type should be your default in a system design interview?",
+      "opts": [
+        "Document database (MongoDB)",
+        "Key-value store (Redis)",
+        "Relational database (PostgreSQL)",
+        "Graph database (Neo4j)"
+      ],
+      "ans": 2,
+      "exp": "Relational databases are the recommended default. Most problems map naturally onto the relational model, and deviating requires clear justification from requirements."
+    },
+    {
+      "cat": "Database Models",
+      "q": "Why are document databases rarely the right call in a system design interview?",
+      "opts": [
+        "They are too slow",
+        "Interviews scope requirements clearly, removing the 'evolving schema' justification",
+        "They don't support querying",
+        "They need more indexes than SQL"
+      ],
+      "ans": 1,
+      "exp": "Interviews provide a clear, concise set of requirements. This removes 'evolving schemas' — the main reason to choose a document database over SQL."
+    },
+    {
+      "cat": "Database Models",
+      "q": "What is the recommended pattern when using a key-value store alongside a relational database?",
+      "opts": [
+        "Replace SQL entirely with Redis",
+        "Use key-value as source of truth, SQL as read replica",
+        "Use SQL as source of truth with a key-value cache in front for hot data",
+        "Store all foreign keys in Redis to speed up joins"
+      ],
+      "ans": 2,
+      "exp": "SQL is the source of truth; a key-value cache (like Redis) sits in front for hot data. This gives fast access without sacrificing durability or complex queries."
+    },
+    {
+      "cat": "Database Models",
+      "q": "Which workloads are wide-column databases best optimized for?",
+      "opts": [
+        "Complex multi-table joins and ACID transactions",
+        "Rapidly evolving schemas with deeply nested data",
+        "Massive write-heavy workloads, time-series data, and analytics",
+        "Social graph traversal and recommendation engines"
+      ],
+      "ans": 2,
+      "exp": "Wide-column databases are optimized for enormous write volumes, time-series data, and analytics — think telemetry, event logging, or IoT sensors."
+    },
+    {
+      "cat": "Database Models",
+      "q": "Why are graph databases generally a mistake in system design interviews?",
+      "opts": [
+        "They cannot store relationships",
+        "Even graph-heavy companies like LinkedIn use SQL for core relationship data",
+        "They require too much memory",
+        "They only work for undirected graphs"
+      ],
+      "ans": 1,
+      "exp": "Companies with extremely graph-heavy workloads (Facebook, LinkedIn, Twitter) use relational databases for their core relationship data. Graph databases add unnecessary complexity."
+    },
+    {
+      "cat": "Database Models",
+      "q": "How does the article characterize the scalability concern about relational databases?",
+      "opts": [
+        "Relational databases fundamentally cannot scale beyond one machine",
+        "The concern is often exaggerated; modern SQL scales with replicas, sharding, pooling, and caching",
+        "SQL stops being viable beyond 1 billion rows",
+        "SQL is only suitable for OLTP workloads"
+      ],
+      "ans": 1,
+      "exp": "The scalability knock on relational databases is 'often exaggerated.' Modern SQL scales well with read replicas, sharding, connection pooling, and caching."
+    },
+    {
+      "cat": "Schema Design",
+      "q": "Why should primary keys use system-generated IDs rather than business data like emails?",
+      "opts": [
+        "System-generated IDs are shorter",
+        "Emails are not unique",
+        "System-generated keys stay stable even when business rules change",
+        "Emails cannot be indexed"
+      ],
+      "ans": 2,
+      "exp": "Business data like email addresses can change when rules evolve. System-generated IDs remain stable regardless of business rule changes."
+    },
+    {
+      "cat": "Schema Design",
+      "q": "What does a foreign key in the 'posts' table pointing to 'users.id' ensure?",
+      "opts": [
+        "Each post has a unique ID",
+        "No post can reference a user that doesn't exist (referential integrity)",
+        "User data is cached with post data",
+        "Posts are automatically sorted by user"
+      ],
+      "ans": 1,
+      "exp": "Foreign keys enforce referential integrity — preventing orphaned records like a post referencing a non-existent user. The database validates each insert/update."
+    },
+    {
+      "cat": "Schema Design",
+      "q": "What is the main trade-off when dropping foreign key constraints at very large scale?",
+      "opts": [
+        "Queries become slower",
+        "You gain write performance but must enforce integrity at the application level",
+        "Indexes stop working",
+        "You can no longer use ACID transactions"
+      ],
+      "ans": 1,
+      "exp": "At hyper-scale, some companies drop foreign keys for write performance. The trade-off is that referential integrity must then be enforced in application code."
+    },
+    {
+      "cat": "Schema Design",
+      "q": "A 'users liked many posts, posts liked by many users' relationship is best modeled as:",
+      "opts": [
+        "One-to-one (1:1)",
+        "One-to-many (1:N) from posts",
+        "Many-to-many (N:M) via a join table",
+        "A nested document in the users collection"
+      ],
+      "ans": 2,
+      "exp": "Users and posts have a many-to-many relationship for likes. This is implemented via a join/junction table (likes table with user_id and post_id)."
+    },
+    {
+      "cat": "Indexing",
+      "q": "What query does a composite index on (user_id, created_at) most efficiently support?",
+      "opts": [
+        "Finding a single post by ID",
+        "Counting total posts across all users",
+        "Loading a specific user's recent posts in order",
+        "Searching post content by keyword"
+      ],
+      "ans": 2,
+      "exp": "A composite index on (user_id, created_at) efficiently supports queries that filter by user and sort by time — loading a user's recent posts."
+    },
+    {
+      "cat": "Indexing",
+      "q": "What does 'connect indexes to API endpoints' mean in practice?",
+      "opts": [
+        "Every endpoint must have exactly one dedicated index",
+        "Name indexes after the endpoint that uses them",
+        "Identify what query each endpoint runs and add indexes to support those queries",
+        "Document indexes in the API spec"
+      ],
+      "ans": 2,
+      "exp": "For each endpoint, ask: 'What query does this run?' then add an index to directly support that. For example, GET /users/{id}/posts → index on posts.user_id."
+    },
+    {
+      "cat": "Normalization",
+      "q": "What consistency problem arises in the denormalized schema from the article?",
+      "opts": [
+        "Posts can't be queried without a full scan",
+        "If a user changes their username, every post must be updated or data becomes inconsistent",
+        "Denormalized schemas can't support foreign keys",
+        "Post content is duplicated"
+      ],
+      "ans": 1,
+      "exp": "In the denormalized example, username is stored on every post row. A username change must update every post — missing one leaves inconsistent data."
+    },
+    {
+      "cat": "Normalization",
+      "q": "When does the article say denormalization is acceptable?",
+      "opts": [
+        "Whenever reads need to be fast",
+        "For analytics/reporting, event logs/audit trails, and heavily read-optimized systems",
+        "Whenever data exceeds 1 million rows",
+        "Only in key-value stores"
+      ],
+      "ans": 1,
+      "exp": "Three valid exceptions: analytics/reporting systems, event logs capturing point-in-time snapshots, and heavily read-optimized systems like search engines."
+    },
+    {
+      "cat": "Normalization",
+      "q": "What is the recommended way to get denormalized read performance while keeping a clean source of truth?",
+      "opts": [
+        "Store data twice — normalized and denormalized in separate tables",
+        "Put a cache in front with a denormalized representation; keep the schema normalized",
+        "Denormalize the main tables and use triggers",
+        "Use a document database instead"
+      ],
+      "ans": 1,
+      "exp": "Keep the source of truth normalized and place a cache in front with pre-computed joins, aggregations, or feed objects. Clean schema + fast reads."
+    },
+    {
+      "cat": "Scaling & Sharding",
+      "q": "Why is time-range sharding an anti-pattern for write-heavy systems?",
+      "opts": [
+        "Time keys are too long for indexing",
+        "All current writes hit the same newest shard, creating a hot shard",
+        "It prevents read scaling",
+        "Timestamps aren't unique enough"
+      ],
+      "ans": 1,
+      "exp": "With time-range sharding, all writes go to the current time-range shard. This creates a hot shard that receives all writes while older shards are idle."
+    },
+    {
+      "cat": "Scaling & Sharding",
+      "q": "If you shard by user_id and your feed needs posts from multiple followed users, what problem arises?",
+      "opts": [
+        "The shard key becomes too large",
+        "You must query multiple shards and merge results at the application layer",
+        "user_id sharding prevents indexing on posts",
+        "Queries require full table scans on each shard"
+      ],
+      "ans": 1,
+      "exp": "When data for different users lives on different shards, a query spanning several followed users must hit multiple shards and merge results — expensive and complex."
+    },
+    {
+      "cat": "Scaling & Sharding",
+      "q": "What does the article say about the permanence of your shard key choice?",
+      "opts": [
+        "Shard keys can be changed online with zero downtime",
+        "Your shard key choice is often permanent and affects every query",
+        "Shard keys only matter beyond 10 TB",
+        "The shard key can be migrated by rebuilding indexes"
+      ],
+      "ans": 1,
+      "exp": "The article explicitly warns the shard key choice is often permanent and affects every query. Think carefully about primary access patterns before deciding."
+    },
+    {
+      "cat": "Scaling & Sharding",
+      "q": "What is the recommended primary principle for choosing a shard key?",
+      "opts": [
+        "Choose the column with the highest cardinality",
+        "Shard by the primary access pattern to keep related data together",
+        "Always shard by timestamp for even distribution",
+        "Shard by the largest table's primary key"
+      ],
+      "ans": 1,
+      "exp": "Shard by your primary access pattern. If you mostly query 'posts by user,' shard by user_id so a user's posts are always co-located on the same database node."
+    }
+  ]
+}

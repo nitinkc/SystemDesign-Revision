@@ -4,6 +4,7 @@ site_author: Interview Prep Team
 
 theme:
   name: material
+  custom_dir: overrides
   color_mode: auto
   user_color_mode_toggle: true
   primary: teal
@@ -32,9 +33,15 @@ theme:
     - sql
     - bash
   features:
-    - toc.integrate
     - navigation.tabs
     - navigation.instant
+    - navigation.sections
+    - navigation.expand
+    #    - toc.integrate
+    - content.code.copy
+    - search
+    - search.highlight
+    - search.suggest
 
 plugins:
   - search
@@ -76,10 +83,15 @@ nav:
   - Home: index.md
   - Quiz :
       - quiz/index.md
-      - Core Concepts: quiz/core_concepts_quiz.html
-      - Key Technologies: quiz/key_technologies_quiz.html
-      - networking essentials: quiz/networking_essentials_quiz.html
-      - api design quiz: quiz/api_design_quiz.html  
+      - In a Hurry - Core Concepts: quiz/core_concepts_quiz.md
+      - In a Hurry - Key Technologies: quiz/key_technologies_quiz.md
+      - Core concepts - Networking Essentials: quiz/networking-essentials-quiz.md
+      - Core concepts - API Design: quiz/api-design-quiz.md
+      - Core concepts - Data Modeling: quiz/data-modeling-quiz-dark.md
+  - Flashcards:
+      - flashcards/index.md
+      - Data Modelling: flashcards/data-modeling-flashcards-dark.md
+
 #  - Easy:
 #    - easy/index.md
 #    - 01 · Hotel Booking Service: easy/01-hotel-booking.md

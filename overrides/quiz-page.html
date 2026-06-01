@@ -1,0 +1,61 @@
+{% extends "main.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ 'css/common.css' | url }}">
+  <link rel="stylesheet" href="{{ 'css/quiz.css' | url }}">
+{% endblock %}
+
+{% block content %}
+<div class="sd-page theme-dark quiz-page" style="--quiz-accent:#8B83E6;--quiz-selected-border:#8B83E6;--quiz-selected-bg:#252840;--quiz-selected-text:#A8A4E8;">
+  <div
+    id="sd-quiz-root"
+    data-json-source="{% if page.meta.quiz_data %}{{ page.meta.quiz_data | url }}{% endif %}">
+  </div>
+
+  <div class="page-header">
+    <div class="page-title" id="page-title">Quiz</div>
+    <div class="page-sub" id="page-sub">Shuffled each attempt.</div>
+  </div>
+
+  <div id="resume-banner" style="display:none">
+    <span id="resume-msg"></span>
+    <div>
+      <button class="btn-resume" onclick="resumeSession()">Resume</button>
+      <button class="btn-discard" onclick="discardSession()">Start fresh</button>
+    </div>
+  </div>
+
+  <div class="card" id="quiz-card">
+    <div id="prog-lbl"></div>
+    <div id="prog-wrap"><div id="prog-bar" style="width:0%"></div></div>
+    <div id="cat-lbl"></div>
+    <div id="q-text"></div>
+    <div id="opts"></div>
+    <div id="expl"></div>
+    <div class="btn-row">
+      <button id="btn-check" onclick="checkAnswer()">Check answer</button>
+      <button id="btn-next" onclick="nextQuestion()">Next -&gt;</button>
+    </div>
+  </div>
+
+  <div id="results-card">
+    <div class="score-big" id="r-score"></div>
+    <div class="score-pct" id="r-pct"></div>
+    <div class="motiv" id="r-motiv"></div>
+    <div class="cat-grid" id="r-cats"></div>
+    <button id="btn-restart" onclick="restart()">Restart quiz</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ 'js/interactive-core.js' | url }}"></script>
+  <script src="{{ 'js/storage.js' | url }}"></script>
+  <script src="{{ 'js/quiz-engine.js' | url }}"></script>
+  <script src="{{ 'js/quiz-template-loader.js' | url }}"></script>
+{% endblock %}
+
+
+

@@ -1,0 +1,571 @@
+{
+  "title": "Networking Essentials",
+  "subtitle": "40 questions covering all key topics. Shuffled each attempt.",
+  "storageKey": "networking_essentials_quiz_progress_v1",
+  "questions": [
+    {
+      "cat": "Networking Basics",
+      "q": "What is the primary purpose of the OSI model in networking?",
+      "opts": [
+        "To define hardware specifications for network cables",
+        "To provide layered abstractions for reasoning about device communication",
+        "To encrypt data between devices",
+        "To assign IP addresses automatically"
+      ],
+      "ans": 1,
+      "expl": "The OSI model is a layered architecture that lets application developers reason about network communication in simpler, abstracted terms without needing to understand lower-level details like electrical signals."
+    },
+    {
+      "cat": "Networking Basics",
+      "q": "Which OSI layer is IP (Internet Protocol) primarily associated with?",
+      "opts": [
+        "Layer 7 – Application",
+        "Layer 4 – Transport",
+        "Layer 3 – Network",
+        "Layer 2 – Data Link"
+      ],
+      "ans": 2,
+      "expl": "IP operates at Layer 3 (Network layer). It handles routing and addressing, breaks data into packets, and provides best-effort delivery to any destination IP address."
+    },
+    {
+      "cat": "Networking Basics",
+      "q": "Which of the following protocols operates at the Application Layer (Layer 7)?",
+      "opts": [
+        "IP",
+        "TCP",
+        "UDP",
+        "HTTP"
+      ],
+      "ans": 3,
+      "expl": "HTTP, DNS, WebSockets, and WebRTC are all application-layer protocols (Layer 7). TCP and UDP are transport-layer (Layer 4) and IP is network-layer (Layer 3)."
+    },
+    {
+      "cat": "Networking Basics",
+      "q": "What is the first step in a simple web request when you type a URL into a browser?",
+      "opts": [
+        "TCP Handshake",
+        "DNS Resolution",
+        "HTTP Request",
+        "Server Processing"
+      ],
+      "ans": 1,
+      "expl": "DNS Resolution happens first — the browser converts the human-readable domain name (e.g. hellointerview.com) into an IP address before any TCP connection can be established."
+    },
+    {
+      "cat": "Networking Basics",
+      "q": "How many steps are in the TCP three-way handshake?",
+      "opts": [
+        "Two (SYN, ACK)",
+        "Three (SYN, SYN-ACK, ACK)",
+        "Four (SYN, ACK, FIN, ACK)",
+        "One (SYN only)"
+      ],
+      "ans": 1,
+      "expl": "The TCP three-way handshake consists of SYN (client to server), SYN-ACK (server to client), and ACK (client to server). This establishes the connection before data transfer begins."
+    },
+    {
+      "cat": "Networking Basics",
+      "q": "What does 'stateless' mean in the context of HTTP?",
+      "opts": [
+        "Each request is encrypted independently",
+        "Each request is independent; the server doesn't maintain info about prior requests",
+        "The server maintains a record of all requests",
+        "HTTP has no status codes"
+      ],
+      "ans": 1,
+      "expl": "HTTP is stateless — each request stands on its own and the server doesn't need to remember any previous interactions. This simplifies server design and is generally desirable in system design."
+    },
+    {
+      "cat": "Networking Basics",
+      "q": "What is the TCP teardown sequence after data transfer completes?",
+      "opts": [
+        "SYN, SYN-ACK, ACK",
+        "FIN, ACK, FIN, ACK",
+        "RST, ACK",
+        "ACK, FIN, RST"
+      ],
+      "ans": 1,
+      "expl": "TCP uses a four-way teardown: FIN (client), ACK (server), FIN (server), ACK (client). Both sides must explicitly close their end of the connection."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "Which protocol is described as 'connectionless' with no guarantees of delivery or ordering?",
+      "opts": [
+        "TCP",
+        "QUIC",
+        "UDP",
+        "HTTP"
+      ],
+      "ans": 2,
+      "expl": "UDP (User Datagram Protocol) is connectionless and provides no guarantees for delivery, ordering, or duplicate protection. It's fast but 'spray and pray' in nature."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "Which of the following is NOT a characteristic of TCP?",
+      "opts": [
+        "Connection-oriented",
+        "Reliable delivery",
+        "No ordering guarantees",
+        "Flow control"
+      ],
+      "ans": 2,
+      "expl": "TCP guarantees ordered delivery — messages sent in the same connection arrive in the same order. 'No ordering guarantees' is a characteristic of UDP, not TCP."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "What is the header size of a UDP packet?",
+      "opts": [
+        "20–60 bytes",
+        "8 bytes",
+        "15 bytes",
+        "4 bytes"
+      ],
+      "ans": 1,
+      "expl": "UDP has a very small 8-byte header, contributing to its lower overhead and faster transmission compared to TCP's 20–60 byte header."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "Which protocol would be the best fit for a live video streaming application where some packet loss is acceptable?",
+      "opts": [
+        "TCP",
+        "QUIC",
+        "UDP",
+        "HTTP/2"
+      ],
+      "ans": 2,
+      "expl": "UDP is ideal for live video streaming because speed and low latency matter more than perfect reliability. The client can handle occasional dropped packets (e.g. a brief visual glitch) rather than waiting for retransmission."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "QUIC is best described as which of the following?",
+      "opts": [
+        "An older replacement for UDP with no handshake",
+        "A new protocol combining some TCP reliability benefits with modernization and performance improvements",
+        "A Layer 3 routing protocol",
+        "An application-layer API protocol"
+      ],
+      "ans": 1,
+      "expl": "QUIC is a relatively new transport protocol that aims to provide similar reliability benefits to TCP while adding performance improvements. It's becoming more popular but not yet ubiquitous."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "In which scenario would you likely choose TCP over UDP?",
+      "opts": [
+        "Real-time multiplayer gaming",
+        "Live audio streaming (VoIP)",
+        "A payment processing API",
+        "DNS lookups"
+      ],
+      "ans": 2,
+      "expl": "TCP is ideal when data integrity is critical. A payment API must guarantee every byte is delivered correctly and in order — packet loss would be catastrophic. Gaming, VoIP, and DNS can tolerate some loss."
+    },
+    {
+      "cat": "Transport Layer",
+      "q": "What does 'congestion control' in TCP refer to?",
+      "opts": [
+        "Preventing clients from sending too many DNS requests",
+        "Adapting data transmission rate to avoid overwhelming the network during congestion",
+        "Limiting the number of HTTP connections per user",
+        "Filtering out duplicate UDP packets"
+      ],
+      "ans": 1,
+      "expl": "TCP's congestion control mechanism monitors network conditions and reduces transmission rate when congestion is detected, helping prevent network collapse from overload."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "Which HTTP method should be idempotent and have no request body?",
+      "opts": [
+        "POST",
+        "PUT",
+        "GET",
+        "PATCH"
+      ],
+      "ans": 2,
+      "expl": "GET requests should be idempotent (calling them multiple times has no side effects) and don't have a request body. They are used to retrieve data from a server."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "What HTTP status code indicates a resource was successfully created?",
+      "opts": [
+        "200 OK",
+        "301 Moved Permanently",
+        "201 Created",
+        "404 Not Found"
+      ],
+      "ans": 2,
+      "expl": "201 Created is returned when a POST request successfully creates a new resource. 200 OK is for general success, not specifically resource creation."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "Which status code means the client has sent too many requests in a given period?",
+      "opts": [
+        "401 Unauthorized",
+        "403 Forbidden",
+        "500 Server Error",
+        "429 Too Many Requests"
+      ],
+      "ans": 3,
+      "expl": "429 Too Many Requests is the standard rate-limiting status code, indicating the client has exceeded the allowed number of requests in a time window."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "In REST API design, how would you correctly represent 'get all posts for a user'?",
+      "opts": [
+        "GET /getUserPosts/{id}",
+        "POST /posts?user={id}",
+        "GET /users/{id}/posts",
+        "FETCH /users/{id}/posts"
+      ],
+      "ans": 2,
+      "expl": "RESTful APIs model resources and relationships. GET /users/{id}/posts uses proper HTTP verb + nested resource path to represent fetching posts belonging to a specific user."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "What does HTTPS add over HTTP?",
+      "opts": [
+        "Faster response times",
+        "A TLS/SSL security layer that encrypts communications",
+        "Request caching",
+        "WebSocket support"
+      ],
+      "ans": 1,
+      "expl": "HTTPS adds TLS/SSL encryption on top of HTTP, protecting data in transit against eavesdropping and man-in-the-middle attacks. All public-facing websites should use HTTPS."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "What is the main design principle of REST APIs?",
+      "opts": [
+        "All endpoints use POST with JSON bodies",
+        "Clients perform simple CRUD operations on resources using HTTP verbs",
+        "APIs must return XML",
+        "Every API must be versioned with /v1/ prefix"
+      ],
+      "ans": 1,
+      "expl": "REST is built around the idea that clients perform simple operations (GET, POST, PUT, DELETE) on resources, using HTTP methods as verbs and URL paths to identify those resources."
+    },
+    {
+      "cat": "HTTP & REST",
+      "q": "What is a key security risk to watch for even with HTTPS?",
+      "opts": [
+        "HTTPS prevents all possible attacks",
+        "Request bodies are encrypted but the server should still validate user IDs and not trust them blindly",
+        "HTTPS slows down all APIs significantly",
+        "HTTP status codes are visible to attackers"
+      ],
+      "ans": 1,
+      "expl": "HTTPS encrypts data in transit but doesn't guarantee that request contents were generated by a legitimate client. Servers must always validate input — an attacker could modify the request body to change a user ID and access arbitrary data."
+    },
+    {
+      "cat": "GraphQL & gRPC",
+      "q": "What problem does GraphQL primarily solve?",
+      "opts": [
+        "Slow database queries",
+        "Over-fetching and under-fetching of data in APIs",
+        "Lack of encryption between services",
+        "Poor TCP performance"
+      ],
+      "ans": 1,
+      "expl": "GraphQL solves the over-fetching (getting more data than needed) and under-fetching (needing multiple requests to get all required data) problems common with REST APIs by letting clients request exactly the data they need."
+    },
+    {
+      "cat": "GraphQL & gRPC",
+      "q": "What serialization format does gRPC use instead of JSON?",
+      "opts": [
+        "XML",
+        "MessagePack",
+        "Protocol Buffers (binary)",
+        "YAML"
+      ],
+      "ans": 2,
+      "expl": "gRPC uses Protocol Buffers — a binary encoding that is more compact (fewer bytes) and faster to parse than JSON. Benchmarks show gRPC can achieve up to 10x throughput over JSON/HTTP."
+    },
+    {
+      "cat": "GraphQL & gRPC",
+      "q": "Which transport protocol does gRPC build upon?",
+      "opts": [
+        "HTTP/1.1",
+        "UDP",
+        "WebSocket",
+        "HTTP/2"
+      ],
+      "ans": 3,
+      "expl": "gRPC uses HTTP/2 as its transport protocol, which enables features like multiplexing, streaming, and header compression that contribute to its high performance."
+    },
+    {
+      "cat": "GraphQL & gRPC",
+      "q": "When is gRPC most appropriate according to the article?",
+      "opts": [
+        "Public-facing browser APIs",
+        "Internal service-to-service communication where performance is critical",
+        "Mobile app frontends",
+        "DNS resolution"
+      ],
+      "ans": 1,
+      "expl": "gRPC shines for internal microservice communication where efficiency and strong typing matter. It's generally not used for public-facing APIs because it's a binary protocol with less accessible tooling for external clients."
+    },
+    {
+      "cat": "GraphQL & gRPC",
+      "q": "What is the recommended default API choice for system design interviews?",
+      "opts": [
+        "GraphQL",
+        "gRPC",
+        "REST",
+        "WebSocket"
+      ],
+      "ans": 2,
+      "expl": "REST is the recommended default for system design interviews. It's well-understood, flexible, and a good baseline. You should only reach for GraphQL, gRPC, SSE, or WebSockets when REST can't meet specific requirements."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "How does Server-Sent Events (SSE) work at the transport level?",
+      "opts": [
+        "It uses a persistent UDP connection for fast pushing",
+        "It opens a new HTTP connection for every event",
+        "It streams many messages as 'chunks' over a single HTTP response connection",
+        "It requires a WebSocket upgrade handshake"
+      ],
+      "ans": 2,
+      "expl": "SSE is a hack on top of HTTP — the server keeps a single HTTP response open and streams messages as individual lines (chunks) over time. The client processes each line as it arrives."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "Which of the following is a known limitation of SSE?",
+      "opts": [
+        "It requires a special UDP socket",
+        "Servers or load balancers may close long-lived connections; the EventSource reconnects automatically",
+        "It only works with gRPC backends",
+        "It cannot be used over HTTPS"
+      ],
+      "ans": 1,
+      "expl": "SSE connections can be closed by servers, load balancers, or proxy middleboxes. The SSE standard handles this with an EventSource object that automatically reconnects with the last received message ID."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "What makes WebSockets different from SSE?",
+      "opts": [
+        "WebSockets use UDP instead of TCP",
+        "WebSockets support bidirectional communication; SSE is server-to-client only",
+        "WebSockets are faster because they avoid HTTP entirely",
+        "SSE supports binary data but WebSockets do not"
+      ],
+      "ans": 1,
+      "expl": "WebSockets provide persistent, bidirectional (full-duplex) communication — both client and server can send messages freely. SSE is unidirectional: only the server can push data to the client."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "How is a WebSocket connection initiated?",
+      "opts": [
+        "By sending a UDP packet to the server",
+        "Via a TCP SYN to a dedicated WebSocket port",
+        "Via an HTTP 'upgrade' protocol that upgrades an existing TCP connection",
+        "Via DNS lookup to find the WebSocket endpoint"
+      ],
+      "ans": 2,
+      "expl": "WebSockets start as a regular HTTP connection which then performs an 'upgrade' handshake to switch to the WebSocket protocol over the same TCP connection. This allows reusing HTTP session info like cookies."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "Which protocol is best suited for audio/video calling applications?",
+      "opts": [
+        "SSE",
+        "REST over HTTP",
+        "WebRTC",
+        "gRPC streaming"
+      ],
+      "ans": 2,
+      "expl": "WebRTC is specifically designed for peer-to-peer audio/video communication between browsers. It uses UDP for low-latency media transfer and includes built-in mechanisms for NAT traversal."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "What does STUN stand for in the context of WebRTC?",
+      "opts": [
+        "Secure Tunnel for UDP Networking",
+        "Session Traversal Utilities for NAT",
+        "Standard TCP Update Notification",
+        "Server-Transmitted UDP Node"
+      ],
+      "ans": 1,
+      "expl": "STUN (Session Traversal Utilities for NAT) is a protocol used in WebRTC to help peers discover their public IP addresses and ports, enabling direct peer-to-peer connections even when behind NAT devices."
+    },
+    {
+      "cat": "Real-Time Protocols",
+      "q": "What is the role of a signaling server in WebRTC?",
+      "opts": [
+        "It relays all audio/video data between peers",
+        "It keeps track of available peers and their connection information so they can find each other",
+        "It encrypts the WebRTC stream",
+        "It assigns IP addresses via DHCP"
+      ],
+      "ans": 1,
+      "expl": "The WebRTC signaling server is a central coordination point where peers register and exchange connection information. Once peers find each other, the actual media flows directly peer-to-peer (bypassing the signaling server)."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "What is 'client-side load balancing'?",
+      "opts": [
+        "The client browser randomly picks a CSS file to load",
+        "The client itself decides which backend server to contact, often using a service registry",
+        "A load balancer sitting in front of all clients",
+        "DNS always pointing to one fixed server"
+      ],
+      "ans": 1,
+      "expl": "With client-side load balancing, clients query a service registry for a list of available servers and then make routing decisions themselves — without an intermediary. This avoids an extra network hop per request."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "At which OSI layer do Layer 4 load balancers operate?",
+      "opts": [
+        "Application layer",
+        "Network layer",
+        "Transport layer",
+        "Data link layer"
+      ],
+      "ans": 2,
+      "expl": "Layer 4 load balancers operate at the Transport layer (TCP/UDP). They route based on IP addresses and ports without inspecting the actual content of packets."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "What is a key advantage of L7 load balancers over L4 load balancers?",
+      "opts": [
+        "They are faster due to zero packet inspection",
+        "They maintain persistent TCP connections more efficiently",
+        "They can route based on HTTP request content like URLs, headers, and cookies",
+        "They use less CPU than L4 balancers"
+      ],
+      "ans": 2,
+      "expl": "L7 load balancers understand the application layer (HTTP) and can make intelligent routing decisions based on request content — e.g. routing /api requests to one server farm and static assets to another."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "Which load balancing algorithm is recommended for services with persistent connections like WebSockets?",
+      "opts": [
+        "Round Robin",
+        "Random",
+        "IP Hash",
+        "Least Connections"
+      ],
+      "ans": 3,
+      "expl": "Least Connections is preferred for persistent-connection services (SSE, WebSockets) because it prevents a single server from gradually accumulating all long-lived connections while others stay idle."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "How does DNS contribute to load balancing?",
+      "opts": [
+        "DNS servers run load balancer software on their own",
+        "DNS returns a rotated list of IP addresses so different clients hit different servers",
+        "DNS caches all responses forever, eliminating load",
+        "DNS only works with a single IP per domain"
+      ],
+      "ans": 1,
+      "expl": "DNS-based load balancing works by returning different IP addresses (or different orderings) to different clients. Each client gets a rotated list, naturally distributing traffic across multiple servers."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "What is the purpose of health checks in a load balancer?",
+      "opts": [
+        "To measure the latency of DNS resolution",
+        "To determine if backend servers are healthy and route traffic away from failed ones",
+        "To encrypt HTTP traffic between client and server",
+        "To limit the number of connections per client"
+      ],
+      "ans": 1,
+      "expl": "Health checks allow load balancers to detect failed or unhealthy servers and automatically stop routing traffic to them until they recover. This enables automatic failover without manual intervention."
+    },
+    {
+      "cat": "Reliability & Failures",
+      "q": "What is 'exponential backoff' in retry strategies?",
+      "opts": [
+        "Retrying at a fixed interval forever until success",
+        "Doubling the wait time between each retry attempt to reduce load on recovering services",
+        "Immediately retrying failed requests with no delay",
+        "Canceling all retries after the first failure"
+      ],
+      "ans": 1,
+      "expl": "Exponential backoff increases the wait time between retries (e.g. 1s, 2s, 4s, 8s...), giving struggling services time to recover and reducing the retry storm that could make things worse."
+    },
+    {
+      "cat": "Reliability & Failures",
+      "q": "Why is 'jitter' important in retry strategies?",
+      "opts": [
+        "It improves encryption security",
+        "It adds randomness to retry timing to prevent all clients from retrying simultaneously",
+        "It speeds up the initial connection",
+        "It helps with DNS caching"
+      ],
+      "ans": 1,
+      "expl": "Jitter adds randomness to backoff timings so that multiple clients don't synchronize their retries and hammer a recovering service all at once — a 'thundering herd' that could prevent recovery."
+    },
+    {
+      "cat": "Reliability & Failures",
+      "q": "What is an idempotency key used for?",
+      "opts": [
+        "Encrypting API requests",
+        "Ensuring an operation is only processed once even if the request is retried multiple times",
+        "Tracking the number of API calls per user",
+        "Speeding up database queries"
+      ],
+      "ans": 1,
+      "expl": "An idempotency key is a unique identifier sent with a request that lets the server detect and deduplicate retried requests — preventing side effects like double-charging a user's credit card."
+    },
+    {
+      "cat": "Reliability & Failures",
+      "q": "In a circuit breaker pattern, what does the 'open' state mean?",
+      "opts": [
+        "Requests flow normally to the downstream service",
+        "The circuit has tripped and requests immediately fail without attempting the actual call",
+        "The service is under test with partial traffic",
+        "The load balancer is sending extra health checks"
+      ],
+      "ans": 1,
+      "expl": "When a circuit breaker trips to 'open' state (because failures exceeded a threshold), requests immediately fail-fast without even attempting the network call. This prevents cascading failures and reduces load on the struggling service."
+    },
+    {
+      "cat": "Reliability & Failures",
+      "q": "What is the 'half-open' state in a circuit breaker?",
+      "opts": [
+        "Half of all requests are blocked",
+        "The circuit breaker sends a single test request to check if the service has recovered",
+        "Retries happen at half the normal rate",
+        "The load balancer routes 50% of traffic to the failed service"
+      ],
+      "ans": 1,
+      "expl": "After an open circuit's timeout period, it transitions to 'half-open' and sends a single test request. If it succeeds, the circuit closes (normal operation resumes); if it fails, the circuit reopens."
+    },
+    {
+      "cat": "Regionalization & CDN",
+      "q": "What is the theoretical minimum round-trip latency between New York and London due to physics?",
+      "opts": [
+        "About 5ms",
+        "About 56ms",
+        "About 200ms",
+        "About 1ms"
+      ],
+      "ans": 1,
+      "expl": "Light travels through fiber at ~2/3 the speed of light in vacuum (~200,000 km/s). The ~5,600 km New York–London distance gives a theoretical minimum of ~56ms round-trip — before any processing time is added."
+    },
+    {
+      "cat": "Regionalization & CDN",
+      "q": "What is a CDN 'edge location'?",
+      "opts": [
+        "A server at the CDN's headquarters",
+        "A geographically distributed server close to end users that caches content",
+        "A firewall appliance at a data center",
+        "A load balancer for DNS requests"
+      ],
+      "ans": 1,
+      "expl": "Edge locations are CDN servers distributed around the world, positioned close to users. When a user's request can be served from a nearby edge server (via caching), they get very low latency responses."
+    },
+    {
+      "cat": "Regionalization & CDN",
+      "q": "What strategy does Uber's system design use to minimize cross-region data queries?",
+      "opts": [
+        "Replicating all data to every data center worldwide",
+        "Using WebRTC for driver-rider communication",
+        "Regional partitioning — grouping nearby cities and co-locating their data and servers",
+        "Using UDP for all location updates"
+      ],
+      "ans": 2,
+      "expl": "Regional partitioning co-locates data and servers for nearby geographic areas. Since an Uber rider in Miami will never book a driver in New York, queries can be answered entirely within a regional cluster — fast and efficient."
+    }
+  ]
+}

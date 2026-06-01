@@ -1,0 +1,81 @@
+{% extends "main.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <link rel="stylesheet" href="{{ 'css/common.css' | url }}">
+  <link rel="stylesheet" href="{{ 'css/flashcards.css' | url }}">
+{% endblock %}
+
+{% block content %}
+<div class="sd-page theme-dark flashcards-page" style="--fc-accent:#8B83E6;">
+  <div id="sd-flashcards-root" data-json-source="{% if page.meta.flashcards_data %}{{ page.meta.flashcards_data | url }}{% endif %}"></div>
+
+  <div class="page-header">
+    <div class="page-title" id="fc-page-title">Flashcards</div>
+    <div class="page-sub" id="fc-page-sub">Click to flip.</div>
+  </div>
+
+  <div class="card">
+    <div class="pills" id="pills"></div>
+    <div class="stats-row">
+      <span>Known: <strong id="sk">0</strong> &nbsp; Left: <strong id="sl">0</strong></span>
+      <span id="nc2"></span>
+    </div>
+    <div id="prog-wrap"><div id="prog-bar" style="width:0%"></div></div>
+    <div class="legend">
+      <span><span class="dot" style="background:#8B83E6"></span>Definition</span>
+      <span><span class="dot" style="background:#34D399"></span>Concept</span>
+      <span><span class="dot" style="background:#F87171"></span>Trade-off</span>
+      <span><span class="dot" style="background:#60A5FA"></span>Application</span>
+    </div>
+
+    <div id="main-panel">
+      <div class="fc" id="thecard" onclick="revealCard()">
+        <div class="fc-header">
+          <span class="dot" id="typedot"></span>
+          <span class="fc-label q" id="sidelabel">Question</span>
+          <span class="fc-badge" id="cattag"></span>
+        </div>
+        <div class="fc-body">
+          <div id="cardtext" class="fc-q"></div>
+        </div>
+      </div>
+      <div class="fc-hint" id="hinttext">Click card to reveal answer</div>
+      <div class="rate-row" id="ratebts" style="display:none">
+        <button class="btn btn-nope" onclick="rate(false)">Still learning</button>
+        <button class="btn btn-know" onclick="rate(true)">Got it ✓</button>
+      </div>
+      <div class="nav-row">
+        <button class="btn" onclick="move(-1)">&#8592; Prev</button>
+        <span class="nav-count" id="nc3"></span>
+        <button class="btn" onclick="move(1)">Next &#8594;</button>
+      </div>
+      <div class="export-row">
+        <button class="btn" onclick="doCSV()">&#8595; Export CSV (Anki/Quizlet)</button>
+        <button class="btn" onclick="doJSON()">&#8595; Export JSON</button>
+        <button class="btn" onclick="studyUnknown()">Study unknowns only</button>
+      </div>
+    </div>
+
+    <div id="done-panel">
+      <div class="done-score" id="dscore"></div>
+      <div class="done-pct" id="dpct"></div>
+      <div class="done-msg" id="dmsg"></div>
+      <div class="cat-grid" id="dcg"></div>
+      <div class="done-btns">
+        <button class="btn btn-primary" onclick="resetAll()">Study all again</button>
+        <button class="btn" onclick="studyUnknown()">Unknowns only</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ 'js/interactive-core.js' | url }}"></script>
+  <script src="{{ 'js/storage.js' | url }}"></script>
+  <script src="{{ 'js/flashcard-engine.js' | url }}"></script>
+  <script src="{{ 'js/flashcards-template-loader.js' | url }}"></script>
+{% endblock %}
+

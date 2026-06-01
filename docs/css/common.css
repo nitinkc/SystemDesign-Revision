@@ -1,0 +1,56 @@
+/* Scoped resets — only inside sd-page wrappers, not global */
+.sd-page *, .sd-page *::before, .sd-page *::after {
+  box-sizing: border-box;
+}
+
+.sd-page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.sd-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.sd-header {
+  margin: 0 auto 24px;
+}
+
+.sd-header h1,
+.sd-header .sd-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.sd-header p,
+.sd-header .sd-sub {
+  font-size: 14px;
+}
+
+body.theme-light .sd-header p,
+body.theme-light .sd-header .sd-sub {
+  color: #666;
+}
+
+body.theme-dark .sd-header p,
+body.theme-dark .sd-header .sd-sub {
+  color: #7b7f96;
+}
+
+.sd-card {
+  border-radius: 12px;
+  padding: 1.75rem;
+}
+
+body.theme-light .sd-card {
+  background: #fff;
+  border: 0.5px solid #ddd;
+}
+
+body.theme-dark .sd-card {
+  background: #1a1d27;
+  border: 0.5px solid #2e3347;
+}
+
