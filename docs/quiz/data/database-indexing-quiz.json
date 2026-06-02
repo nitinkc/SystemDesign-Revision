@@ -1,0 +1,439 @@
+{
+  "title": "Database Indexing",
+  "subtitle": "35 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "database_indexing_quiz_progress",
+  "questions": [
+    {
+      "cat": "Fundamentals",
+      "q": "Without an index, how does a database find a specific record in a table with millions of rows?",
+      "opts": [
+        "It uses a built-in hash function on the primary key",
+        "It performs a sequential scan, checking every row one by one",
+        "It loads the entire table into memory and sorts it first",
+        "It uses the OS file system's built-in search capabilities"
+      ],
+      "ans": 1,
+      "expl": "Without an index, the database performs a full sequential scan — checking every single row until it finds a match. For millions of rows this means millions of disk reads, which is extremely slow."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "What is the main data structure used to store the raw table data in most databases?",
+      "opts": [
+        "A B-tree sorted by primary key",
+        "A heap file — a collection of rows in no particular order",
+        "An SSTable flushed from a memtable",
+        "A hash table keyed by row ID"
+      ],
+      "ans": 1,
+      "expl": "The main table data is typically stored as a heap file — essentially rows written in no particular order, like entries in a notebook written as they arrive. Indexes are separate data structures maintained alongside this heap."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "Why is random disk access still a concern even on modern SSDs?",
+      "opts": [
+        "SSDs don't support random access at all",
+        "Random access on SSDs is identical in speed to sequential access",
+        "Random access is still significantly slower than sequential access on SSDs, just less so than HDDs",
+        "SSDs cache random reads, making them faster than sequential reads"
+      ],
+      "ans": 2,
+      "expl": "A common misconception is that SSDs eliminate the random vs. sequential access performance gap. While SSDs are much faster than HDDs for random access, sequential access is still significantly faster on SSDs. The article explicitly calls this out as a common misconception."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "What are the two primary costs of adding an index to a table?",
+      "opts": [
+        "Increased query complexity and slower read performance",
+        "Additional disk space and slower write performance",
+        "Higher CPU usage during reads and increased memory pressure during compaction",
+        "Slower range queries and difficulty maintaining sorted order"
+      ],
+      "ans": 1,
+      "expl": "Every index requires additional disk space (sometimes nearly as much as the original data) and slows down writes — because every insert or update must update not just the main table but every index on it, triggering multiple disk writes per operation."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "In which scenario might adding an index actually hurt more than help?",
+      "opts": [
+        "A users table queried by email millions of times per day",
+        "A logging table with constant inserts but rare reads",
+        "A products table with range queries on price",
+        "An orders table with frequent lookups by customer_id"
+      ],
+      "ans": 1,
+      "expl": "A logging table with constant writes but rare reads is the classic case where index overhead exceeds benefit. The cost of maintaining the index on every insert is not justified when reads are infrequent. Similarly, very small tables may not benefit because a sequential scan is already fast."
+    },
+    {
+      "cat": "B-Tree Indexes",
+      "q": "What property of B-trees makes them particularly well-suited for disk-based storage?",
+      "opts": [
+        "Each node stores only one key, minimizing memory usage",
+        "Each node is sized to fit in a single disk page, maximizing I/O efficiency",
+        "B-trees store all data in leaf nodes, enabling sequential scans",
+        "B-trees never require rebalancing, so no background I/O is needed"
+      ],
+      "ans": 1,
+      "expl": "B-tree nodes are sized to match a single disk page (typically 8KB). This means each node read is one disk I/O, and the wide branching factor (hundreds of children per node) means even massive datasets can be found in just 2-3 disk reads."
+    },
+    {
+      "cat": "B-Tree Indexes",
+      "q": "How many B-tree indexes does PostgreSQL automatically create when you define a table with a PRIMARY KEY and a UNIQUE constraint on a second column?",
+      "opts": [
+        "Zero — you must create indexes manually",
+        "One — it creates a single composite index",
+        "Two — one for the primary key and one for the unique constraint",
+        "Three — it also creates one on the internal row ID"
+      ],
+      "ans": 2,
+      "expl": "PostgreSQL automatically creates a B-tree index for each PRIMARY KEY and each UNIQUE constraint. So a table with one primary key and one unique column gets two B-tree indexes automatically, without any explicit CREATE INDEX statement."
+    },
+    {
+      "cat": "B-Tree Indexes",
+      "q": "Which of the following query types can a B-tree index NOT handle efficiently?",
+      "opts": [
+        "Equality searches: WHERE email = 'x@x.com'",
+        "Range searches: WHERE age > 25",
+        "ORDER BY operations on the indexed column",
+        "Full-text search: WHERE content LIKE '%database%'"
+      ],
+      "ans": 3,
+      "expl": "B-trees are excellent at equality searches, range queries, and ORDER BY on indexed columns because they maintain sorted order. They cannot efficiently handle arbitrary substring pattern matching (LIKE '%database%') because the match could occur anywhere in the string, requiring a full scan."
+    },
+    {
+      "cat": "B-Tree Indexes",
+      "q": "What is a B+ tree, and which major database uses it for indexes?",
+      "opts": [
+        "A B-tree where internal nodes store data pointers; used by PostgreSQL",
+        "A B-tree variant where all data is stored in leaf nodes; used by MongoDB",
+        "A B-tree that uses hashing at each level for faster lookups; used by MySQL",
+        "A B-tree optimized for in-memory storage; used by Redis"
+      ],
+      "ans": 1,
+      "expl": "A B+ tree is a variant of the B-tree where all actual data is stored in the leaf nodes, while internal nodes store only keys for navigation. MongoDB uses B+ trees for its indexes. This structure enables efficient sequential scans of the leaf level."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What fundamental problem with B-trees do LSM trees solve?",
+      "opts": [
+        "B-trees can't handle range queries efficiently at high scale",
+        "B-tree writes require random disk seeks, which become a bottleneck at very high write throughput",
+        "B-trees don't support secondary indexes on non-primary-key columns",
+        "B-trees can't handle concurrent reads and writes safely"
+      ],
+      "ans": 1,
+      "expl": "With B-trees, each write requires finding the right leaf page on disk, reading it into memory, updating it, and writing it back — random I/O. At 100,000 writes/second, those random disk seeks become a serious bottleneck. LSM trees solve this by batching writes in memory and flushing sequentially."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What is the correct sequence of events when a write arrives at an LSM-tree-based database?",
+      "opts": [
+        "SSTable → memtable → WAL → compaction",
+        "WAL → memtable → SSTable flush → compaction",
+        "Memtable → WAL → SSTable flush → compaction",
+        "WAL → SSTable flush → memtable → compaction"
+      ],
+      "ans": 1,
+      "expl": "Writes go to the WAL first (for durability) and also to the in-memory memtable. When the memtable fills, it's flushed to disk as an immutable SSTable. Background compaction periodically merges SSTables. The WAL ensures data isn't lost if the process crashes before the memtable is flushed."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "Why are reads more expensive in LSM trees compared to B-trees?",
+      "opts": [
+        "LSM trees don't maintain sorted order, so binary search can't be used",
+        "A read may need to check the memtable, any immutable memtables, and multiple SSTables on disk",
+        "LSM trees store data in compressed form, requiring decompression on every read",
+        "The WAL must be replayed on every read to ensure consistency"
+      ],
+      "ans": 1,
+      "expl": "Because LSM trees use an append-only approach, the same key can exist in the memtable, pending memtables, and multiple SSTables. A read must check all of these in order (newest to oldest) to find the most recent value — potentially many disk reads in the worst case."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "What role do Bloom filters play in LSM tree read optimization?",
+      "opts": [
+        "They cache frequently accessed keys in memory to avoid disk reads",
+        "They tell you definitively if a key is NOT in an SSTable, allowing you to skip it entirely",
+        "They compress SSTable data to reduce the number of disk pages read",
+        "They maintain a sorted index of keys within each SSTable for binary search"
+      ],
+      "ans": 1,
+      "expl": "Each SSTable has an associated Bloom filter — a probabilistic data structure that can say 'definitely not here' (never a false negative) or 'maybe here' (false positives possible). This lets the database skip most SSTables without reading them, dramatically reducing the worst-case read cost."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "An important distinction between LSM trees and B-trees in terms of secondary indexes: which statement is accurate?",
+      "opts": [
+        "LSM trees support secondary indexes with identical performance to primary key lookups",
+        "B-trees can't support secondary indexes; only LSM trees can",
+        "The LSM tree IS the storage format for the whole table sorted by primary key; secondary indexes require additional separate structures with different performance characteristics",
+        "LSM trees use hash indexes for secondary columns automatically"
+      ],
+      "ans": 2,
+      "expl": "Unlike B-trees where each index is its own separate structure you can create on any column, the LSM tree is the storage format for the entire table, sorted by primary key. Secondary indexes (like Cassandra's or DynamoDB's GSIs) require separate structures and have different — often worse — performance than primary key access."
+    },
+    {
+      "cat": "LSM Trees",
+      "q": "Which of these workloads is the BEST fit for an LSM-tree-based database?",
+      "opts": [
+        "A social network where every page load triggers 10+ read queries",
+        "A financial system requiring fast point lookups by account ID",
+        "A metrics collection system ingesting millions of data points per second",
+        "An e-commerce catalog with frequent range queries on price and category"
+      ],
+      "ans": 2,
+      "expl": "LSM trees excel at write-heavy workloads. A metrics collection system (like DataDog ingesting millions of metrics/second) is the canonical use case — high write throughput with reads that are less frequent or can tolerate slightly higher latency. The other options favor B-trees due to their read-heavy or balanced read/write patterns."
+    },
+    {
+      "cat": "Hash Indexes",
+      "q": "What is the time complexity of a hash index lookup, and what type of query is it optimized for?",
+      "opts": [
+        "O(log n) — range queries and sorted scans",
+        "O(1) — exact-match (equality) queries only",
+        "O(n) — full-text pattern matching",
+        "O(log n) — prefix match queries"
+      ],
+      "ans": 1,
+      "expl": "Hash indexes achieve O(1) average-case lookups by hashing the value to find its bucket directly. However, this makes them useless for range queries or sorting, since similar values are deliberately scattered across different buckets by the hash function."
+    },
+    {
+      "cat": "Hash Indexes",
+      "q": "Why are hash indexes rarely used in production disk-based databases despite their O(1) lookup speed?",
+      "opts": [
+        "Hash indexes require more CPU to compute hashes than B-tree traversal takes",
+        "B-trees perform nearly as well for exact matches while also supporting range queries and sorting",
+        "Hash indexes can't handle hash collisions in large datasets",
+        "Hash indexes require the entire index to fit in memory"
+      ],
+      "ans": 1,
+      "expl": "As the PostgreSQL documentation notes, B-trees can handle equality comparisons almost as efficiently as hash indexes, while also supporting range queries and sorting. Since B-trees give you everything hash indexes offer plus much more, hash indexes rarely justify their limited flexibility. Database expert Bruce Momjian summarized it: 'Hash indexes solve a problem we rarely have.'"
+    },
+    {
+      "cat": "Hash Indexes",
+      "q": "In which context do hash indexes actually shine?",
+      "opts": [
+        "Geospatial lookups where coordinates must be hashed to a grid",
+        "In-memory databases like Redis where all data lives in RAM and exact-match lookups are the primary use case",
+        "Time-series databases where hash indexes speed up range scans",
+        "Full-text search engines where word tokens are hashed for fast retrieval"
+      ],
+      "ans": 1,
+      "expl": "Hash indexes are well-suited for in-memory databases like Redis, where all data lives in RAM and the primary use case is exact-match key-value lookups. Without the disk I/O concerns that favor B-trees, the raw O(1) speed of hash lookups can be advantageous. MySQL's MEMORY engine also defaulted to hash indexes for this reason."
+    },
+    {
+      "cat": "Geospatial Indexes",
+      "q": "Why do two separate B-tree indexes on latitude and longitude fail for proximity searches?",
+      "opts": [
+        "B-trees can't store decimal values like latitude/longitude accurately",
+        "A proximity search is a 2D circular problem; two 1D indexes either produce a strip or a rectangle, both much larger than the actual search area",
+        "Databases don't support index intersection on more than one column",
+        "Latitude and longitude values aren't stored in sorted order in B-trees"
+      ],
+      "ans": 1,
+      "expl": "A latitude index produces a long strip spanning the entire globe at that latitude. Using both indexes produces a rectangle much larger than the actual circular search radius, and the database still needs to filter out all points outside the true radius. Neither approach leverages the 2D spatial relationship between coordinates."
+    },
+    {
+      "cat": "Geospatial Indexes",
+      "q": "What is the core idea behind geohashing?",
+      "opts": [
+        "Assigning each location a random integer ID and storing them in a hash table",
+        "Converting 2D coordinates into a 1D string in a way that nearby locations usually share similar string prefixes",
+        "Dividing the map into a fixed grid and storing coordinates as grid cell references",
+        "Hashing latitude and longitude separately and combining the hash values"
+      ],
+      "ans": 1,
+      "expl": "Geohashing recursively divides the world into quadrants and encodes the path taken as a base32 string. The key property is that nearby locations usually share similar prefixes (e.g., 'dr5ru' and 'dr5rv' are close together). This lets you use a regular B-tree index on the geohash string for proximity searches via prefix range scans."
+    },
+    {
+      "cat": "Geospatial Indexes",
+      "q": "What is a known limitation of geohashing for proximity searches?",
+      "opts": [
+        "Geohashes can only represent points, not polygons or shapes",
+        "The geohash string grows exponentially with precision, making storage prohibitive",
+        "Two locations near each other in reality might not share a similar prefix if they fall on opposite sides of a major grid boundary",
+        "Geohashing only works for locations within a single country"
+      ],
+      "ans": 2,
+      "expl": "Geohashing's main limitation is boundary artifacts: two restaurants on opposite sides of a street that happens to be a geohash cell boundary might have very different prefix strings despite being physically close. Proximity queries must therefore also check adjacent geohash cells, though this is still just a handful of prefix range scans."
+    },
+    {
+      "cat": "Geospatial Indexes",
+      "q": "How does Redis use geohashing internally?",
+      "opts": [
+        "Redis stores coordinates as two separate sorted sets and intersects them at query time",
+        "Redis uses GEOADD and GEOSEARCH commands backed by geohash under the hood to efficiently find nearby points",
+        "Redis implements a full R-tree in memory for its geospatial commands",
+        "Redis delegates geospatial queries to an external PostGIS server"
+      ],
+      "ans": 1,
+      "expl": "Redis's geospatial commands (GEOADD, GEOSEARCH) use geohashing internally. When you add a location, Redis converts it to a geohash and stores it in a sorted set. Proximity queries become prefix range scans on the sorted geohash values — leveraging Redis's existing sorted set data structure."
+    },
+    {
+      "cat": "Geospatial Indexes",
+      "q": "What is the key difference between how quadtrees and R-trees divide space?",
+      "opts": [
+        "Quadtrees use strings; R-trees use integers to represent spatial regions",
+        "Quadtrees divide space into four equal fixed quadrants recursively; R-trees use flexible, overlapping rectangles that adapt to actual data distribution",
+        "Quadtrees are disk-based; R-trees are in-memory only",
+        "Quadtrees support polygons; R-trees only support point data"
+      ],
+      "ans": 1,
+      "expl": "Quadtrees rigidly divide each region into four equal parts regardless of data distribution. R-trees use flexible, overlapping bounding rectangles that adapt to where the data actually clusters. This makes R-trees more efficient for non-uniform data and better at handling mixed data types (points, polygons, shapes)."
+    },
+    {
+      "cat": "Geospatial Indexes",
+      "q": "Which spatial index type is the production standard in modern databases like PostgreSQL/PostGIS and MySQL?",
+      "opts": [
+        "Geohash stored in a B-tree",
+        "Quadtree",
+        "R-tree",
+        "KD-tree"
+      ],
+      "ans": 2,
+      "expl": "R-trees have emerged as the default spatial index in modern production databases like PostgreSQL/PostGIS and MySQL. Their flexible, overlapping rectangles adapt to real data distributions and efficiently handle both points and shapes. Quadtrees, while foundational, require specialized structures and are less common in production today."
+    },
+    {
+      "cat": "Inverted Indexes",
+      "q": "Why can't a B-tree index help with a query like: WHERE content LIKE '%database%'?",
+      "opts": [
+        "B-trees can only index integer columns, not text",
+        "The pattern could match anywhere within the text, so no prefix order in the B-tree helps — the database must scan every row",
+        "B-trees are limited to indexes under 1000 rows",
+        "The LIKE operator bypasses all indexes by design in SQL"
+      ],
+      "ans": 1,
+      "expl": "B-tree indexes can help with prefix matches (LIKE 'database%') because the prefix preserves sorted order. But when the match can occur anywhere in the string ('%database%'), the B-tree's sorted order is useless — the database has no choice but to read every row and check every character."
+    },
+    {
+      "cat": "Inverted Indexes",
+      "q": "What does an inverted index store, and how is it different from a regular index?",
+      "opts": [
+        "It stores row IDs mapped to column values — the inverse of a primary key index",
+        "It stores words mapped to the list of documents containing them — the reverse of storing documents with their words",
+        "It stores compressed column values in reverse sorted order for efficient backward scans",
+        "It stores deleted records so they can be recovered — the inverse of a normal write"
+      ],
+      "ans": 1,
+      "expl": "An inverted index flips the relationship: instead of documents → words, it stores words → documents. Like the index at the back of a textbook, you look up a word and find every document (page) that mentions it. This enables efficient full-text search without scanning every document."
+    },
+    {
+      "cat": "Inverted Indexes",
+      "q": "What does the 'analysis pipeline' in systems like Elasticsearch do to text before indexing?",
+      "opts": [
+        "It compresses the text to reduce storage overhead",
+        "It converts text to a numeric hash for faster lookup",
+        "It tokenizes, lowercases, removes stop words, and often applies stemming so searches match variations of words",
+        "It splits text into fixed-size chunks for parallel indexing"
+      ],
+      "ans": 2,
+      "expl": "The analysis pipeline processes text before indexing: breaking it into tokens, converting to lowercase, removing stop words (like 'the', 'and'), and often stemming words to their root form. This is why searching for 'Databases' can match documents containing 'database', 'DATABASE', or 'database's'."
+    },
+    {
+      "cat": "Inverted Indexes",
+      "q": "What is a key trade-off of inverted indexes compared to B-tree indexes?",
+      "opts": [
+        "Inverted indexes can only support equality searches, not ranking",
+        "Inverted indexes require substantial storage overhead and updating them when a document changes requires updating entries for every term it contains",
+        "Inverted indexes are slower than B-trees for all query types",
+        "Inverted indexes can't be stored on disk — they must be kept entirely in memory"
+      ],
+      "ans": 1,
+      "expl": "Inverted indexes require significant storage overhead since each word maps to potentially many documents. When a document is updated, you must update entries for every term it contained and every term it now contains. This write complexity and storage cost are trade-offs accepted in exchange for powerful full-text search capabilities."
+    },
+    {
+      "cat": "Composite Indexes",
+      "q": "For this query: SELECT * FROM posts WHERE user_id = 123 AND created_at > '2024-01-01' ORDER BY created_at DESC — which index is most efficient?",
+      "opts": [
+        "Two separate indexes: one on user_id and one on created_at",
+        "A single composite index on (user_id, created_at)",
+        "A hash index on user_id combined with a B-tree on created_at",
+        "No index — the query optimizer will handle this automatically"
+      ],
+      "ans": 1,
+      "expl": "A composite index on (user_id, created_at) lets the database traverse the B-tree to the first entry for user_id=123, then scan sequentially through that user's entries in sorted date order. This handles filtering, range constraint, and sorting in a single index traversal. Two separate indexes would require intersecting result sets and re-sorting."
+    },
+    {
+      "cat": "Composite Indexes",
+      "q": "Given a composite index on (user_id, created_at), which query can use the index efficiently?",
+      "opts": [
+        "WHERE created_at > '2024-01-01' (filtering only on created_at)",
+        "WHERE user_id = 123 AND created_at > '2024-01-01' (filtering on both columns)",
+        "WHERE created_at > '2024-01-01' AND user_id = 123 ORDER BY user_id (sorting by user_id)",
+        "WHERE created_at BETWEEN '2024-01-01' AND '2024-02-01' (range on second column only)"
+      ],
+      "ans": 1,
+      "expl": "Composite indexes can only be used efficiently for queries that include a prefix of the indexed columns. An index on (user_id, created_at) requires user_id to be in the WHERE clause to use the index effectively. A query filtering only on created_at (the second column) cannot use this index efficiently — it would require a full index scan."
+    },
+    {
+      "cat": "Composite Indexes",
+      "q": "The article says 'order columns from most selective to least selective' in a composite index, but then adds nuance. What is that nuance?",
+      "opts": [
+        "Selectivity only matters for B-tree indexes, not hash indexes",
+        "Query patterns can override selectivity — if you frequently sort by a column, including it in the composite index can eliminate expensive sort operations even if it's not highly selective",
+        "The most selective column should always be last so the B-tree can scan it as a range",
+        "Selectivity rules only apply when the table has more than 1 million rows"
+      ],
+      "ans": 1,
+      "expl": "While 'most selective first' is a good default, query patterns can trump selectivity. If a query frequently sorts by a particular column, including it in the composite index (even if not highly selective) can eliminate expensive sort operations by leveraging the B-tree's natural sorted order. The goal is to match the index to actual access patterns."
+    },
+    {
+      "cat": "Covering Indexes",
+      "q": "What makes a covering index different from a regular composite index?",
+      "opts": [
+        "A covering index uses hash buckets instead of a B-tree for the indexed columns",
+        "A covering index includes all columns needed by the query so results can be returned entirely from the index without accessing the main table",
+        "A covering index spans multiple tables, covering joins automatically",
+        "A covering index automatically updates its included columns in real-time without write overhead"
+      ],
+      "ans": 1,
+      "expl": "A covering index includes not just the filter/sort columns but also extra columns that the query needs to return (using INCLUDE in PostgreSQL). This allows the database to serve the entire query result from the index itself, skipping the expensive 'table heap lookup' step that fetches the full row from the main data pages."
+    },
+    {
+      "cat": "Covering Indexes",
+      "q": "What is the primary trade-off of covering indexes in 2026, per the article?",
+      "opts": [
+        "They are incompatible with composite indexes and can't be combined",
+        "They require a special database engine that most production systems don't support",
+        "They come with real storage and maintenance overhead costs, and modern query optimizers are smart enough that covering indexes are often unnecessary — simpler strategies are usually preferred",
+        "They only work for SELECT queries and break INSERT/UPDATE performance entirely"
+      ],
+      "ans": 2,
+      "expl": "The article notes that as of 2026, covering indexes are more of a niche optimization than a go-to solution. Modern query optimizers have become quite smart, reducing the cases where covering indexes provide significant gains. Their maintenance overhead and storage cost means you should have a strong justification before reaching for them."
+    },
+    {
+      "cat": "Choosing the Right Index",
+      "q": "An engineer is building a restaurant discovery app and needs to find restaurants within 5 miles of a user. Which index type should they use?",
+      "opts": [
+        "A composite B-tree index on (latitude, longitude)",
+        "A hash index on a concatenated lat+lng string",
+        "A geospatial index such as geohash with a B-tree, or an R-tree",
+        "An inverted index on the restaurant's address string"
+      ],
+      "ans": 2,
+      "expl": "Proximity search requires an index that understands 2D spatial relationships. A composite B-tree on lat/lng fails because it treats them as independent dimensions, producing rectangular rather than circular search areas. A geospatial index (geohash + B-tree, or R-tree) preserves spatial proximity and enables efficient radius queries."
+    },
+    {
+      "cat": "Choosing the Right Index",
+      "q": "A developer needs to let users search through millions of blog posts by keyword. Which index type should they use?",
+      "opts": [
+        "A B-tree index on the content column",
+        "A hash index on the content column",
+        "An inverted index (full-text search index)",
+        "A composite index on (title, content)"
+      ],
+      "ans": 2,
+      "expl": "Full-text search — finding posts containing a keyword anywhere in the content — cannot be done efficiently with B-trees or hash indexes. An inverted index maps words to the documents containing them, enabling fast keyword searches with ranking, stemming, and fuzzy matching. Elasticsearch and similar systems use this approach."
+    },
+    {
+      "cat": "Choosing the Right Index",
+      "q": "If you're unsure which index type to use in a system design interview, what does the article recommend?",
+      "opts": [
+        "Default to a hash index since O(1) lookups are always fastest",
+        "Default to a B-tree index — it handles both exact matches and range queries and is the standard choice for most databases",
+        "Default to a composite index covering all queried columns",
+        "Default to an LSM tree since write performance is always more critical than reads"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly says: 'When in doubt, go with B-trees. They're the swiss army knife of indexes, handling both exact matches and range queries efficiently, and they're what most databases use by default for good reason.' B-trees are the safe, versatile default in interviews."
+    }
+  ]
+}

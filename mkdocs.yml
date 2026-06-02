@@ -96,6 +96,7 @@ nav:
       - Core concepts - Networking Essentials: quiz/networking-essentials-quiz.md
       - Core concepts - API Design: quiz/api-design-quiz.md
       - Core concepts - Data Modeling: quiz/data-modeling-quiz-dark.md
+      - Core concepts - DB Indexing: quiz/db-indexing-quiz.md
       - Technologies - Time Series DB: quiz/time-series-databases-quiz.md
   - Flashcards:
       - flashcards/index.md
