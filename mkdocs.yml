@@ -97,10 +97,13 @@ nav:
       - Core concepts - API Design: quiz/api-design-quiz.md
       - Core concepts - Data Modeling: quiz/data-modeling-quiz-dark.md
       - Core concepts - DB Indexing: quiz/db-indexing-quiz.md
+      - Core concepts - Sharding: quiz/sharding-quiz.md
       - Technologies - Time Series DB: quiz/time-series-databases-quiz.md
   - Flashcards:
       - flashcards/index.md
       - Data Modelling: flashcards/data-modeling-flashcards.md
+      - DB Indexing: flashcards/db-indexing-flashcards.md
+      - Sharding : flashcards/sharding-flashcards.md
 
 #  - Easy:
 #    - easy/index.md
