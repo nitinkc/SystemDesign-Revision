@@ -4,228 +4,242 @@
   "storageKey": "sharding_flashcards_progress",
   "cards": [
     {
-      "cat": "Partitioning vs Sharding",
+      "cat": "Core Definitions",
       "type": "def",
-      "q": "What is partitioning?",
-      "a": "Splitting a large table into smaller logical pieces within a single database instance. No new machines are added. The database can manage each partition separately, allowing queries to scan only the relevant partition instead of the full table.",
-      "ex": "An orders table with 500M rows partitioned by year: a query for last month's orders scans only the current-year partition, not all 500M rows."
+      "q": "Sharding",
+      "a": "Splitting data across multiple independent machines, each with its own CPU, memory, and storage. Together all shards form the complete dataset.",
+      "ex": ""
     },
     {
-      "cat": "Partitioning vs Sharding",
+      "cat": "Core Definitions",
       "type": "def",
-      "q": "What is horizontal partitioning?",
-      "a": "Splitting rows across partitions. Each partition contains the same columns but a subset of the rows. This is what most people mean when they say 'partitioning' in a database context.",
-      "ex": "Orders table partitioned by year: 2022 orders in partition A, 2023 orders in partition B, 2024 orders in partition C. Same schema, fewer rows per partition."
+      "q": "Partitioning",
+      "a": "Splitting a large table into smaller logical pieces within a single database instance. No new machines — just better organization.",
+      "ex": ""
     },
     {
-      "cat": "Partitioning vs Sharding",
+      "cat": "Core Definitions",
       "type": "def",
-      "q": "What is vertical partitioning?",
-      "a": "Splitting columns across partitions. Each partition contains all rows but a subset of the columns. Useful for separating frequently accessed columns from large or rarely accessed ones.",
-      "ex": "A users table split into: partition A (id, name, email — accessed on every page load) and partition B (bio, profile_picture_url, preferences — accessed only on profile pages)."
+      "q": "Horizontal partitioning",
+      "a": "Splitting rows across partitions. Same columns, fewer rows per partition.",
+      "ex": ""
     },
     {
-      "cat": "Partitioning vs Sharding",
+      "cat": "Core Definitions",
       "type": "def",
-      "q": "What is sharding?",
-      "a": "Horizontal partitioning across multiple independent machines. Each shard holds a subset of the data and runs on its own server with its own CPU, memory, storage, and connection pool. Together, all shards form the complete dataset.",
-      "ex": "User data split across 64 shards: shard 1 holds users 1–1M, shard 2 holds users 1M–2M, etc. Each shard is a standalone database."
+      "q": "Vertical partitioning",
+      "a": "Splitting columns across partitions. All rows present, but each partition holds a different subset of columns.",
+      "ex": ""
     },
     {
-      "cat": "Partitioning vs Sharding",
+      "cat": "Core Definitions",
+      "type": "def",
+      "q": "Shard key",
+      "a": "The field used to decide which shard a record belongs to. The most important sharding decision — a bad shard key causes hotspots and expensive queries.",
+      "ex": ""
+    },
+    {
+      "cat": "Core Definitions",
+      "type": "def",
+      "q": "Hot spot",
+      "a": "When one shard handles far more traffic than others, becoming a bottleneck that negates the benefit of sharding.",
+      "ex": ""
+    },
+    {
+      "cat": "Core Definitions",
+      "type": "def",
+      "q": "Celebrity problem",
+      "a": "A hot spot caused by inherently popular keys — not bad distribution. A celebrity's shard gets 1000x more requests than a normal user's shard.",
+      "ex": ""
+    },
+    {
+      "cat": "Core Definitions",
+      "type": "def",
+      "q": "Cross-shard (fan-out) query",
+      "a": "A query that needs data from multiple shards. Requires contacting all relevant shards, waiting for all responses, then merging results — expensive.",
+      "ex": ""
+    },
+    {
+      "cat": "Shard Key Properties",
       "type": "concept",
-      "q": "When should you partition instead of shard?",
-      "a": "Partition when you haven't hit single-machine limits but want to improve query performance on large tables. Partitioning avoids the complexity of cross-machine coordination, distributed transactions, and shard routing. Only shard when you've proven a single machine can't handle the load.",
-      "ex": "A 500M-row table with slow range queries → partition first. A system needing 50TB of storage or 50K+ writes/sec that exceeds one machine's limits → shard."
+      "q": "High cardinality (shard key)",
+      "a": "The shard key should have many unique values so data can be spread across many shards. A boolean key (2 values) can only ever produce 2 shards.",
+      "ex": ""
     },
     {
-      "cat": "Shard Keys",
-      "type": "def",
-      "q": "What is a shard key?",
-      "a": "The field or column used to determine which shard a record belongs to. The shard key is the most important sharding decision — it controls data distribution, query efficiency, and hotspot potential. A bad shard key can make sharding worse than not sharding at all.",
-      "ex": "Sharding a users table by user_id: the shard key is user_id. A hash of user_id (or range of user_ids) determines which shard stores each user's data."
-    },
-    {
-      "cat": "Shard Keys",
+      "cat": "Shard Key Properties",
       "type": "concept",
-      "q": "What are the three properties of a good shard key?",
-      "a": "1. High cardinality — many unique values so data can be spread across many shards. 2. Even distribution — values don't cluster, so shards get roughly equal amounts of data. 3. Query alignment — your most common queries should hit just one shard, not fan out across all of them.",
-      "ex": "user_id: millions of unique values (high cardinality), users spread evenly (distribution), 'get user profile' hits one shard (alignment). ✓ All three."
+      "q": "Even distribution (shard key)",
+      "a": "Values of the shard key should spread roughly evenly across shards so no single shard gets overloaded.",
+      "ex": ""
     },
     {
-      "cat": "Shard Keys",
-      "type": "app",
-      "q": "Why is a boolean field (e.g., is_premium) a terrible shard key?",
-      "a": "Boolean fields have cardinality of 2 — meaning you can only ever have 2 shards. Worse, distribution is almost always uneven: if 90% of users are free, the free shard is massively overloaded. This defeats the entire purpose of sharding.",
-      "ex": "is_premium=false shard: 90M users. is_premium=true shard: 10M users. The free shard is 9x larger and handles 9x more traffic — a massive hotspot."
+      "cat": "Shard Key Properties",
+      "type": "concept",
+      "q": "Query alignment (shard key)",
+      "a": "The shard key should match your most common query patterns so those queries hit just one shard instead of fanning out to all of them.",
+      "ex": ""
     },
     {
-      "cat": "Shard Keys",
-      "type": "app",
-      "q": "Why is created_at a bad shard key for a high-write system?",
-      "a": "All new records always go to the shard holding the most recent time range. This creates a perpetual write hotspot on the newest shard. Older shards sit mostly idle, handling only reads of historical data. The load is never balanced across shards.",
-      "ex": "Sharding events by created_at: the 'today' shard receives all new writes. Yesterday's shard gets almost zero writes. Last week's shard gets none. Massive imbalance."
+      "cat": "Shard Key Properties",
+      "type": "tradeoff",
+      "q": "Why created_at is a bad shard key",
+      "a": "All new writes go to the shard holding the most recent time range — a constant write hotspot. Older shards sit mostly idle.",
+      "ex": ""
     },
     {
-      "cat": "Sharding Strategies",
-      "type": "def",
-      "q": "What is range-based sharding?",
-      "a": "Assigning records to shards based on continuous ranges of the shard key. Simple and supports efficient range scans — queries over a range of keys hit one or a few shards. Prone to hotspots when access patterns concentrate on specific ranges.",
-      "ex": "User IDs 1–1M → Shard 1, 1M–2M → Shard 2, 2M–3M → Shard 3. A query for users 500K–600K hits only Shard 1."
-    },
-    {
-      "cat": "Sharding Strategies",
-      "type": "def",
-      "q": "What is hash-based sharding?",
-      "a": "Using a hash function to assign records to shards. The shard key is hashed and the result determines the shard (e.g., shard = hash(user_id) % N). Produces even distribution by scrambling the input values. The default and most common sharding strategy.",
-      "ex": "hash(42) % 4 = 2 → User 42 goes to Shard 2. hash(99) % 4 = 3 → User 99 goes to Shard 3. Distribution is even across all shards."
+      "cat": "Shard Key Properties",
+      "type": "tradeoff",
+      "q": "Why a boolean is a bad shard key",
+      "a": "Only 2 possible values = only 2 shards max. Distribution is almost always uneven (e.g., 90% free users vs 10% premium).",
+      "ex": ""
     },
     {
       "cat": "Sharding Strategies",
       "type": "def",
-      "q": "What is directory-based sharding?",
-      "a": "Using a lookup table (the 'directory') that explicitly maps each record to its shard. Maximum flexibility — any record can be moved to any shard by updating the mapping. Cost: every request requires a directory lookup, and the directory is a single point of failure.",
-      "ex": "Directory: user_15 → Shard 1, user_87 → Shard 4, user_204 → Shard 2. To move user_87 to a dedicated shard, just update the mapping."
+      "q": "Range-based sharding",
+      "a": "Records are assigned to shards based on continuous ranges of the shard key (e.g., user IDs 1–1M go to shard 1). Simple, supports range scans, but prone to hotspots.",
+      "ex": ""
+    },
+    {
+      "cat": "Sharding Strategies",
+      "type": "def",
+      "q": "Hash-based sharding",
+      "a": "A hash function determines which shard a record goes to (e.g., shard = hash(user_id) % N). The default strategy — produces even distribution across shards.",
+      "ex": ""
+    },
+    {
+      "cat": "Sharding Strategies",
+      "type": "def",
+      "q": "Directory-based sharding",
+      "a": "A lookup table explicitly maps each record to its shard. Maximum flexibility, but every request needs a directory lookup and the directory is a single point of failure.",
+      "ex": ""
+    },
+    {
+      "cat": "Sharding Strategies",
+      "type": "def",
+      "q": "Consistent hashing",
+      "a": "A technique that minimizes data movement when shards are added or removed. Only ~1/N of data needs to move instead of nearly all of it with simple modulo hashing.",
+      "ex": ""
+    },
+    {
+      "cat": "Sharding Strategies",
+      "type": "concept",
+      "q": "Best use case for range-based sharding",
+      "a": "Multi-tenant SaaS systems where each company queries only its own range of IDs. Different tenants naturally hit different shards.",
+      "ex": ""
     },
     {
       "cat": "Sharding Strategies",
       "type": "tradeoff",
-      "q": "Range vs. Hash vs. Directory sharding: when do you use each?",
-      "a": "Range: when data is naturally queried by range and different users query different ranges (e.g., multi-tenant SaaS). Hash: default choice for even distribution when exact-match queries dominate. Directory: only when you need dynamic, per-key routing flexibility (e.g., isolating hot keys to dedicated shards) — avoid as a default due to SPOF risk.",
-      "ex": "SaaS app where each company has an ID range → Range. Social network user profiles → Hash. Celebrity accounts needing dedicated hardware → Directory for those specific keys."
-    },
-    {
-      "cat": "Sharding Strategies",
-      "type": "concept",
-      "q": "What is consistent hashing and why does it matter for sharding?",
-      "a": "Consistent hashing places both keys and shards on a virtual ring. Adding a shard only affects the keys between the new shard and its predecessor — approximately 1/N of the data moves instead of nearly all of it with simple modulo hashing. Critical for systems that need to resize the number of shards over time.",
-      "ex": "Going from 4 to 5 shards: simple modulo (% 4 → % 5) reshuffles ~80% of all keys. Consistent hashing moves only ~20% (1/5 of data)."
-    },
-    {
-      "cat": "Hot Spots",
-      "type": "def",
-      "q": "What is a hot spot in sharding?",
-      "a": "When one shard handles disproportionately more traffic than others, becoming a bottleneck that negates the benefits of sharding. Hot spots can be caused by uneven data distribution (bad shard key) or inherently high-traffic keys (celebrity problem) or time-based patterns (all new writes to latest shard).",
-      "ex": "Taylor Swift's user_id hashes to Shard 7. Every profile view, like, and message hits Shard 7. Even though all other shards are balanced, Shard 7 is overwhelmed."
-    },
-    {
-      "cat": "Hot Spots",
-      "type": "def",
-      "q": "What is the celebrity problem?",
-      "a": "A hot spot caused not by bad data distribution but by inherent key popularity. Some keys (like celebrity user IDs) generate 1000x more traffic than average keys. Hash distribution correctly assigns them to a shard — but that shard is still overwhelmed by the volume of requests for that one key.",
-      "ex": "Taylor Swift's account: every one of her 200M followers might load her profile daily. That's 200M requests hitting one shard, while most user shards handle ~100 requests/day."
-    },
-    {
-      "cat": "Hot Spots",
-      "type": "app",
-      "q": "What are three ways to mitigate hot spots?",
-      "a": "1. Isolate hot keys: Move celebrity/high-traffic accounts to dedicated shards. 2. Compound shard keys: hash(user_id + date) spreads a hot user's data across multiple shards over time. 3. Dynamic shard splitting: Some databases (like MongoDB's balancer) can split and migrate hot shards automatically.",
-      "ex": "Twitter's approach: celebrity accounts with huge follower counts are handled differently in the fanout pipeline — their tweets are pushed to follower timelines asynchronously rather than pulling from a hot shard."
-    },
-    {
-      "cat": "Cross-Shard Operations",
-      "type": "concept",
-      "q": "What is a cross-shard (fan-out) query and why is it expensive?",
-      "a": "A query that requires data from multiple shards. The database must send the query to all relevant shards, wait for all responses, merge the results, and return the final answer. Cost grows linearly with the number of shards involved: 64 shards = 64 network calls, 64 waits, and a merge operation.",
-      "ex": "'Top 10 most popular posts globally' when posts are sharded by user_id: must query all 64 shards, wait for all 64 responses, merge 640 candidates, then pick the top 10."
-    },
-    {
-      "cat": "Cross-Shard Operations",
-      "type": "app",
-      "q": "What are three strategies for handling expensive cross-shard queries?",
-      "a": "1. Cache results: expensive but infrequently-changing aggregates (trending posts, leaderboards) can be cached for minutes. 2. Denormalize: store copies of related data on the same shard to avoid cross-shard joins. 3. Accept the hit: for truly infrequent admin/reporting queries, cross-shard fan-out is acceptable.",
-      "ex": "'Trending posts' computed every 5 minutes by a background job and cached → first computation hits all shards, next million reads hit cache. Cost amortized over huge number of reads."
-    },
-    {
-      "cat": "Cross-Shard Operations",
-      "type": "concept",
-      "q": "What does it signal if your design requires frequent cross-shard queries for common use cases?",
-      "a": "It's a red flag that your shard key or shard boundaries are wrong. Frequent cross-shard fan-outs mean your data isn't partitioned along the lines of your access patterns. Pause and ask: can I choose a different shard key? Can I denormalize? Can I precompute? Cross-shard queries should be the rare exception, not the norm.",
-      "ex": "If 'show user's feed' (the most common query) requires hitting all shards, you've likely sharded by the wrong field. Shard by user_id instead, keeping all user-related data together."
-    },
-    {
-      "cat": "Consistency",
-      "type": "concept",
-      "q": "Why do cross-shard transactions break normal database transaction guarantees?",
-      "a": "A single database transaction works because one database owns all the data and its transaction manager ensures atomicity. With sharding, data for one logical operation may span two independent databases. There's no shared transaction manager — if you write to shard 1 and then shard 2 fails, shard 1's write is committed but shard 2's isn't. The data is now inconsistent.",
-      "ex": "Transfer $100 from User A (shard 1) to User B (shard 2): deduct from shard 1, then shard 2 crashes before adding to User B. Money is lost — the deduction happened but the credit didn't."
+      "q": "Downside of simple modulo hash sharding",
+      "a": "Adding or removing a shard changes the modulo, causing almost every record to map to a different shard — massive data movement required.",
+      "ex": ""
     },
     {
       "cat": "Consistency",
       "type": "def",
-      "q": "What is two-phase commit (2PC)?",
-      "a": "A distributed transaction protocol: Phase 1 (Prepare) — a coordinator asks all shards if they can commit; Phase 2 (Commit) — if all say yes, the coordinator tells everyone to commit. Guarantees atomicity across shards but is slow, fragile, and can leave the system stuck if any participant or the coordinator crashes between phases.",
-      "ex": "Coordinator: 'Shard 1, can you deduct $100?' Shard 1: 'Yes.' Coordinator: 'Shard 2, can you add $100?' Shard 2: crashes. System is now frozen — shard 1 has reserved the $100 but can't release or commit without hearing from shard 2."
+      "q": "Two-phase commit (2PC)",
+      "a": "A distributed transaction protocol: coordinator asks all shards to 'prepare', then tells them to 'commit'. Guarantees atomicity but is slow and fragile — a crash mid-way can leave the system stuck.",
+      "ex": ""
     },
     {
       "cat": "Consistency",
       "type": "def",
-      "q": "What is the saga pattern?",
-      "a": "A pattern for coordinating multi-step operations across shards without 2PC. Each step is independent with a corresponding compensating action. If any step fails, compensating actions for all previous steps are run to undo the work. Achieves eventual consistency without distributed locks.",
-      "ex": "Money transfer saga: Step 1: deduct from User A. Step 2: add to User B. If Step 2 fails → run compensating action: refund User A. System converges to a consistent state without 2PC."
+      "q": "Saga pattern",
+      "a": "Coordinating multi-shard operations as a sequence of independent steps, each with a compensating action. If step 3 fails, compensating actions undo steps 1 and 2. Achieves eventual consistency without 2PC.",
+      "ex": ""
     },
     {
       "cat": "Consistency",
-      "type": "tradeoff",
-      "q": "What is the best way to avoid distributed transaction complexity in a sharded system?",
-      "a": "Design your shard key so all data involved in a transaction lives on the same shard. If you shard users by user_id and keep all user data (account balance, transactions, profile) on their shard, all operations are single-shard transactions — fast, atomic, and reliable. Needing frequent cross-shard transactions often means you chose the wrong shard key.",
-      "ex": "E-commerce: shard orders by user_id. Order creation, inventory reservation, and payment deduction all relate to one user → same shard → single-database transaction. No saga needed."
+      "type": "def",
+      "q": "Compensating action (saga)",
+      "a": "A step that undoes a previously completed operation if a later step in a saga fails. Example: if adding funds to User B fails, refund User A.",
+      "ex": ""
+    },
+    {
+      "cat": "Consistency",
+      "type": "concept",
+      "q": "Best way to avoid distributed transactions",
+      "a": "Choose a shard key that keeps all data involved in a transaction on the same shard. Single-shard transactions are fast and need no coordination.",
+      "ex": ""
+    },
+    {
+      "cat": "Cross-Shard Challenges",
+      "type": "concept",
+      "q": "Denormalization (sharding context)",
+      "a": "Storing copies of related data on the same shard to avoid cross-shard joins. Trades data duplication and update complexity for faster, single-shard reads.",
+      "ex": ""
+    },
+    {
+      "cat": "Cross-Shard Challenges",
+      "type": "concept",
+      "q": "Compound shard key",
+      "a": "Combining two fields as the shard key (e.g., hash(user_id + date)) to spread a hot user's data across multiple shards over time.",
+      "ex": ""
+    },
+    {
+      "cat": "Cross-Shard Challenges",
+      "type": "concept",
+      "q": "Caching cross-shard aggregates",
+      "a": "Expensive global queries (e.g., top trending posts) are run once against all shards and the result is cached. Subsequent requests hit the cache instead of fanning out.",
+      "ex": ""
     },
     {
       "cat": "Modern Databases",
       "type": "concept",
-      "q": "How does Cassandra distribute data, and is it classic consistent hashing?",
-      "a": "Cassandra uses a partitioner (e.g., Murmur3Partitioner) with virtual nodes (vnodes) to map partition keys to token ranges on nodes. This is a form of consistent hashing. Virtual nodes allow finer-grained load balancing — each physical node owns multiple small token ranges instead of one large one.",
-      "ex": "A Cassandra cluster with 6 nodes might have each node own 256 virtual nodes (token ranges). Adding a new node takes some vnodes from each existing node, distributing the migration cost evenly."
+      "q": "How Cassandra distributes data",
+      "a": "Uses a partitioner (e.g., Murmur3) with virtual nodes — a form of consistent hashing that maps partition keys to token ranges on nodes.",
+      "ex": ""
     },
     {
       "cat": "Modern Databases",
       "type": "concept",
-      "q": "How does DynamoDB handle partitioning, and how is it different from classic consistent hashing?",
-      "a": "DynamoDB hashes the partition key to route items to internal partitions and automatically splits/merges partitions as they grow. This is optimized for high write throughput. Unlike classic ring-based consistent hashing, DynamoDB's internal mechanisms aren't exposed to users — you specify a partition key and DynamoDB handles the rest.",
-      "ex": "DynamoDB table with partition key = user_id: you don't choose the number of shards. DynamoDB automatically manages partition splits as your table grows past ~10GB or exceeds throughput limits per partition."
+      "q": "How DynamoDB handles partitioning",
+      "a": "Hashes the partition key to route items to internal partitions and automatically splits/merges partitions as data grows. The internals are not exposed to users.",
+      "ex": ""
     },
     {
       "cat": "Modern Databases",
       "type": "concept",
-      "q": "What is Vitess and how does it approach resharding?",
-      "a": "Vitess is an open-source sharding layer for MySQL that handles query routing, cross-shard operations, and resharding. It supports online resharding (no downtime required), but the process is operator-driven — a human must initiate and manage it. It's not automatic like MongoDB's balancer.",
-      "ex": "A company running MySQL at scale (e.g., YouTube used Vitess) can use Vitess to add shards without downtime, but an operator must run the resharding workflow and monitor progress."
+      "q": "How MongoDB balances shards",
+      "a": "Uses range-based chunks with a background balancer that automatically splits and migrates chunks to keep shards balanced. Not classic ring-based consistent hashing.",
+      "ex": ""
     },
     {
-      "cat": "Interview Application",
-      "type": "app",
-      "q": "What is the correct flow for introducing sharding in a system design interview?",
-      "a": "1. Do the capacity math to identify the bottleneck (storage, write throughput, or read load). 2. Show why a single database can't handle it. 3. Propose sharding. 4. Choose a shard key aligned with access patterns. 5. Pick a distribution strategy (default: hash with consistent hashing). 6. Acknowledge trade-offs (cross-shard queries, resharding). Never jump straight to sharding without proving it's needed.",
-      "ex": "'We have 500M users at 5KB each — 2.5TB, manageable now. But at 10x growth that's 25TB and 50K writes/sec peak, which exceeds a single Postgres instance. So I'd shard by user_id using consistent hashing.'"
+      "cat": "Modern Databases",
+      "type": "def",
+      "q": "Vitess",
+      "a": "An open-source sharding layer for MySQL. Handles query routing, cross-shard operations, and online resharding. Resharding is operator-driven, not automatic.",
+      "ex": ""
     },
     {
-      "cat": "Interview Application",
-      "type": "tradeoff",
-      "q": "What are the three valid triggers for proposing sharding in an interview?",
-      "a": "1. Storage: data size approaches or exceeds single-machine limits (e.g., Aurora maxes at ~256 TiB). 2. Write throughput: writes per second exceed what a single DB can handle (typically tens of thousands/sec). 3. Read throughput: read load exceeds what even read replicas can handle.",
-      "ex": "'We expect 50K writes/second at peak — a single database will struggle, so we need to shard.' vs. 'We have 1M users' — not a valid sharding trigger without additional math showing a bottleneck."
-    },
-    {
-      "cat": "Interview Application",
-      "type": "app",
-      "q": "For a social media app, how would you walk through the full sharding recommendation?",
-      "a": "1. Shard key: user_id — most queries are user-scoped (feed, profile, followers). 2. Strategy: hash-based with consistent hashing for even distribution and easier resharding. 3. Trade-off: global queries (trending posts) require cross-shard fan-out. 4. Mitigation: cache trending content and precompute with a background job. 5. Growth: start with 64 shards; consistent hashing lets us add shards with minimal data movement.",
-      "ex": "'For a social media app, shard by user_id with consistent hashing. Global queries like trending posts hit all shards, so we cache those results and precompute them with a background job rather than querying 64 shards per request.'"
-    },
-    {
-      "cat": "Interview Application",
-      "type": "tradeoff",
-      "q": "What are the main challenges sharding introduces, and how do you address each in an interview?",
-      "a": "1. Hot spots: address with good shard key choice, compound keys for celebrities, or dedicated shards for known hot keys. 2. Cross-shard queries: minimize by designing shard key to match access patterns; cache/precompute aggregates; denormalize when needed. 3. Distributed transactions: design shard key to keep related data together; use sagas when cross-shard ops are unavoidable. 4. Resharding: use consistent hashing or a managed database that handles it.",
-      "ex": "Interviewer: 'What about global analytics?' You: 'Those require cross-shard fan-out, which is expensive. We'd precompute them with a background job and cache the results — they don't need real-time accuracy.'"
-    },
-    {
-      "cat": "Interview Application",
+      "cat": "Interview Tips",
       "type": "concept",
-      "q": "Why is 'we'll use DynamoDB with user_id as the partition key' often a sufficient sharding answer in an interview?",
-      "a": "Modern distributed databases like DynamoDB, Cassandra, and MongoDB handle sharding automatically — you specify the partition/shard key and the database manages distribution, rebalancing, and routing. You don't need to implement sharding internals. The key insight is choosing the right partition key; the database handles the rest.",
-      "ex": "'We'll use DynamoDB with user_id as the partition key' — this implies hash-based distribution, automatic partition splits as data grows, and built-in query routing. No further sharding implementation is needed."
+      "q": "When to introduce sharding in an interview",
+      "a": "Only after establishing a bottleneck: storage limits, write throughput a single DB can't handle, or read load exceeding even read replicas. Do the math first.",
+      "ex": ""
+    },
+    {
+      "cat": "Interview Tips",
+      "type": "concept",
+      "q": "#1 sharding mistake in interviews",
+      "a": "Proposing sharding before proving it's necessary. Slow down, do the capacity math, confirm a single database can't handle the load.",
+      "ex": ""
+    },
+    {
+      "cat": "Interview Tips",
+      "type": "concept",
+      "q": "What frequent cross-shard queries signal",
+      "a": "A design problem — likely the wrong shard key. Common queries should hit one shard. If they don't, reconsider your shard key, denormalize, or precompute.",
+      "ex": ""
+    },
+    {
+      "cat": "Interview Tips",
+      "type": "concept",
+      "q": "Default sharding answer in interviews",
+      "a": "Hash-based sharding with consistent hashing on a high-cardinality key aligned to your access patterns (e.g., user_id for user-centric apps).",
+      "ex": ""
     }
   ]
 }

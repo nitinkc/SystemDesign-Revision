@@ -1,0 +1,287 @@
+{
+  "title": "Time Series Databases — Flashcards",
+  "subtitle": "40 cards across 9 categories · Click to flip",
+  "storageKey": "time_series_databases_flashcards_progress",
+  "cards": [
+    {
+      "cat": "Foundations",
+      "type": "def",
+      "q": "Time Series Database (TSDB)",
+      "a": "A database optimized for storing and querying data points indexed by time — like metrics, sensor readings, and monitoring data.",
+      "ex": ""
+    },
+    {
+      "cat": "Foundations",
+      "type": "concept",
+      "q": "When NOT to use a TSDB",
+      "a": "When you need to sort or aggregate across many series (e.g. Top-K problems). A general-purpose DB like Postgres is often a better fit.",
+      "ex": ""
+    },
+    {
+      "cat": "Foundations",
+      "type": "concept",
+      "q": "TSDB data assumptions",
+      "a": "Low-cardinality tags, highly regular timestamps, and small deltas between consecutive values. Violate these and you lose all the benefits.",
+      "ex": ""
+    },
+    {
+      "cat": "Append-Only Storage",
+      "type": "def",
+      "q": "Append-Only Storage",
+      "a": "Every new data point is written to the end of a file. No seeking, no overwriting. Converts random I/O into sequential I/O.",
+      "ex": ""
+    },
+    {
+      "cat": "Append-Only Storage",
+      "type": "concept",
+      "q": "Random I/O vs Sequential I/O",
+      "a": "Random I/O seeks to arbitrary disk locations (slow). Sequential I/O writes continuously to the next available spot (much faster, especially on SSDs).",
+      "ex": ""
+    },
+    {
+      "cat": "Append-Only Storage",
+      "type": "concept",
+      "q": "Why append-only needs an extra layer",
+      "a": "Just appending leaves data unorganized for reads. LSM trees are the layer that adds read-friendly structure on top.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "def",
+      "q": "LSM Tree",
+      "a": "Log-Structured Merge Tree. Turns expensive random writes into cheap sequential writes by batching in memory and flushing to disk periodically.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "def",
+      "q": "Memtable",
+      "a": "In-memory write buffer. New data lands here first in a sorted structure (e.g. red-black tree). Fast because it's all in RAM.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "def",
+      "q": "SSTable",
+      "a": "Sorted String Table. An immutable sorted file on disk produced when a memtable is flushed.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "def",
+      "q": "Compaction",
+      "a": "Background process merging smaller SSTables into larger ones, removing duplicates and tombstones. Keeps reads manageable.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "def",
+      "q": "Tombstone",
+      "a": "A marker written to indicate a deleted record. Cleaned up during compaction.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "tradeoff",
+      "q": "LSM Tree trade-off",
+      "a": "Very fast writes (sequential, batched) but slower reads — a query must check the memtable plus multiple SSTables.",
+      "ex": ""
+    },
+    {
+      "cat": "LSM Trees",
+      "type": "def",
+      "q": "Write Amplification",
+      "a": "Data being rewritten multiple times as SSTables are merged during compaction. A known cost of the LSM approach.",
+      "ex": ""
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "type": "def",
+      "q": "Delta Encoding",
+      "a": "Storing the difference between consecutive values instead of the absolute values. Small deltas = fewer bits needed.",
+      "ex": "[45.2, 45.3, 45.1] stored as [45.2, +0.1, -0.2]"
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "type": "def",
+      "q": "Varint (Variable-Length Integer)",
+      "a": "An encoding where small numbers use fewer bytes. The number 1 = 1 byte; 1,000,000 = 3 bytes. Pairs perfectly with delta encoding.",
+      "ex": ""
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "type": "def",
+      "q": "Delta-of-Delta Encoding",
+      "a": "Takes the delta between timestamps, then the delta of those deltas. When intervals are regular, the result is all zeros — near-zero storage.",
+      "ex": "Timestamps every 10s: deltas = [10,10,10,10]. Delta-of-deltas = [10,0,0,0]."
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "type": "def",
+      "q": "XOR-Based Float Compression",
+      "a": "XORing two similar floats produces mostly zero bits. Only the position of the first differing bit and the meaningful bits are stored.",
+      "ex": ""
+    },
+    {
+      "cat": "Delta Encoding & Compression",
+      "type": "concept",
+      "q": "Gorilla Paper",
+      "a": "Facebook's paper showing delta-of-delta can compress timestamps to ~1 bit per value and XOR compression achieves ~1.37 bytes per float.",
+      "ex": ""
+    },
+    {
+      "cat": "Time-Based Partitioning",
+      "type": "def",
+      "q": "Time-Based Partitioning",
+      "a": "Grouping data into partitions by time windows (e.g. one partition per day). All new writes go to the current partition.",
+      "ex": ""
+    },
+    {
+      "cat": "Time-Based Partitioning",
+      "type": "concept",
+      "q": "Why time-based partitioning helps writes",
+      "a": "All incoming data always goes to the current time partition — no routing logic needed. Writes are naturally localized.",
+      "ex": ""
+    },
+    {
+      "cat": "Time-Based Partitioning",
+      "type": "concept",
+      "q": "Why time-based partitioning helps retention",
+      "a": "Deleting old data = dropping old partition files. No expensive DELETE queries scanning a massive table.",
+      "ex": ""
+    },
+    {
+      "cat": "Bloom Filters",
+      "type": "def",
+      "q": "Bloom Filter",
+      "a": "A probabilistic data structure that says 'definitely not here' (no false negatives) or 'maybe here' (false positives possible). Zero disk I/O to check.",
+      "ex": ""
+    },
+    {
+      "cat": "Bloom Filters",
+      "type": "concept",
+      "q": "Bloom Filter in TSDBs",
+      "a": "Each SSTable has a Bloom filter. Before reading an SSTable from disk, check its filter. 'Not here' = skip entirely. Eliminates most disk reads.",
+      "ex": ""
+    },
+    {
+      "cat": "Bloom Filters",
+      "type": "concept",
+      "q": "Bloom Filter false positive rate",
+      "a": "~1% with 10 bits per key. Means 99% of irrelevant SSTables are skipped. Dozens of potential disk reads reduced to one or two.",
+      "ex": ""
+    },
+    {
+      "cat": "Downsampling & Rollups",
+      "type": "def",
+      "q": "Downsampling",
+      "a": "Automatically reducing the resolution of older data over time. Trades precision for storage efficiency.",
+      "ex": "Last 24h: 10s resolution → Last 7d: 1-min averages → Last 30d: 5-min averages"
+    },
+    {
+      "cat": "Downsampling & Rollups",
+      "type": "def",
+      "q": "Rollup",
+      "a": "Pre-aggregated summary of raw data at a coarser time resolution (stores min, max, sum, count). Answers historical queries without reading raw data.",
+      "ex": ""
+    },
+    {
+      "cat": "Downsampling & Rollups",
+      "type": "tradeoff",
+      "q": "Downsampling trade-off",
+      "a": "Uses more storage and causes write amplification (data written again per rollup level) but delivers dramatically faster reads on historical data.",
+      "ex": ""
+    },
+    {
+      "cat": "Block-Level Metadata",
+      "type": "def",
+      "q": "Block-Level Metadata",
+      "a": "Stored min/max timestamps and values for each data block. Lets the query engine skip entire blocks that can't match the query.",
+      "ex": "Query: CPU > 10%. Block metadata: values range 0–5%. Skip the whole block."
+    },
+    {
+      "cat": "Block-Level Metadata",
+      "type": "concept",
+      "q": "Block Pruning",
+      "a": "Using block-level metadata to skip blocks that provably can't contain matching data. An extra filtering layer on top of time partitioning.",
+      "ex": ""
+    },
+    {
+      "cat": "Data Model",
+      "type": "def",
+      "q": "Series (in a TSDB)",
+      "a": "A unique combination of measurement name + all tag key-value pairs. All data points for one series are stored together.",
+      "ex": "cpu_usage,host=server-1,region=us-west is one series."
+    },
+    {
+      "cat": "Data Model",
+      "type": "def",
+      "q": "Tags (TSDB)",
+      "a": "Indexed metadata fields used for filtering queries (e.g. host, region). Stored in an in-memory inverted index for fast lookup.",
+      "ex": ""
+    },
+    {
+      "cat": "Data Model",
+      "type": "def",
+      "q": "Fields (TSDB)",
+      "a": "The actual measured values (e.g. value=45.2). Not indexed — just the raw data you're recording.",
+      "ex": ""
+    },
+    {
+      "cat": "Data Model",
+      "type": "concept",
+      "q": "Tags vs Fields — the key rule",
+      "a": "Use tags for things you filter by. Use fields for the values you measure. Putting high-cardinality data in tags causes cardinality explosion.",
+      "ex": ""
+    },
+    {
+      "cat": "Data Model",
+      "type": "def",
+      "q": "Tag Index",
+      "a": "An in-memory inverted index mapping tag values to series. Like an Elasticsearch inverted index but for tag values instead of words.",
+      "ex": "region=us-west → [Series 1, Series 2]"
+    },
+    {
+      "cat": "Cardinality",
+      "type": "def",
+      "q": "Cardinality (TSDB)",
+      "a": "The number of unique tag combinations (series). Each unique combo creates a new series entry in memory.",
+      "ex": ""
+    },
+    {
+      "cat": "Cardinality",
+      "type": "def",
+      "q": "Cardinality Explosion",
+      "a": "When a high-cardinality value (like user_id with 10M unique values) is used as a tag, creating billions of series that overflow memory.",
+      "ex": "1,000 hosts × 50 metrics × 10M user_ids = 500 billion series."
+    },
+    {
+      "cat": "Cardinality",
+      "type": "concept",
+      "q": "High-cardinality values in TSDBs",
+      "a": "Store as fields, not tags. You can write them but lose all query performance benefits — no indexed filtering.",
+      "ex": "user_id, request_id, session_id → always fields, never tags."
+    },
+    {
+      "cat": "Cardinality",
+      "type": "tradeoff",
+      "q": "TSDB performance contract",
+      "a": "10–100x better than a general-purpose DB when data assumptions hold (low cardinality, regular intervals, small deltas). Worse than Postgres when they don't.",
+      "ex": ""
+    },
+    {
+      "cat": "Storage Engine",
+      "type": "def",
+      "q": "Write-Ahead Log (WAL)",
+      "a": "A sequential append-only log written before data hits the memtable. Enables crash recovery of uncommitted data.",
+      "ex": ""
+    },
+    {
+      "cat": "Storage Engine",
+      "type": "concept",
+      "q": "Series locality",
+      "a": "All data points for a given series are stored physically together in compressed blocks. No scatter-gather across disk to assemble a time series.",
+      "ex": ""
+    }
+  ]
+}

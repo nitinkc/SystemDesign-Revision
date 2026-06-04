@@ -104,6 +104,7 @@ nav:
       - Data Modelling: flashcards/data-modeling-flashcards.md
       - DB Indexing: flashcards/db-indexing-flashcards.md
       - Sharding : flashcards/sharding-flashcards.md
+      - Time Series DB: flashcards/time-series-db-flashcards.md
 
 #  - Easy:
 #    - easy/index.md
