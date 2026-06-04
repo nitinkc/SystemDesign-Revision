@@ -102,7 +102,7 @@ nav:
   - Flashcards:
       - flashcards/index.md
       - Data Modelling: flashcards/data-modeling-flashcards.md
-      - DB Indexing: flashcards/db-indexing-flashcards.md
+      - DB Indexing: flashcards/database-indexing-flashcards.md
       - Sharding : flashcards/sharding-flashcards.md
       - Time Series DB: flashcards/time-series-db-flashcards.md
 
