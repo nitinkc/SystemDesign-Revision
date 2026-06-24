@@ -18,7 +18,7 @@ mkdocs serve
 
 ## Quick Links
 
-👉 **[Hotel Booking Service](docs/easy/01-hotel-booking.md)** — Complete example (25 min read)  
+👉 **[Hotel Booking Service](docs/designs/easy/01-hotel-booking.md)** — Complete example (25 min read)  
 👉 **[Glossary](docs/_abbreviations.md)** — All technical terms (inline definitions)  
 📖 **[Copilot Instructions](COPILOT_INSTRUCTIONS.md)** — Style guide + replication steps  
 📋 **[Template](TEMPLATE.md)** — Copy-paste structure for new designs  
@@ -49,7 +49,7 @@ mkdocs serve
 
 ### Scenario 3: You're Building the Material (Content Creator)
 
-1. Read **[Hotel Booking Service](docs/easy/01-hotel-booking.md)** (reference implementation)
+1. Read **[Hotel Booking Service](docs/designs/easy/01-hotel-booking.md)** (reference implementation)
 2. Review **[COPILOT_INSTRUCTIONS.md](COPILOT_INSTRUCTIONS.md)** (style + structure rules)
 3. Use **[TEMPLATE.md](TEMPLATE.md)** (copy-paste starting point)
 4. Pick topic from **[../2025-05-03-systems-design-plan.md](../2025-05-03-systems-design-plan.md)**

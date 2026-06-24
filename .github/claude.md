@@ -115,294 +115,287 @@ Examples:
 ---
 
 ## Article
-
-Time Series Databases
-Learn the concepts behind time-series databases like LSM trees, append-only storage, and delta encoding.
+Database Indexing
+Learn about how database indexing works and how to optimize your queries
 
 Watch Video Walkthrough
 Watch the author walk through the problem step-by-step
 
-In this deep dive we're going to cover the patterns that enable high-throughput time-series databases. While the ideas in totality make time-series databases really hum, each of the ideas here has wider applicability to distributed systems, especially for infra-style system design interviews. And what we hope to demonstrate is that none of these ideas are terribly complex: they're simple ideas and the magic is in how you put them together.
-Before we dive in, a worthwhile caveat about time series databases in general: just because you have time series data doesn't mean you need a time-series database! The Top-K problem breakdown is a classic example where it seems like a TSDB would be helpful but can actually make the problem harder because we need to sort and aggregate across a huge number of series — something that most TSDBs aren't designed for.
-Be careful about reaching for a time-series database when a general-purpose database like Postgres or DynamoDB would be a better fit. I'd advise you to stretch general-purpose solutions to fit your needs and only when you encounter a true bottleneck that can't be solved with another solution you should reach for specialized tech like a time-series database. Understanding their limits (in this guide) will help you understand when they apply!
-Let's dive in to how time series databases work.
-A Motivating Example
-Imagine you're designing a monitoring system for a cloud provider. You've got 100,000 servers, each emitting 5 metrics every 10 seconds: CPU usage, memory, disk I/O, network traffic. That's 50,000 metrics per second, or 4.3 billion data points per day. And users want to query this data to see dashboards, set up alerts, and debug issues from the past week.
-Let's try to store this in vanilla Postgres:
-CREATE TABLE metrics (
-    timestamp TIMESTAMP,
-    host VARCHAR(255),
-    metric_name VARCHAR(255),
-    value DOUBLE PRECISION
+Database performance can make or break modern applications. Think about what it takes to search for a user's profile by email in a table with millions of records. Without any optimizations, the database would have to check each row sequentially, scanning through every single record until it finds a match. For a table with millions of rows, this becomes painfully slow - like searching through every book in a library one by one to find a specific novel.
+This is where indexes come in handy. By maintaining separate data structures optimized for searching, indexes allow databases to quickly locate the exact records we need without examining every row. From finding products in an e-commerce catalog to loading user profiles in a social network, indexes are what make fast lookups possible.
+Knowing when to add an index, to what columns, and what type of index is a critical part of system design. Choosing the right indexes is often a key focus in interviews. For mid-level engineers, understanding basic indexing strategies is expected. For staff-level engineers, mastery of different index types and their trade-offs is essential.
+This deep dive covers how database indexes work under the hood and the different types you'll encounter. We'll start with the core concepts of how indexes are stored and accessed, then examine specific index types like B-trees, hash indexes, geospatial indexes, and more. For each type, we'll cover their strengths, limitations, and when to use them in your system design interviews.
+First, let's understand exactly how databases store and use indexes to make our queries efficient.
+Indexing and data organization tends to be a stronger focus in infrastructure style interviews. For full-stack and product-focused roles, you'll likely only need a basic understanding of when and why to use indexes. The depth we cover here goes beyond what's typically asked in full-stack interviews, but understanding the fundamentals will help you make better decisions when designing and optimizing your applications.
+How Database Indexes Work
+When we store data in a database, it's ultimately written to disk as a collection of files. The main table data is typically stored as a heap file - essentially a collection of rows in no particular order. Think of this like a notebook where you write entries as they come, one after another.
+Physical Storage and Access Patterns
+Unless interviewing for a database internals role, the details here are not going to be asked in an interview. That said, they are an important foundation to understand the problem of why we need indexes.
+Modern databases face an interesting challenge: they need to store and quickly access vast amounts of data. While the data lives on disk (typically SSDs nowadays), we can only process it when it's in memory. This means every query requires loading data from disk into RAM.
+When querying without an index, we need to scan through every page of data one by one, loading each into memory to check if it contains what we're looking for. With millions of pages, this means millions of (relatively)slow disk reads just to find a single record. It's like having to flip through every page of a massive book to find one specific word.
+Modern databases have optimizations like prefetching and caching to make random access faster, but the point here still stands. It's too slow to scan through every page of data sequentially.
+But with indexes, we transform our access patterns. Instead of reading through every page of data sequentially, indexes provide a structured path to follow directly to the data we need. They help us minimize the number of pages we need to read from storage by telling us exactly which pages contain our target data. It's the difference between checking every page in a book versus using the table of contents to jump straight to the relevant pages.
+While SSDs are the norm today, it's important to note that random access is still significantly slower than sequential access, even on SSDs. This is a common misconception - while the performance gap is smaller than with HDDs, it's still very real. And for systems still using HDDs, especially for large datasets, this performance difference becomes even more pronounced, making proper indexing absolutely critical.
+Cost
+But indexes aren't free - they come with their own set of trade-offs. Every index we create requires additional disk space, sometimes nearly as much as the original data.
+Write performance takes a hit too. When we insert a new row or update an existing one, the database must update not just the main table, but every index on it. With multiple indexes, a single write operation can trigger several disk writes.
+So when might indexes actually hurt more than help? The classic case is a table with frequent writes but infrequent reads. Think of a logging table where we're constantly inserting new records but rarely querying old ones. Here, the overhead of maintaining indexes might not justify their benefit. Similarly, for small tables with just a few hundred rows, the cost of maintaining an index and traversing its structure might exceed the cost of a simple sequential scan.
+In reality, the impact of indexes on memory is often overblown. Modern databases have smart buffer pool management that reduces the performance hit of having multiple indexes. However, it's still a good idea to closely monitor index usage and avoid creating unnecessary indexes that don't provide significant benefits.
+Types of indexes
+There are lots of indexes, many of which fall into the tail and are rarely used but for specialized use cases. Rather than enumerating every type of index you may see in the wild, we're going to focus in on the most common ones that show up in system design interviews.
+B-Tree Indexes
+B-tree indexes are the most common type of database index, providing an efficient way to organize data for fast searches and updates. They achieve this by maintaining a balanced tree structure that minimizes the number of disk reads needed to find any piece of data.
+The Structure of B-trees
+A B-tree is a self-balancing tree that maintains sorted data and allows for efficient insertions, deletions, and searches. Unlike binary trees where each node has at most two children, B-tree nodes can have multiple children - typically hundreds in practice. Each node contains an ordered array of keys and pointers, structured to minimize disk reads.
+
+b-tree
+Every node in a B-tree follows strict rules:
+All leaf nodes must be at the same depth
+Each node can contain between m/2 and m keys (where m is the order of the tree)
+A node with k keys must have exactly k+1 children
+Keys within a node are kept in sorted order
+This structure is particularly clever because it maps perfectly to how databases store data on disk. Each node is sized to fit in a single disk page (typically 8KB), maximizing our I/O efficiency. When PostgreSQL needs to find a record with id=350, it might only need to read 2-3 pages from disk: the root node, maybe an internal node, and finally a leaf node.
+Real-World Examples
+B-trees are everywhere in modern databases. PostgreSQL uses them for almost everything - primary keys, unique constraints, and most regular indexes are all B-trees.
+When you create a table like this in PostgreSQL:
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE
 );
-With 4.3 billion rows per day, you're looking at ~30 billion rows per week. Even with indexes, simple queries like "show me the average CPU usage for host-42 over the past hour" become painfully slow and the write performance degrades as we add more indexes. Worse, the write throughput needed (50,000 writes/second minimum, with bursts much higher) will crush a single Postgres instance. Storage is also wildly inefficient: each row stores the full host name and metric name repeatedly, ballooning to 50-100 bytes per data point when the actual information (a timestamp and a float) is only 16 bytes.
-We can do a lot better.
-Time-series databases like InfluxDB, TimescaleDB, and Prometheus are built specifically for this workload. So how do they work?
-The Building Blocks
-Let's talk about all of the pieces that make a time series database hum. Time series databases typically involve so much data that disk-based storage is the only viable option. So let's start with what we'll need there.
-Append-Only Storage
-The first insight is deceptively simple: if you're writing a lot of data, don't update data in place. Instead, always append new data to the end of a file.
-Why does this matter? Consider how traditional databases handle writes. When you update a row, the database needs to:
-Find the row's location on disk
-Read the current data
-Modify it in memory
-Write the updated data back
-This involves random I/O which is the most frequent cause of performance problems. With spinning disks, the disk head has to seek to a specific location. This is a physical arm moving on the drive and while hard disks are optimized for this, they still only operate at 100-200 operations per second. Even SSDs, while much faster at random operations, still perform significantly better with sequential access patterns due to their architecture.
-Append-only storage flips this around. Every new data point gets written to the end of the current file. No seeking, no reading-before-writing - just sequential writes. SSDs can handle hundreds of thousands of sequential writes per second, and even spinning disks can manage tens of thousands.
-Traditional DB write:
-[Seek to block 4752] → [Read] → [Modify] → [Write] → [Seek to block 9201] → ...
-Append-only write:
-[Write to end] → [Write to end] → [Write to end] → ...
-
-Random vs. Sequential I/O
-But wait - if we only append, how do organize the data for reading? This is where the next piece comes in.
+PostgreSQL automatically creates two B-tree indexes: one for the primary key and one for the unique email constraint. These B-trees maintain sorted order, which is crucial for both uniqueness checks and range queries.
+DynamoDB organizes items within a partition in sort-key order, enabling efficient range queries within that partition. Its storage internals aren’t publicly documented in detail, but it’s widely understood to use an LSM-style storage architecture rather than a B-tree for its underlying engine.
+Even MongoDB, with its document model, uses B-trees (specifically B+ trees, a variant where all data is stored in leaf nodes) for its indexes.
+When you create an index in MongoDB like this:
+db.users.createIndex({ "email": 1 });
+You're creating a B-tree that maps email values to document locations.
+Why B-trees are the default choice
+B-trees have become the default choice for most database indexes because they excel at everything databases need:
+They maintain sorted order, making range queries and ORDER BY operations efficient
+They're self-balancing, ensuring predictable performance even as data grows
+They minimize disk I/O by matching their structure to how databases store data
+They handle both equality searches (email = 'x') and range searches (age > 25) equally well
+They remain balanced even with random inserts and deletes, avoiding the performance cliffs you might see with simpler tree structures
+If you find yourself in an interview and you need to decide which index to use, B-trees are a safe bet.
 LSM Trees (Log-Structured Merge Trees)
-LSM trees are the secret sauce behind many high-write-throughput databases, including InfluxDB, Cassandra, and LevelDB. You may recall this idea from our Cassandra deep dive or DB Indexing core concept - the core idea is to transform expensive random writes into cheap sequential writes, then periodically reorganize the data in the background to make reads more efficient.
-Here's how it works:
-Step 1: Write to Memory (like a Memtable)
-When data arrives, it goes into an in-memory buffer like a memtable. The memtable is typically implemented as a sorted data structure (like a red-black tree or skip list), so data remains ordered by key. Writes are blazingly fast since they only touch RAM.
-Why keep it sorted? Because when we flush to disk, we want the resulting file to be sorted too. Sorted files let us use binary search for point lookups, make range queries efficient (adjacent keys are stored together), and - critically - allow us to merge multiple files efficiently using merge sort during compaction.
-Step 2: Flush to Disk (like SSTable)
-When the memtable gets full, it's written to disk as an immutable sorted file called an SSTable (Sorted String Table). Since the memtable was already sorted, this flush is just a sequential write from start to end - very fast. The memtable is then cleared for new data.
-Step 3: Background Compaction
-Over time, you accumulate many SSTables. Reading becomes expensive because you might need to check multiple files. Compaction runs in the background, merging smaller SSTables into larger ones, removing duplicates and tombstones (deleted data markers).
+B-trees are great for balanced workloads, but what happens when you need to handle tons of writes? Think about building a system like DataDog that's ingesting millions of metrics per second from thousands of servers. Every CPU reading, memory stat, and error count needs to be stored immediately.
+With B-trees, each write means finding the right leaf page, reading it into memory, updating it, and writing it back to disk. For a few thousand writes per second, this works fine. But when you're processing 100,000 writes per second, those random disk seeks become a bottleneck. It's like trying to update a filing cabinet where you need to find and modify individual folders scattered throughout - eventually, you spend more time searching than actually storing data.
+This is where LSM trees work really well. But they take a fundamentally different approach to indexing. With B-trees, each index is its own separate structure that you can create on any column. LSM trees don't work this way. The LSM tree is the storage format for your entire table, sorted by the primary key. Your primary key lookups are extremely fast, but secondary indexes require additional structures - some systems like Cassandra and DynamoDB (via GSIs/LSIs) support them, though with different performance characteristics than primary key access.
+Instead of updating data in place like B-trees, LSM trees use an append-only approach that's built for write-heavy workloads.
+How LSM Trees Work
+LSM trees solve the write problem by batching writes in memory and flushing them to disk sequentially. Instead of immediately writing each update to disk like B-trees do, LSM trees buffer changes in memory and write them out in large chunks. This converts many small random writes into fewer large sequential writes, increasing efficiency.
+Here's what happens when you write to a database that uses LSM trees:
+Memtable (Memory Component): New writes go into an in-memory structure called a memtable, typically implemented as a sorted data structure like a red-black tree or skip list. This is extremely fast since it's all in RAM.
+Write-Ahead Log (WAL): To ensure durability, every write is also appended to a write-ahead log on disk. This is a sequential append operation, which is much faster than random writes.
+Flush to SSTable: Once the memtable reaches a certain size (often a few megabytes), it's frozen and flushed to disk as an immutable Sorted String Table (SSTable). This is a single sequential write operation that can write megabytes of data at once.
+Compaction: Over time, you accumulate many SSTables on disk. A background process called compaction periodically merges these files, removing duplicates and deleted entries. This keeps the number of files manageable and maintains read performance.
 
-LSM Model
-The beauty of this approach is that writes never block on reads. The memtable handles new data while background threads organize older data. This separation is what enables LSM-based databases to handle sustained high write throughput.
-LSM trees aren't free. Read performance can suffer because you might need to check multiple SSTables to find a value. There's also write amplification - data gets rewritten multiple times during compaction. So reach for LSM trees when you have a high-write workload and you're willing to trade some read performance for write performance.
-Ok with append-only storage and LSM trees, we're starting to look like Cassandra. Let's add a few more pieces to the puzzle.
-Delta Encoding and Compression
-Time-series data has a unique property: adjacent values are often similar. If you're recording CPU usage every second, the values might be 45.2%, 45.3%, 45.1%, 45.4%. Storing the full value each time wastes space.
-Delta encoding stores the difference between consecutive values instead of the absolute values:
-Raw values:     [45.2] [45.3] [45.1] [45.4]
-Delta encoded:  [45.2] [+0.1] [-0.2] [+0.3]
-The deltas are much smaller numbers, requiring fewer bits to store.
-But wait - don't integers and floats always take 32 or 64 bits? Not if you use variable-length encoding. Techniques like varint (variable-length integer) encode small numbers with fewer bytes: the number 1 might take just 1 byte, while 1,000,000 takes 3 bytes. When your deltas are tiny (like +1 or -2), you're storing 1-2 bytes instead of 8. This is why converting large absolute values into small deltas pays off so dramatically.
-Time-series databases go even further with specialized compression algorithms.
-Timestamps use delta-of-delta encoding. Timestamps in time-series data are often regular - every 10 seconds, for example. The delta between timestamps might be constant or nearly constant:
-Raw timestamps:     1000, 1010, 1020, 1030, 1040
-Deltas:             10  , 10  , 10  , 10  , 10  , ...
-Delta-of-deltas:    10  , 0   , 0   , 0   , 0   , ...
-When timestamps are perfectly regular, you can encode millions of them with essentially zero overhead. Facebook's Gorilla paper showed this technique can compress timestamps to as low as 1 bit per value on average.
-Float values use XOR-based compression. When you XOR two similar floating-point numbers, most bits are zero. You can then run-length encode those zeros:
-Value 1: 0 10000010 01101000101000111101011
-Value 2: 0 10000010 01101000110000100000000
-XOR:     0 00000000 00000000011000011101011
-                    ^^^^^^^^^^ lots of leading zeros
-By storing only the position of the first differing bit and the meaningful bits after it, you compress each value significantly. In practice, this achieves 1.37 bytes per value on average for typical time-series data - a massive improvement over the 8 bytes needed for a raw double.
-Most interviews aren't going to get into this level of detail, so don't try to memorize "1.37 bytes per value". The core idea is that we can achieve strong compression on data at rest that has a lot of redundancy in it — and time series data is a great example of this.
-Time-Based Partitioning (Sharding by Time)
-Another key concept is organizing data by time. Time-series databases group data into partitions based on time windows - for example, one partition per day or per week. These partitions don't necessarily live on different machines, but they absolutely can if necessary for scaling.
-Why is this so powerful?
-Writes are localized. All incoming data goes to the current time partition. There's no need to figure out which of many partitions should receive the data - it's always the "now" partition.
-Reads are efficient. When you query "show me the last hour of data," the database knows exactly which partitions to examine. It doesn't need to scan data from last month.
-Retention becomes trivial. Want to keep only 7 days of data? Just delete partitions older than 7 days. No expensive DELETE queries scanning through a massive table - just drop the old files.
-┌─────────────────────────────────────────────────────────┐
-│  Query: "Last 2 hours of CPU data for host-42"          │
-└─────────────────────────────────────────────────────────┘
-                         │                                 
-                         ▼                                 
-┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-│ Nov 22  │ │ Nov 23  │ │ Nov 24  │ │ Nov 25  │ │ Nov 26  │
-│  skip   │ │  skip   │ │  skip   │ │  skip   │ │ ← SCAN  │
-└─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
-This time-partitioning strategy is nearly universal in time-series databases. You'll see it in TimescaleDB (which calls them "chunks"), in Prometheus, and in custom-built systems.
-So far we've focused on write optimization. But what about reads?
-Bloom Filters for Read Optimization
-Remember how LSM trees work: data gets written to multiple SSTables over time. To find a value, you might need to check several of these files. Each check means a potential disk read. The worst case scenario is a long query which might cover many partitions but is only seeking a single value, or a small number of values (like gathering the time series for a single host over a long period of time).
-Bloom filters (more on Bloom Filters in our Data Structures for Big Data deep dive) solve this elegantly.
-A Bloom filter is a probabilistic data structure that can tell you "definitely not here" or "maybe here" with zero disk I/O. Each SSTable maintains a Bloom filter of all the keys it contains. When you query for a specific series, the database first checks the Bloom filter for each SSTable. If the filter says "not here," the database skips that file entirely with absolute certainty. False positives are possible (the filter says "maybe" but the key isn't there), but false negatives never happen.
-Query: "Get data for host=server-42"
+lsm-tree
+This makes writes incredibly fast, you're just appending to memory and a log file. Even when flushing to disk, you're writing large sequential chunks rather than seeking to random locations.
+Negative Impact on Reads
+As always, this benefits comes at a cost. While LSM trees excel at writes, they make reads more complex. Remember how B-trees could find any record with just 2-3 disk reads? With LSM trees, the story is different.
+When you query for a specific key, the database must check multiple places:
+First, the memtable: Is the data in the current in-memory buffer?
+Then, immutable memtables: Any memtables waiting to be flushed?
+Finally, all SSTables on disk: Starting from the newest (most likely to have recent data) and working backwards
+This means a single point query might need to check dozens of files in the worst case. It's like searching for a document that could be in your desk drawer, filing cabinet, or any of several archive boxes. And you have to check them all.
+Obviously, this would make LSM trees almost unusable for any workflow requiring reasonable read performance. So to mitigate this problem, LSM trees typically employ several optimizations:
+Bloom Filters: Each SSTable has an associated bloom filter - a probabilistic data structure that can quickly tell you if a key is definitely NOT in that file. This lets you skip most SSTables without reading them. If the bloom filter says "maybe", you still need to check, but it eliminates the definite misses.
+Sparse Indexes: Since SSTables are sorted, they maintain sparse indexes that tell you the range of keys in each block. If you're looking for user_id=500 and an SSTable only contains keys 1000-2000, you can skip it entirely.
+Compaction Strategies: Different compaction strategies optimize for different workloads. Size-tiered compaction minimizes write amplification but can lead to more files to check. Leveled compaction maintains fewer files but requires more frequent rewrites.
+Despite these optimizations, LSM trees fundamentally trade read performance for write performance. This makes them perfect for write-heavy workloads like time-series databases, logging systems, and analytics platforms where you're constantly ingesting new data but queries are less frequent or can tolerate slightly higher latency.
+The key insight for system design interviews is knowing when this trade-off makes sense. If you're building a system that writes far more than it reads - like a metrics collection system, audit log, or IoT data platform - LSM trees are likely the right choice. But for a user-facing application where every page load triggers multiple queries, B-trees usually perform better.
+Real-World Examples
+LSM trees power some of the most write-heavy systems on the internet:
+Cassandra handles Netflix's billions of viewing events. When you watch a show, that data gets written to Cassandra's LSM-based storage without slowing down playback.
+RocksDB (built by Facebook) serves as the storage engine for many databases. It handles millions of social interactions per second—likes, posts, messages—all written to LSM trees for fast persistence.
+DynamoDB is generally understood to use an LSM-tree–style storage architecture optimized for high write throughput; its exact internals aren’t exposed publicly, and it does not dynamically switch storage engines based on access patterns.
+Hash Indexes
+While B-trees dominate the indexing landscape, hash indexes serve a specialized purpose: they excel at exact-match queries. They're simply a persistent hashmap implementation, trading flexibility for super-fast O(1) lookups.
+How Hash Indexes Work
+At their core, hash indexes are just a hashmap that maps indexed values to row locations. The database maintains an array of buckets, where each bucket can store multiple key-location pairs. When indexing a value, the database hashes it to determine which bucket should store the pointer to the row data.
 
-SSTable-1 Bloom filter: "not here"     → skip (no disk read)
-SSTable-2 Bloom filter: "not here"     → skip (no disk read)
-SSTable-3 Bloom filter: "maybe here"   → check (disk read)
-SSTable-4 Bloom filter: "not here"     → skip (no disk read)
-In practice, a well-tuned Bloom filter uses about 10 bits per key and achieves a 1% false positive rate. For a database with millions of series spread across dozens of SSTables, this turns what could be dozens of disk reads into just one or two.
-Downsampling and Rollups
-Bloom filters help with point lookups, but what about aggregate queries over large time ranges? Raw metrics at 10-second resolution are great for debugging recent issues, but nobody needs that granularity when looking at last year's data. Downsampling automatically reduces the resolution of older data, trading precision for storage efficiency.
-A typical policy might look like:
-Last 24 hours: Full resolution (10-second intervals)
-Last 7 days: 1-minute averages
-Last 30 days: 5-minute averages
-Last year: 1-hour averages
-The database computes these rollups in the background, storing pre-aggregated values (typically min, max, sum, count) that can answer most queries without touching the raw data. When you ask "what was the average CPU usage last month?", the database reads from the 5-minute rollup table - 288x less data than the raw 10-second data.
-Raw data (10s):     [45.2] [45.3] [45.1] [45.4] [45.0] [45.5] ... (8,640 points/day)
-1-min rollup:       [min:45.0, max:45.5, avg:45.25, count:6] ... (1,440 points/day)
-1-hour rollup:      [min:44.1, max:47.2, avg:45.8, count:360] ... (24 points/day)
-This is a form of pre-computation that trades storage and write amplification for dramatically faster reads on historical data. If you want to see downsampling in action in a problem context, check out our Ad Click Aggregator breakdown where we use this technique to handle billions of ad events.
-Downsampling and rollups frequently show up in interviews as a negotiation in requirements. Your interviewer says "we need to store 10s samples for 1 year", and you say "that's a ton of data, I think we probably only need the fine resolution for a week, and can downsample to 5 minute averages for a month ... does this work?" The key is (a) you anticipating a future problem, (b) explaining the challenge, and (c) offering an alternative. Even if the interviewer says no, they're marking down your ability to think outside of the rigid requirements that were given to you — a hallmark of a staff+ candidate.
-Block-Level Metadata
-Our last optimization is a twist on the query planning ideas we covered in our Elasticsearch deep dive. When scanning data files, time-series databases maintain metadata about each block's contents - particularly min/max timestamps and sometimes min/max values. This enables block pruning during queries.
-If a query asks for CPU usage above 10%, and a block's metadata shows it only contains data from 0-5%, the database skips that entire block without reading it. Combined with time-based partitioning (which already limits which partitions to check), this provides another layer of filtering that keeps queries fast even as data volumes grow.
-Putting It Together: A Time-Series Storage Engine
-Now that we understand the building blocks, let's see how they combine in a typical time-series database architecture.
-The Data Model
-Time-series databases typically organize data into:
-Measurements or metrics - like tables (e.g., "cpu_usage", "memory")
-Tags - indexed metadata for filtering (e.g., host="server-1", region="us-west")
-Fields - the actual measured values (e.g., value=45.2)
-Timestamps - when the measurement was taken
-A data point might look like this:
-cpu_usage,host=server-1,region=us-west value=45.2 1699999200000000000
-└─────────────────────────────────────┘ └────────┘ └─────────────────┘
-        measurement + tags               field          timestamp
-Tags are crucial because they're indexed. Queries filtering by tags are fast. Fields are not indexed - they're the actual time-series data you're storing.
-The distinction between tags and fields trips people up. Use tags for metadata you'll filter by (host, region, service). Use fields for the actual values you're measuring. Getting this wrong leads to either poor query performance or the cardinality explosion problem we'll discuss later.
-The Storage Engine
-A typical time-series storage engine combines the patterns we've discussed:
-Write Ahead Log (WAL): Data first goes to the WAL for durability. If the database crashes, it can recover uncommitted data from the WAL.
-In-Memory Buffer: Data is also written to an in-memory buffer, organized by measurement and tag combination. This is the memtable from our LSM discussion.
-Flush to Disk: When the buffer reaches a threshold, it's flushed to disk as an immutable file with compressed timestamps and values.
-Background Compaction: Smaller files are periodically merged into larger ones, reducing the number of files to check during queries and removing deleted data.
-The file format is heavily optimized:
-File Structure:
-┌──────────────────────────────────────────────────────────────┐
-│                          Header                              │
-├──────────────────────────────────────────────────────────────┤
-│  Block 1: Timestamps (delta-of-delta + varint encoded)       │
-│  Block 1: Values (XOR compressed)                            │
-├──────────────────────────────────────────────────────────────┤
-│  Block 2: Timestamps                                         │
-│  Block 2: Values                                             │
-├──────────────────────────────────────────────────────────────┤
-│                         ...                                  │
-├──────────────────────────────────────────────────────────────┤
-│                    Index (series → block offsets)            │
-├──────────────────────────────────────────────────────────────┤
-│                         Footer                               │
-└──────────────────────────────────────────────────────────────┘
-Each file contains an index at the end that maps series keys (measurement + tag combinations) to the blocks containing their data. This means looking up data for a specific series is a seek to the index, then a seek to the data - two disk operations regardless of how much data is in the file.
-Query Execution
-When you query a time-series database:
-SELECT mean(value) FROM cpu_usage 
-WHERE host = 'server-1' 
-  AND time > now() - 1h
-GROUP BY time(5m)
-The query engine:
-Identifies relevant partitions based on the time filter. Only partitions overlapping the query time range are considered.
-Locates series by looking up the tag filter (host='server-1') in the in-memory tag index.
-Reads from buffer and disk files. The buffer has the most recent data; disk files have older data. Results are merged.
-Applies aggregations as data is read. This is a streaming operation - the database doesn't need to load all data into memory before computing the mean.
-The key insight is that time-series databases exploit both time locality (recent data is in memory or recent files) and series locality (related data points are stored together) to minimize disk access.
-Worked Example: Multi-Tag Query
-Let's trace through a complete example to see how data flows from ingestion to query results.
-Step 1: Data Ingestion
-Imagine our monitoring system writes these data points over a few seconds:
-cpu_usage,host=server-1,region=us-west,env=prod value=45.2 1700000000000000000
-cpu_usage,host=server-1,region=us-west,env=prod value=47.1 1700000010000000000
-cpu_usage,host=server-2,region=us-west,env=prod value=62.3 1700000000000000000
-cpu_usage,host=server-2,region=us-west,env=prod value=61.8 1700000010000000000
-cpu_usage,host=server-3,region=us-east,env=prod value=38.9 1700000000000000000
-cpu_usage,host=server-3,region=us-east,env=prod value=39.2 1700000010000000000
-cpu_usage,host=server-4,region=us-east,env=staging value=71.0 1700000000000000000
-cpu_usage,host=server-4,region=us-east,env=staging value=73.5 1700000010000000000
-Step 2: How Data Is Organized
-Each unique combination of measurement + tags creates a "series." Our data has 4 series:
-Series 1: cpu_usage,host=server-1,region=us-west,env=prod
-Series 2: cpu_usage,host=server-2,region=us-west,env=prod
-Series 3: cpu_usage,host=server-3,region=us-east,env=prod
-Series 4: cpu_usage,host=server-4,region=us-east,env=staging
-In the data file, data for each series is stored together in compressed blocks. Here's what it looks like on disk, with all our compression tricks applied:
-┌─────────────────────────────────────────────────────────────────────────┐
-│ Data File (partition for Nov 15, 2023)                                  │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Block 0: Series 1 (server-1, us-west, prod)                             │
-│                                                                         │
-│   Raw timestamps:    [1700000000000000000, 1700000010000000000] (16 bytes)
-│   Stored as:         base=1700000000, delta=10, Δ-of-Δ=[0]       (3 bytes)
-│                                                                         │
-│   Raw values:        [45.2, 47.1]                                (16 bytes)
-│   Stored as:         [45.2, XOR-diff]                           (10 bytes)
-│                                                                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│ Block 1: Series 2 (server-2, us-west, prod)                             │
-│   Raw:    ts=[1700000000, 1700000010], vals=[62.3, 61.8]        (32 bytes)
-│   Stored: ts=base+Δ+[0], vals=[62.3, XOR-diff]                  (13 bytes)
-├─────────────────────────────────────────────────────────────────────────┤
-│ Block 2: Series 3 (server-3, us-east, prod)                             │
-│   Raw:    ts=[1700000000, 1700000010], vals=[38.9, 39.2]        (32 bytes)
-│   Stored: ts=base+Δ+[0], vals=[38.9, XOR-diff]                  (13 bytes)
-├─────────────────────────────────────────────────────────────────────────┤
-│ Block 3: Series 4 (server-4, us-east, staging)                          │
-│   Raw:    ts=[1700000000, 1700000010], vals=[71.0, 73.5]        (32 bytes)
-│   Stored: ts=base+Δ+[0], vals=[71.0, XOR-diff]                  (13 bytes)
-├─────────────────────────────────────────────────────────────────────────┤
-│ INDEX                                                                   │
-│   "cpu_usage,host=server-1,region=us-west,env=prod"  → Block 0          │
-│   "cpu_usage,host=server-2,region=us-west,env=prod"  → Block 1          │
-│   "cpu_usage,host=server-3,region=us-east,env=prod"  → Block 2          │
-│   "cpu_usage,host=server-4,region=us-east,env=staging" → Block 3        │
-└─────────────────────────────────────────────────────────────────────────┘
-Block 0 shows the full breakdown; the other blocks use a compact notation. Notice how each block stores ~13 bytes instead of 32 bytes - a 60% reduction just from these two techniques and this only becomes more significant as the data volume grows.
-The database also maintains an in-memory tag index that maps tag values to series. If this looks familiar, it's essentially an inverted index - the same data structure that powers Elasticsearch. Instead of mapping words to documents, we're mapping tag values to series.
-Tag Index (in memory):
-┌─────────────────────────────────────────────────────────────────────────┐
-│ region=us-west  → [Series 1, Series 2]                                  │
-│ region=us-east  → [Series 3, Series 4]                                  │
-│ env=prod        → [Series 1, Series 2, Series 3]                        │
-│ env=staging     → [Series 4]                                            │
-│ host=server-1   → [Series 1]                                            │
-│ host=server-2   → [Series 2]                                            │
-│ host=server-3   → [Series 3]                                            │
-│ host=server-4   → [Series 4]                                            │
-└─────────────────────────────────────────────────────────────────────────┘
-Step 3: Executing a Multi-Tag Query
-Now let's query: "What's the average CPU usage for production servers in us-west?"
-SELECT mean(value) FROM cpu_usage 
-WHERE region = 'us-west' AND env = 'prod'
-  AND time >= 1700000000000000000 AND time <= 1700000010000000000
-Here's how the database processes this:
-Query: region='us-west' AND env='prod'
+hash-index
+For example, with a hash index on email:
+buckets[hash("alice@example.com")] -> [ptr to page 1]
+buckets[hash("bob@example.com")]   -> [ptr to page 2]
+Hash collisions are handled by allowing multiple entries per bucket, many systems use chaining with overflow storage when a bucket fills. For example, PostgreSQL hash indexes use buckets that can link to overflow pages (chaining). With a good hash function and load factor, average lookups remain O(1).
+This structure makes hash indexes incredibly fast for exact-match queries - just compute the hash, go to the bucket, and follow the pointer. However, this same structure makes them useless for range queries or sorting since similar values are deliberately scattered across different buckets.
+Real-World Usage
+Despite their speed for exact matches, hash indexes are relatively rare in practice. PostgreSQL supports them but doesn't use them by default because B-trees perform nearly as well for exact matches while supporting range queries and sorting. As the PostgreSQL documentation notes, "B-trees can handle equality comparisons almost as efficiently as hash indexes."
+However, hash indexes do shine in specific scenarios, particularly for in-memory databases. Redis, for example, uses hash tables as its primary data structure for key-value lookups because all data lives in memory. MySQL's MEMORY storage engine defaulted to hash indexes because in-memory exact-match queries were its primary use case. When working with disk-based storage, B-trees are usually the better choice due to their efficient handling of disk I/O patterns.
+When to Choose Hash Indexes
+For system design interviews, you might consider hash indexes when:
+You need the absolute fastest possible exact-match lookups
+You'll never need range queries or sorting
+You have plenty of memory (hash indexes tend to be larger than B-trees)
+But in most cases, B-trees will be the better choice. They're nearly as fast for exact matches and give you the flexibility to handle range queries when you need them. In the words of database expert Bruce Momjian: "Hash indexes solve a problem we rarely have."
+Don't overemphasize hash indexes in an interview. While it's good to know about them, focusing too much on them might make you seem out of touch with real-world database practices. Remember, hash indexes are rarely used in production systems. They're a bit like that specialized kitchen gadget you buy and then use only once. B-trees are just so versatile that they cover most use cases where you might consider a hash index.
+Geospatial Indexes
+Here's an interesting quirk of system design interviews: while geospatial indexes are fairly specialized in practice - you might never touch them unless you're working with location data - they've become a common focus in interviews. Why? The rise of location-based services like Uber, Yelp, and Find My Friends has made proximity search a favorite interview topic.
+The Challenge with Location Data
+Say we're building a restaurant discovery app like Yelp. We have millions of restaurants in our database, each with a latitude and longitude. A user opens the app and wants to find "restaurants within 5 miles of me." Seems simple enough, right?
+The naive approach would be to use standard B-tree indexes on latitude and longitude:
+CREATE TABLE restaurants (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    latitude DECIMAL(10, 8),
+    longitude DECIMAL(11, 8)
+);
 
-Step 1: Consult the tag index
-         region=us-west → [Series 1, Series 2]
-         env=prod       → [Series 1, Series 2, Series 3]
-         
-Step 2: Intersect the sets
-         [Series 1, Series 2] ∩ [Series 1, Series 2, Series 3] 
-         = [Series 1, Series 2]
-         
-Step 3: Look up block locations in file index
-         Series 1 → Block 0
-         Series 2 → Block 1
-         
-Step 4: Read only blocks 0 and 1 from disk (skip blocks 2, 3!)
-         Block 0: timestamps [1700000000, 1700000010], values [45.2, 47.1]
-         Block 1: timestamps [1700000000, 1700000010], values [62.3, 61.8]
-         
-Step 5: Apply time filter (all points match in this case)
-         
-Step 6: Compute aggregation
-         mean([45.2, 47.1, 62.3, 61.8]) = 54.1
-What Made This Fast?
-The tag index let us identify matching series without scanning any data. We read exactly 2 blocks from disk, skipping the 2 blocks for us-east servers entirely. The data within each block was already organized by series, so no sorting or filtering within blocks was needed.
-Compare this to a naive approach in Postgres:
--- PostgreSQL equivalent
-SELECT AVG(value) FROM metrics 
-WHERE region = 'us-west' AND env = 'prod'
-  AND timestamp BETWEEN '2023-11-15 00:00:00' AND '2023-11-15 00:00:10';
-Even with indexes on region and env, Postgres would need to:
-Use the indexes to find matching row IDs
-Fetch each row from potentially scattered locations on disk
-Extract the value column from each row
-Compute the average
-With millions of rows, those scattered disk reads kill performance. The columnar, series-oriented storage in a time-series database means the data you need is physically co-located. Our writes are optimized to assist our reads!
-Where Things Break
-These advantages are not without their challenges. A particularly poignant example is the cardinality problem.
-Cardinality refers to the number of unique tag combinations. If you have 1,000 hosts and 50 metric names, that's 50,000 series. Manageable. But what if you add a tag for user_id with 10 million unique users? Suddenly you have 500 billion potential series.
-Why is this a problem? Time-series databases maintain an in-memory index of all series. Each unique tag combination needs an entry. With billions of series, you run out of memory. Queries also slow down because the index becomes massive.
-This is why user IDs, request IDs, or any high-cardinality value can only be stored as fields, not tags. In essence, we can write them but we lose all the performance benefits of the time-series database in reading them.
-Summary
-The cardinality problem puts a fine point on the lesson of time-series databases: if we can make some strong assumptions about our data (low-cardinality tags, highly regular data, low deltas between points), we can build a system which exploits each of these properties to achieve a massive improvement in performance. But as soon as our assumptions are violated, we lose all of the benefits and our system becomes worse than a general-purpose database for the task.
-This is where most candidates will stumble. By not understanding the data assumptions of a database, they'll wander in to propose a solution which actually performs worse (or not at all) for a task they're asked to solve. Understanding these data assumptions and trademarks in the hallmarks of a staff+ candidate. If you find yourself uncertain, falling back to what you know rather than winging it with a technology you don't is the better strategy.
-To summarize what we've covered, time series databases exploit a number of fundamental patterns to achieve their performance benefits, and these patterns are not exclusive to time series problems:
-Append-only storage turns random I/O into sequential I/O
-LSM trees enable high write throughput by deferring organization to background compaction
-Delta encoding and specialized compression exploit the structure of time-series data
-Time-based partitioning localizes writes and makes retention trivial
-Bloom filters eliminate unnecessary disk reads when checking SSTables
-Downsampling and rollups trade precision for storage efficiency on historical data
-Block-level metadata enables pruning during queries
-In doing so, we achieve some practical performance benefits that order 10-100x better than a general-purpose database for their target workload.
-So the next time you see a system handling millions of events per second, you'll know it's not magic. It's append-only logs, LSM trees, clever compression, Bloom filters, rollups, and careful data modeling.
+CREATE INDEX idx_lat ON restaurants(latitude);
+CREATE INDEX idx_lng ON restaurants(longitude);
+But this falls apart quickly when we try to execute a proximity search. Think about how a B-tree index on latitude and longitude actually works. We're essentially trying to solve a 2D spatial problem (finding points within a circle) using two separate 1D indexes.
+When we query "restaurants within 5 miles," we'll inevitably hit one of two performance problems:
+If we use the latitude index first, we'll find all restaurants in the right latitude range - but that's a long strip spanning the entire globe at that latitude! Then for each of those restaurants, we need to check if they're also in the right longitude range. Our index on longitude isn't helping because we're not doing a range scan - we're doing point lookups for each restaurant we found in the latitude range.
+If we try to be clever and use both indexes together (via an index intersection), the database still has to merge two large sets of results - all restaurants in the right latitude range and all restaurants in the right longitude range. This creates a rectangular search area much larger than our actual circular search radius, and we still need to filter out results that are too far away.
+
+latlong
+This is why we need indexes that understand 2D spatial relationships. Rather than treating latitude and longitude as independent dimensions, spatial indexes let us organize points based on their actual proximity in 2D space.
+Core Approaches
+There are three main approaches you'll encounter in interviews: geohashes, quadtrees, and R-trees. Each has its own strengths and trade-offs, but all solve our fundamental problem: they preserve spatial relationships in our index structure.
+We'll explore each one, but remember - while this seems like a lot of specialized knowledge, interviewers mainly want to see that you understand the basic problem (why regular indexes fall short) and can reason about at least one solution. You don't need deep expertise in all three approaches unless you're interviewing for a role that specifically works with location data.
+Geohash
+We'll start with geohash because it's the simplest spatial index to understand and the core idea is beautifully simple: convert a 2D location into a 1D string in a way that preserves proximity.
+
+Geohash
+Imagine dividing the world into four squares and labeling them 0-3. Then divide each of those squares into four smaller squares, and so on. Each division adds more precision to our location description. A geohash is essentially this process, but using a base32 encoding that creates strings like "dr5ru" for locations. The longer the string, the more precise the location:
+"9q8y" might represent all of San Francisco
+"9q8yy" narrows it down to the Mission District
+"9q8yyk" might pinpoint a specific city block
+What makes geohash clever is that locations that are close to each other usually share similar prefix strings. Two restaurants on the same block might have geohashes that start with "9q8yyk", while a restaurant in a different neighborhood might start with "9q8yym".
+And here's the real elegance: once we've converted our 2D locations into these ordered strings, we can use a regular B-tree index to handle our spatial queries. Remember how B-trees excel at prefix matching and range queries? That's exactly what we need for proximity searches.
+When we index the geohash strings with a B-tree:
+CREATE INDEX idx_geohash ON restaurants(geohash);
+Finding nearby locations becomes a matter of searching strings with matching prefixes. If we're looking for restaurants near geohash "9q8yyk", we can do a range scan in our B-tree for entries starting with that prefix. For radius queries, we also need to include adjacent geohash cells since our search area might span cell boundaries - but this is still just a handful of prefix range scans. This lets us leverage all the optimizations that databases already have for B-trees - no special spatial data structure needed.
+This is why Redis's geospatial commands use this approach internally. When you run:
+GEOADD restaurants -122.4194 37.7749 "Restaurant A"
+GEOSEARCH restaurants FROMLONLAT -122.4194 37.7749 BYRADIUS 5 mi
+GEORADIUS is deprecated in favor of GEOSEARCH. Redis uses geohash under the hood to efficiently find nearby points.
+The main limitation of geohash is that locations near each other in reality might not share similar prefixes if they happen to fall on different sides of a major grid division - like two restaurants on opposite sides of a street that marks a geohash boundary. But for most applications, this edge case isn't significant enough to matter.
+This elegance - turning a complex 2D problem into simple string prefix matching that can leverage existing B-tree implementations - is why geohash is such a popular choice. It's easy to understand, implement, and use with existing database systems that already know how to handle strings efficiently.
+Quadtree
+While less common in production databases today, quadtrees represent a fundamental tree-based approach to indexing 2D space that has shaped how we think about spatial indexing. Unlike geohash which transforms coordinates into strings, quadtrees directly partition space by recursively subdividing regions into four quadrants.
+Start with one square covering your entire area. When a square contains more than some threshold of points (typically 4-8), split it into four equal quadrants. Continue this recursive subdivision until reaching a maximum depth or achieving the desired point density per node. This spatial partitioning maps to a tree structure:
+
+Quadtree
+For proximity searches, navigate down the tree to find the target quadrant, check neighboring quadrants at the same level, and adjust the search radius by moving up or down tree levels as needed.
+The key advantage of quadtrees is their adaptive resolution - dense areas get subdivided more finely while sparse regions maintain larger quadrants. However, unlike geohash which leverages existing B-tree implementations, quadtrees require specialized tree structures. This implementation complexity explains why most modern databases prefer geohash or R-tree variants.
+So while they're not common in production nowadays, quadtrees have a significant impact on modern spatial indexing. The core concept of recursive spatial subdivision forms the foundation for R-trees, which optimize these ideas for disk-based storage and better handling of overlapping regions. You'll even find quadtree principles in modern mapping systems - Google Maps uses a similar structure for organizing map tiles at different zoom levels.
+Now let's see how R-trees evolved these concepts into today's production standard for spatial indexing.
+R-Tree
+R-trees have emerged as the default spatial index in modern databases like PostgreSQL/PostGIS and MySQL. While both quadtrees and R-trees organize spatial data hierarchically, R-trees take a fundamentally different approach to how they divide space.
+Instead of splitting space into fixed quadrants, R-trees work with flexible, overlapping rectangles. Where a quadtree rigidly divides each region into four equal parts regardless of data distribution, R-trees adapt their rectangles to the actual data. Think of organizing photos on a table - a quadtree approach would divide the table into equal quarters and keep subdividing, while an R-tree would let you create natural, overlapping groupings of nearby photos.
+
+R-tree
+When searching for nearby restaurants in San Francisco, an R-tree might first identify the large rectangle containing the city, then drill down through progressively smaller, overlapping rectangles until reaching individual restaurant locations. These rectangles aren't constrained to fixed sizes or positions - they adapt to wherever your data actually clusters. A quadtree, in contrast, would force you to navigate through a rigid grid of increasingly smaller squares, potentially requiring more steps to reach the same destinations.
+This flexibility offers a crucial advantage: R-trees can efficiently handle both points and larger shapes in the same index structure. A single R-tree can index everything from individual restaurant locations to delivery zone polygons and road networks. The rectangles simply adjust their size to bound whatever shapes they contain. Quadtrees struggle with this mixed data - they keep subdividing until they can isolate each shape, leading to deeper trees and more complex traversal.
+The trade-off for this flexibility is that overlapping rectangles sometimes force us to search multiple branches of the tree. Modern R-tree implementations use smart algorithms to balance this overlap against tree depth, tuning for how databases actually read data from disk. This balance of flexibility and disk efficiency is why R-trees have become the standard choice for production spatial indexes.
+If you're asked about geospatial indexing in an interview, focus on explaining the problem clearly and contrasting a tree-based approach with a hash-based approach.
+For example, you could say something like:
+"Traditional indexes like B-trees don't work well for spatial data because they treat latitude and longitude as independent dimensions. To efficiently search for nearby locations, we need an index that understands spatial relationships. Geohash is a hash-based approach that converts 2D coordinates into a 1D string, preserving proximity. This allows us to use a regular B-tree index on the geohash strings for efficient proximity searches. However, tree-based approaches like R-trees can offer more flexibility and accuracy by grouping nearby objects into overlapping rectangles, creating a hierarchy of bounding boxes."
+By contrasting these two approaches, you demonstrate a deeper understanding of the trade-offs involved in geospatial indexing.
+Inverted Indexes
+While B-trees excel at finding exact matches and ranges, they fall short when we need to search through text content. Consider what happens when you run a query like:
+SELECT * FROM posts WHERE content LIKE '%database%';
+Here, we're looking for posts that contain the word "database" anywhere in their content - not just posts that start or end with it. Even with a B-tree index on the content column, the database can't use the index at all. Why? B-tree indexes can only help with prefix matches (like 'database%') or suffix matches (if you index the reversed content). When the pattern could match anywhere within the text, the database has no choice but to check every character of every post, reading entire text fields into memory to look for matches.
+This full pattern matching gets exponentially slower as your text content grows. Each additional character in your posts means more data to scan, more memory to use, and more CPU cycles spent checking patterns. It's like trying to find every mention of a word in a library by reading every book, page by page.
+An inverted index solves this by flipping the relationship between documents and their content. Instead of storing documents with their words, it stores words with their documents. Think of it like the index at the back of a textbook - rather than reading every page to find mentions of "ACID properties", you can look up "ACID" and find every page that discusses it.
+Here's how it works. Consider a simple blogging platform with these posts:
+doc1: "B-trees are fast and reliable"
+doc2: "Hash tables are fast but limited"
+doc3: "B-trees handle range queries well"
+The inverted index creates a mapping:
+b-trees  -> [doc1, doc3]
+fast     -> [doc1, doc2]
+reliable -> [doc1]
+hash     -> [doc2]
+tables   -> [doc2]
+limited  -> [doc2]
+handle   -> [doc3]
+range    -> [doc3]
+queries  -> [doc3]
+While this basic mapping shows the core concept, production inverted indexes are much more sophisticated. When systems like Elasticsearch index text, they first run it through an analysis pipeline that processes and enriches the content. This means:
+Breaking text into tokens (words or subwords)
+Converting to lowercase
+Removing common "stop words" like "the" or "and"
+Often applying stemming (reducing words to their root form)
+So when a user searches for "Databases", the system can match documents containing "database", "DATABASE", or even "database's". This is why full-text search feels so natural compared to rigid pattern matching.
+Modern search systems like Elasticsearch and Lucene build additional features on top of this foundation:
+Term frequency analysis (how often words appear)
+Relevance scoring (which documents best match the query)
+Fuzzy matching (finding close matches like "databas")
+Phrase queries (matching exact sequences of words)
+In practice, you'll see inverted indexes whenever advanced text search is needed. When developers search GitHub repositories, when users search Slack message history, or when you search through documentation - they're all using inverted indexes under the hood.
+There are still trade-offs, of course.Inverted indexes require substantial storage overhead and careful updating. When a document changes, you need to update entries for every term it contains. But for making text truly searchable, these are trade-offs we're willing to make.
+You can learn more about how inverted indexes work in our Elasticsearch Deep Dive.
+Index Optimization Patterns
+So far, we've explored the main types of indexes you'll encounter in system design interviews: B-trees for general-purpose querying, hash indexes for exact matches, geospatial indexes for location data, and inverted indexes for text search. Each type solves a specific class of problem, with trade-offs in storage, performance, and flexibility.
+Experienced engineers spend significant time analyzing their application's read and write patterns, looking for ways to reduce the processing overhead of common queries. They identify performance bottlenecks by examining query plans and database metrics, then strategically improve performance using appropriate indexing strategies. This often requires looking beyond just picking the right type of index - it's about understanding your access patterns and crafting an indexing approach that efficiently supports them.
+Composite Indexes
+Composite indexes are the most common optimization pattern you'll encounter in practice. Instead of creating separate indexes for each column, we create a single index that combines multiple columns in a specific order. This matches how we typically query data in real applications.
+Consider a typical social media feed query:
+SELECT * FROM posts 
+WHERE user_id = 123 
+AND created_at > '2024-01-01'
+ORDER BY created_at DESC;
+We could create two separate indexes:
+CREATE INDEX idx_user ON posts(user_id);
+CREATE INDEX idx_time ON posts(created_at);
+But this isn't optimal. The database would need to:
+Use one index to find all posts by user 123
+Use another index to find all posts after January 1st
+Intersect these results
+Sort the final result set by created_at
+Instead, a composite index gives us everything we need in one shot:
+CREATE INDEX idx_user_time ON posts(user_id, created_at);
+When we create a composite index, we're really creating a B-tree where each node's key is a concatenation of our indexed columns. For our (user_id, created_at) index, each key in the B-tree is effectively a tuple of both values. The B-tree maintains these keys in sorted order based on user_id first, then created_at. Conceptually, the keys might look like:
+(1, 2024-01-01)
+(1, 2024-01-02)
+(1, 2024-01-03)
+(2, 2024-01-01)
+(2, 2024-01-02)
+(3, 2024-01-01)
+Now when we execute our query, the database can traverse the B-tree to find the first entry for user_id=123, then scan sequentially through the index entries for that user until it finds entries beyond our date range. Because the entries are already sorted by created_at within each user_id group, we get both our filtering and sorting for free.
+This structure is particularly efficient because we're using the B-tree's natural ordering to handle multiple conditions in a single index traversal. We've effectively turned our two-dimensional query (user and time) into a one-dimensional scan through ordered index entries.
+
+composite-index
+The Order Matters
+The order of columns in a composite index is crucial. Our index on (user_id, created_at) is great for queries that filter on user_id first, but it's not helpful for queries that only filter on created_at. This follows from how B-trees work - we can only use the index efficiently for prefixes of our column list.
+This is why you'll often hear database experts say "order columns from most selective to least selective." But there's more nuance in practice. Sometimes query patterns trump selectivity - if you frequently sort by a particular column, including it in your composite index (even if it's not highly selective) can eliminate expensive sort operations.
+Consider common interview scenarios like:
+Order history lookups: (customer_id, order_date)
+Event processing: (status, priority, created_at)
+Activity feeds: (user_id, type, timestamp)
+Covering Indexes
+A covering index is one that includes all the columns needed by your query - not just the columns you're filtering or sorting on. Think about showing a social media feed with post timestamps and like counts. With a regular index on (user_id, created_at), the database first finds matching posts in the index, then has to fetch each post's full data page just to get the like count. That's a lot of extra disk reads just to display a number.
+By including the likes column directly in our index, we can skip those expensive page lookups entirely. The database can return everything we need straight from the index itself:
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    user_id INT,
+    title TEXT,
+    content TEXT,
+    likes INT,
+    created_at TIMESTAMP
+);
+
+-- Regular index
+CREATE INDEX idx_user_time ON posts(user_id, created_at);
+
+-- Covering index includes likes column
+CREATE INDEX idx_user_time_likes ON posts(user_id, created_at) INCLUDE (likes);
+I'm using SQL as the examples given it's the most ubiquitous language for database interactions. But the same principles apply to other database systems and even NoSQL solutions.
+With the covering index, PostgreSQL can return results purely from the index data - no need to look up each post in the main table. This is especially powerful for queries that only need a small subset of columns from large tables.
+The trade-off is, of course, size - covering indexes are larger because they store extra columns. But for frequently-run queries that only need a few columns, the performance boost from avoiding table lookups often justifies the storage cost. This is particularly true in social feeds, leaderboards, and other read-heavy features where query speed is critical.
+The reality in 2026 is that covering indexes are more of a niche optimization than a go-to solution. Modern database query optimizers have become quite smart at executing queries efficiently with regular indexes. While covering indexes can provide significant performance gains in specific scenarios - like read-heavy tables with limited columns - they come with real costs in terms of maintenance overhead and storage space.
+In an interview, you may be wise to focus on simpler indexing strategies and, if reaching for covering indexes, be sure to make sure you have a good reason for why it's necessary.
+If you're not sure if they make sense in a given scenario, it's often better to err on the side of simplicity.
+Wrapping Up
+
+Flowchart
+Indexes matter. Not just in interviews, but in production systems. Knowing how to use them effectively is a key skill for any developer and is knowledge that is regularly tested in interviews.
+Most important is knowing when you need an index, and on what columns. This should be a natural instinct when you're designing a new schema. Consider the query patterns you're likely to run, and whether you'll be filtering or sorting on certain columns.
+From here, expect that you may be asked what type of index you would use for a given scenario. When in doubt, go with B-trees. They're the swiss army knife of indexes, handling both exact matches and range queries efficiently, and they're what most databases use by default for good reason.
+The two main exceptions are when you're dealing with spatial data, or full-text search.
+If you're dealing with latitude and longitude, and need to efficiently search for nearby points, you'll want to opt for a geospatial index. If you only want to know one option, learn geohashing. Better still if you can explain how it works and weigh the tradeoffs between it and tree-based approaches.
+Lastly, when it comes to full-text search, you'll need an inverted index to search large amounts of text efficiently. While it's unlikely you'll get deeply probed about how they work, you should have a basic understanding of the reverse mapping from keywords to documents.
+With these tools in your toolbelt, you'll be well prepared for the overwhelming majority of indexing questions that may come your way.

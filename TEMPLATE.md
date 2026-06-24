@@ -6,7 +6,7 @@
 
 ## Before You Start
 
-1. Read [Hotel Booking Service](docs/easy/01-hotel-booking.md) fully (25 min)
+1. Read [Hotel Booking Service](docs/designs/easy/01-hotel-booking.md) fully (25 min)
 2. Read [copilot-instructions.md](.github/copilot-instructions.md) for style rules
 3. Have your system design plan topic picked
 
