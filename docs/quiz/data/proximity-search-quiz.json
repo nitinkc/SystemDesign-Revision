@@ -1,0 +1,391 @@
+{
+  "title": "Proximity Search",
+  "subtitle": "32 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "proximity_search_quiz_progress",
+  "questions": [
+    {
+      "cat": "The Core Problem",
+      "q": "Why does a B-tree index work perfectly for 'find users aged 20–25' but fail for 'find drivers within 2km'?",
+      "opts": [
+        "B-trees don't support floating point numbers like lat/lng",
+        "A B-tree sorts on one dimension at a time; age is 1D so nearby values are physically adjacent, but proximity requires 2D closeness which a single sort order can't preserve",
+        "Location queries require full table scans by law in most databases",
+        "B-trees are limited to integer keys and lat/lng are decimals"
+      ],
+      "ans": 1,
+      "expl": "An age B-tree packs 20, 21, 22 next to each other on disk — one seek and a short sequential read returns the range. Location has two numbers (lat and lng), and what matters is 2D distance. A B-tree sorts on one dimension, so nearby points on the ground can land far apart in the index."
+    },
+    {
+      "cat": "The Core Problem",
+      "q": "What happens when you index location with a composite index on (latitude, longitude)?",
+      "opts": [
+        "The database can compute 2D distances efficiently using both columns",
+        "It still only sorts effectively on one dimension — latitude first, longitude only to break ties — so the result is still a strip, not a circle",
+        "A composite index on lat/lng is equivalent to a spatial index for point queries",
+        "It works for short distances but fails at global scale"
+      ],
+      "ans": 1,
+      "expl": "A composite B-tree index on (lat, lng) sorts by latitude first and uses longitude only to break ties. The result is still a horizontal strip of the earth, holding millions of rows that are nowhere near the query point. It can't produce a radius-based result set."
+    },
+    {
+      "cat": "The Core Problem",
+      "q": "What is the 'root problem' the article identifies with applying 1D sorting to location data?",
+      "opts": [
+        "Floating point precision errors accumulate over long distances",
+        "A one-dimensional sort order can't preserve two-dimensional closeness — points that are neighbors on the ground can land far apart in the index",
+        "Databases can't store both latitude and longitude in the same row efficiently",
+        "GPS coordinates change too fast for any index to keep up"
+      ],
+      "ans": 1,
+      "expl": "The article's core insight: flatten a 2D map onto a single sorted axis and geographic neighbors can end up far apart in the index. Every spatial indexing technique in the article is a different way to recover enough of that 2D closeness to make an index useful again."
+    },
+    {
+      "cat": "The Core Problem",
+      "q": "What does a spatial index actually do, according to the article?",
+      "opts": [
+        "It computes the exact distance to every point and returns a perfectly ranked result",
+        "It turns 'check every row' into 'check a small candidate set,' after which exact distance math picks the final winners",
+        "It replaces the need for post-filtering by building 2D distance into the sort key",
+        "It stores vectors of distances from a fixed origin point for fast comparison"
+      ],
+      "ans": 1,
+      "expl": "The article is explicit: a spatial index almost never produces the final answer on its own. Its job is to generate a small candidate set cheaply, and you finish with exact distance or geometry math on that handful. Every structure in the article is just a different way to generate that candidate set."
+    },
+    {
+      "cat": "The Core Problem",
+      "q": "What are the two broad approaches production systems use for proximity search?",
+      "opts": [
+        "Exact search and approximate search",
+        "Custom spatial trees (for geometric/shape data) and encoded keys (for moving points mapped to a sortable key on a regular index)",
+        "In-memory indexes and on-disk indexes",
+        "Hash-based indexing and tree-based indexing"
+      ],
+      "ans": 1,
+      "expl": "The article identifies two approaches: (1) custom spatial trees — purpose-built structures that understand shapes, used by PostGIS and Elasticsearch; (2) encoded keys — turning lat/lng into a single sortable key so an ordinary B-tree index can handle it, used by Redis, geohash, S2, and H3."
+    },
+    {
+      "cat": "Quadtrees",
+      "q": "What is a quadtree?",
+      "opts": [
+        "A binary tree that alternates between splitting on latitude and longitude at each level",
+        "A tree where each node splits into four quadrants recursively; points live only in leaves, and subdivision continues until each leaf holds few enough points to scan directly",
+        "A tree that wraps objects in minimum bounding rectangles grouped by proximity",
+        "A hash table that maps geographic cells to lists of points"
+      ],
+      "ans": 1,
+      "expl": "A quadtree starts with the whole map as the root. Each node splits into four quadrants, and any quadrant with too many points splits again. Points live only in the leaves. The four-way split gives it its name."
+    },
+    {
+      "cat": "Quadtrees",
+      "q": "What is an advantage of quadtrees over uniform grid indexes?",
+      "opts": [
+        "Quadtrees always produce cells of equal area regardless of data density",
+        "Quadtrees adapt to data density — dense areas like Manhattan get deep subdivision while sparse areas stay coarse, wasting no space on empty regions",
+        "Quadtrees map directly onto disk pages with no pointer overhead",
+        "Quadtrees support shapes like polygons, not just points"
+      ],
+      "ans": 1,
+      "expl": "A quadtree's adaptive resolution is one of its nicest properties. A dense area like Manhattan becomes a deep tree with fine-grained cells. An empty lake stays a single coarse cell. You never waste space subdividing empty space."
+    },
+    {
+      "cat": "Quadtrees",
+      "q": "What is the 'depth problem' with quadtrees for dense urban areas?",
+      "opts": [
+        "Dense areas cause hash collisions that slow query performance",
+        "Splits always land at the geometric midpoint of a cell, so a dense cluster requires many levels of halving before points separate — making the busiest regions the slowest to query",
+        "Dense areas require more bounding rectangles, causing excessive overlap",
+        "Dense areas exceed the maximum node capacity and corrupt the index"
+      ],
+      "ans": 1,
+      "expl": "Quadtree splits always cut at the geometric midpoint of a cell, not where data is. A dense cluster like Manhattan requires many halvings before points finally separate. You might burn 10+ levels reaching a leaf downtown while a rural query finishes in 2. Latency varies with density, and the busiest places are slowest."
+    },
+    {
+      "cat": "Quadtrees",
+      "q": "Why are quadtrees unsuitable as on-disk database indexes?",
+      "opts": [
+        "Quadtrees can only store integer coordinates, not floating point lat/lng",
+        "Quadtrees are pointer structures — every node sits at an arbitrary address, causing random disk reads per hop instead of sequential page reads",
+        "Quadtrees require the entire dataset to fit in RAM before building",
+        "Quadtrees can't handle more than 4 levels of recursion on disk"
+      ],
+      "ans": 1,
+      "expl": "Quadtrees are pointer structures: each node holds pointers to its four children at arbitrary disk addresses. Following those pointers means random disk reads — each hop may fetch a page not yet in memory. A few hops in and you're mostly waiting on disk I/O."
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "q": "How does a k-d tree differ from a quadtree in how it splits data?",
+      "opts": [
+        "A k-d tree splits into four quadrants; a quadtree splits into two halves",
+        "A k-d tree splits at the median of alternating dimensions (x then y then x...), while a quadtree splits at the geometric midpoint of all dimensions at once",
+        "A k-d tree uses bounding rectangles; a quadtree uses bounding circles",
+        "A k-d tree is always balanced; a quadtree is always unbalanced"
+      ],
+      "ans": 1,
+      "expl": "A k-d tree alternates between dimensions at each level (x at level 1, y at level 2, x at level 3...) and always splits at the median. A quadtree splits in all dimensions at once at the geometric midpoint. The median split is the key difference — it keeps the tree balanced regardless of data distribution."
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "q": "Why does splitting at the median make k-d trees better balanced than quadtrees on skewed data?",
+      "opts": [
+        "The median minimizes bounding rectangle overlap between child nodes",
+        "Splitting at the median always puts half the points on each side regardless of how clustered they are, keeping depth at log(n) even for dense urban clusters",
+        "The median split avoids pointer-based traversal, mapping cleanly onto disk pages",
+        "The median guarantees equal cell area on both sides of the split"
+      ],
+      "ans": 1,
+      "expl": "The article's concrete example: 10 drivers, 9 bunched at the east end. A quadtree cuts at the geometric midpoint, leaving 9 on one side. A k-d tree cuts at the median (the 5th driver), so exactly 5 end up on each side. Every cut halves the point count, not the area — keeping depth at log(n)."
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "q": "What is a BKD tree and what problem does it solve?",
+      "opts": [
+        "A Bitmap K-D tree that compresses leaf nodes for reduced disk storage",
+        "A Block K-D tree where points are packed into disk-page-sized blocks and the tree is built once from a batch — making it disk-friendly but essentially write-once",
+        "A Balanced K-D tree variant that supports online inserts without rebalancing",
+        "A Bucketed K-D tree that groups nearby cells into buckets for faster range scans"
+      ],
+      "ans": 1,
+      "expl": "BKD (Block K-D) tree packs points into blocks sized to a disk page rather than one point per node. This gives the disk-friendly page-aligned reads that databases need. The tradeoff: the tree is built once from a batch and is essentially write-once. This is what Elasticsearch uses for geo fields."
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "q": "Which production system uses BKD trees for geo queries?",
+      "opts": [
+        "PostGIS",
+        "Redis",
+        "Elasticsearch",
+        "MongoDB"
+      ],
+      "ans": 2,
+      "expl": "Elasticsearch uses BKD trees for its geo fields. A geo query in Elasticsearch is the k-d tree idea repackaged into a disk-friendly, block-structured index. The BKD tree is essentially write-once, built for a chunk of data that doesn't change."
+    },
+    {
+      "cat": "R-Trees",
+      "q": "What two problems did R-trees solve that quadtrees and k-d trees couldn't?",
+      "opts": [
+        "Point queries and range queries",
+        "Support for non-point shapes (lines, polygons) and disk-friendly balanced structure that stays efficient as data changes",
+        "Spherical coordinates and antimeridian crossing",
+        "Equal-area cells and hierarchical IDs"
+      ],
+      "ans": 1,
+      "expl": "R-trees solved two things: (1) shapes — earlier trees assumed points, but R-trees can index lines, polygons, and any geometry using minimum bounding rectangles; (2) disk — R-trees stay balanced like a B-tree, with page-sized nodes and efficient updates, making them suitable as on-disk database indexes."
+    },
+    {
+      "cat": "R-Trees",
+      "q": "What is a Minimum Bounding Rectangle (MBR) in an R-tree?",
+      "opts": [
+        "The smallest circle that fully encloses a set of points",
+        "The smallest axis-aligned rectangle that fully contains an object — points become zero-area rectangles, lines become thin slivers, polygons become their bounding box",
+        "A compressed representation of a polygon that reduces storage overhead",
+        "A grid cell that approximates the coverage area of a geographic region"
+      ],
+      "ans": 1,
+      "expl": "An MBR wraps any object in the smallest rectangle with sides parallel to the lat/lng axes that fully contains it. A point becomes a degenerate zero-area rectangle. A highway becomes a long thin sliver. A county becomes a large box. Nearby MBRs are then grouped inside larger enclosing rectangles, nesting all the way to the root."
+    },
+    {
+      "cat": "R-Trees",
+      "q": "What is the key tradeoff in R-trees that can hurt query performance?",
+      "opts": [
+        "MBRs can only be rectangles, so circular query regions require expensive conversion",
+        "R-tree rectangles can overlap, so a query point inside two bounding rectangles forces the database to descend and search both branches",
+        "R-trees require re-building the entire index after any polygon update",
+        "R-trees can only index one shape type per index — you need separate indexes for points and polygons"
+      ],
+      "ans": 1,
+      "expl": "Unlike quadtree cells which never overlap, R-tree bounding rectangles can overlap. If a query point falls inside two MBRs at the same level, the database must descend both branches and check both subtrees. Sloppy insertions create lots of overlap, dragging performance down. The R*-tree variant addresses this with smarter insertion heuristics."
+    },
+    {
+      "cat": "R-Trees",
+      "q": "What is an R*-tree and why is it what most production systems actually ship?",
+      "opts": [
+        "A read-optimized R-tree that uses caching to avoid repeated disk reads",
+        "A refinement of the R-tree that uses smarter insertion heuristics to minimize overlap between bounding rectangles, improving query performance",
+        "An R-tree extended to support spherical coordinates instead of flat lat/lng",
+        "A recursive R-tree that nests multiple R-tree indexes for multi-scale queries"
+      ],
+      "ans": 1,
+      "expl": "The R*-tree keeps overlap between bounding rectangles low through smarter insertion heuristics. Since overlap is the main performance enemy in R-trees, reducing it dramatically improves query speed. Almost every modern R-tree implementation is built on R*-tree heuristics."
+    },
+    {
+      "cat": "R-Trees",
+      "q": "Which production database uses R-tree-style indexing for spatial data?",
+      "opts": [
+        "Redis, via its sorted set geo commands",
+        "Elasticsearch, via its BKD geo index",
+        "PostGIS, via Postgres's GiST framework which gives R-tree-style bounding-box behavior",
+        "MongoDB, via its 2dsphere index built on S2 cells"
+      ],
+      "ans": 2,
+      "expl": "PostGIS builds spatial indexes on Postgres's GiST framework, which gives R-tree-style bounding-box behavior. SQLite and Oracle Spatial also ship R-tree variants. If your problem involves real geometry — delivery zone containment, road intersections — PostGIS with its R-tree-style index is the default choice."
+    },
+    {
+      "cat": "Geohash",
+      "q": "What is a geohash?",
+      "opts": [
+        "A cryptographic hash of lat/lng coordinates used to anonymize location data",
+        "A hierarchical string key where each character subdivides the previous cell into 32 smaller cells, so points sharing a prefix are near each other on the map",
+        "A 64-bit integer encoding of a hexagonal grid cell used by Uber",
+        "A bounding rectangle identifier used in R-tree indexes"
+      ],
+      "ans": 1,
+      "expl": "A geohash divides the world into 32 cells, assigns one character, then subdivides each into 32 more, and so on. Each additional character zooms in further (5 chars ≈ 5km, 9 chars ≈ 5m). The key property: shared prefix = shared cell = geographic proximity."
+    },
+    {
+      "cat": "Geohash",
+      "q": "Why does a longer shared geohash prefix mean two points are closer together?",
+      "opts": [
+        "Longer prefixes use a finer hash function that reduces collisions",
+        "Two points share a prefix only if they fell into the same cell at every subdivision level that prefix covers — each extra shared character shrinks the shared cell they both fit inside",
+        "A longer shared prefix means both points were inserted at the same time",
+        "The geohash alphabet is ordered by distance from the prime meridian"
+      ],
+      "ans": 1,
+      "expl": "Each geohash character represents one level of subdivision. Two points share a prefix only if they were in the same cell at every level that prefix covers. More shared characters = smaller shared cell = closer together. This is what makes WHERE geohash LIKE 'dr5ru%' a valid proximity query."
+    },
+    {
+      "cat": "Geohash",
+      "q": "How does Redis use geohash internally for its geo commands?",
+      "opts": [
+        "Redis stores lat/lng as two separate sorted sets and intersects them at query time",
+        "Redis interleaves lat and lng bits into a 52-bit geohash integer and stores it as the score in a sorted set; a nearby query becomes a ZRANGEBYSCORE range scan",
+        "Redis builds an in-memory quadtree from GEOADD calls and traverses it on GEOSEARCH",
+        "Redis delegates geo queries to a PostGIS extension via a plugin interface"
+      ],
+      "ans": 1,
+      "expl": "When you call GEOADD, Redis interleaves latitude and longitude bits into a 52-bit geohash integer and stores it as the score in a sorted set. A nearby query becomes a ZRANGEBYSCORE over those scores — the prefix-scan idea in different syntax. No spatial extension needed."
+    },
+    {
+      "cat": "Geohash",
+      "q": "What is the geohash boundary problem and what is the standard fix?",
+      "opts": [
+        "Geohash cells have unequal area near the poles; fix by switching to S2 for high-latitude queries",
+        "Two points a meter apart can have completely different prefixes if they straddle a cell boundary; fix with the 3x3 trick — query your cell plus all 8 neighbors and post-filter by exact distance",
+        "The 32-character alphabet causes ambiguity near the prime meridian; fix by using a 64-character encoding",
+        "Geohash cells wrap incorrectly at the antimeridian; fix by clipping coordinates to ±179 degrees"
+      ],
+      "ans": 1,
+      "expl": "A rider on the edge of cell 'dr5ru' might have the nearest driver 10m away in neighboring cell 'dr5rg' — a naive prefix scan misses them. The 3x3 fix: compute the 8 neighboring cells, query all 9, then post-filter by exact distance. Almost every encoded-key system in production does this."
+    },
+    {
+      "cat": "S2",
+      "q": "What problem does Google's S2 solve that geohash doesn't?",
+      "opts": [
+        "S2 supports hexagonal cells instead of squares for more uniform neighbor distances",
+        "S2 projects the globe onto a cube's six faces, producing cells of roughly equal area anywhere on earth and correctly handling spherical geometry like antimeridian crossings",
+        "S2 allows immutable indexes to be updated without rebuilding, unlike geohash B-tree indexes",
+        "S2 is faster to compute than geohash because it avoids base32 encoding"
+      ],
+      "ans": 1,
+      "expl": "Geohash treats lat/lng as a flat rectangle — so cells near the poles are thin slivers while equatorial cells are fat squares. S2 wraps the globe in a cube and projects onto its six faces, giving roughly equal-area cells everywhere and correctly handling the antimeridian (where longitude wraps ±180). MongoDB's 2dsphere index uses S2."
+    },
+    {
+      "cat": "S2",
+      "q": "Which production database uses S2 cells for its spherical geo index?",
+      "opts": [
+        "PostGIS",
+        "Elasticsearch",
+        "Redis",
+        "MongoDB (2dsphere index)"
+      ],
+      "ans": 3,
+      "expl": "MongoDB's 2dsphere index is built on S2 cells. S2's spherical projection means MongoDB can correctly handle location data at global scale, including polygons that cross the antimeridian — something flat geohash can't do cleanly."
+    },
+    {
+      "cat": "H3",
+      "q": "What is H3's key geometric innovation compared to geohash and S2?",
+      "opts": [
+        "H3 uses triangular cells for higher packing efficiency than squares",
+        "H3 uses hexagonal cells where all 6 neighbors are equidistant, making ring-based queries and heat maps cleaner than square cells with 4 edge-neighbors and 4 corner-neighbors at different distances",
+        "H3 uses circular cells that map directly to GPS accuracy radii",
+        "H3 uses variable-size cells that shrink in dense areas like quadtrees"
+      ],
+      "ans": 1,
+      "expl": "A square cell has two neighbor types: 4 edge-adjacent (closer) and 4 corner-adjacent (farther). A hexagon has 6 neighbors all roughly equidistant. For Uber's ring-based dispatch queries ('all drivers within N rings of me') and heat maps, hexagons produce cleaner, more uniform results."
+    },
+    {
+      "cat": "H3",
+      "q": "How does H3 differ from geohash and S2 in how you query nearby cells?",
+      "opts": [
+        "H3 requires a spatial extension; geohash and S2 work with ordinary B-tree indexes",
+        "H3 IDs aren't arranged along a space-filling curve, so nearby IDs aren't reliably close numerically — instead you use grid math to compute the ring of neighbor cell IDs and do a WHERE h3_cell IN (...) lookup",
+        "H3 requires post-filtering; geohash and S2 return exact results without post-filtering",
+        "H3 only works in memory; geohash and S2 support disk-based indexes"
+      ],
+      "ans": 1,
+      "expl": "Geohash and S2 lay cells along a space-filling curve, so a numeric range scan sweeps up a neighborhood. H3 doesn't — nearby cell IDs aren't reliably close numerically. Instead, H3 provides grid math to compute the exact ring of neighboring cell IDs, and you query WHERE h3_cell IN (that list) on an ordinary integer index."
+    },
+    {
+      "cat": "H3",
+      "q": "What is the H3-based dispatch pattern Uber uses?",
+      "opts": [
+        "Snap each driver to an H3 cell, query the rider's cell plus surrounding rings with WHERE h3_cell IN (...), then post-filter by exact distance",
+        "Build an R-tree over H3 cell centroids and query it with a bounding rectangle around the rider",
+        "Store driver locations as geohash strings and do prefix scans from the rider's geohash",
+        "Hash driver IDs to H3 cells and use a bloom filter to pre-check cell occupancy before querying"
+      ],
+      "ans": 0,
+      "expl": "Uber's dispatch pattern: snap each driver to an H3 cell (e.g. 200m resolution). When a rider opens the app, take their cell plus the surrounding ring (expanding outward if needed). Run WHERE h3_cell IN (list of IDs) — a plain integer index lookup — then post-filter by exact distance. Cheap writes, cheap candidate generation, no spatial extension."
+    },
+    {
+      "cat": "Choosing an Approach",
+      "q": "When should you choose a custom spatial tree (like PostGIS/R-tree) over an encoded key approach?",
+      "opts": [
+        "When your data consists of millions of moving points updated frequently",
+        "When your data is geometric — polygons, roads, delivery zones — and you need containment or intersection queries that require understanding shapes",
+        "When you need to minimize write latency above all else",
+        "When your data fits entirely in RAM and you can use an in-memory quadtree"
+      ],
+      "ans": 1,
+      "expl": "Custom spatial trees (PostGIS R-tree, Elasticsearch BKD) are the right choice when your data is geometric — shapes, polygons, roads, delivery zones — and you need the database to understand containment ('does this zone contain this address?') or intersection ('does this road cross this county?')."
+    },
+    {
+      "cat": "Choosing an Approach",
+      "q": "When should you choose encoded keys (geohash, S2, H3) over a custom spatial tree?",
+      "opts": [
+        "When your data involves complex polygons that change shape frequently",
+        "When your data is mostly moving points (drivers, users, devices) and you need cheap writes and fast candidate generation without a spatial extension",
+        "When you need exact spherical distance calculations on every query",
+        "When your dataset is smaller than 1 million points and fits in a single database instance"
+      ],
+      "ans": 1,
+      "expl": "Encoded keys shine for moving points — drivers, live user locations, IoT devices. A location update is a single integer update (cheap write). Candidate generation is a prefix scan or IN query (fast). No spatial extension needed. The tradeoff: you're mostly limited to points, and you always query a ring of neighbors due to cell boundaries."
+    },
+    {
+      "cat": "Choosing an Approach",
+      "q": "What is the write performance tradeoff of custom spatial trees like R-trees and BKD trees?",
+      "opts": [
+        "Custom spatial trees support faster writes than encoded keys because they avoid recomputing hash values",
+        "Custom spatial trees have more expensive writes — rebalancing bounding rectangles (R-tree) is real work, and BKD trees are essentially write-once — neither loves constantly churning data",
+        "Custom spatial trees require full index rebuilds on every write, making them unsuitable for any real-time updates",
+        "Custom spatial trees write faster in RAM but slower on disk due to pointer chasing"
+      ],
+      "ans": 1,
+      "expl": "R-tree rebalancing is real work — splitting and merging bounding rectangles on every insert/delete. BKD trees (Elasticsearch) are essentially write-once, built for static data. Neither handles millions of location updates per second well. Encoded keys (a single integer update per driver) scale to millions of writes per second."
+    },
+    {
+      "cat": "Choosing an Approach",
+      "q": "An interviewer asks how to find restaurants near a user. You know PostGIS, geohash, and H3. What does the article say is the most important thing to convey?",
+      "opts": [
+        "Name the most specific library (H3 vs S2 vs geohash) to show depth of knowledge",
+        "Explain why a plain lat/lng index fails, then walk through one approach and its tradeoffs — the reasoning matters more than naming a specific library",
+        "Propose a custom spatial tree by default since it handles all cases including future polygon queries",
+        "Always recommend Redis geo commands since they require no additional infrastructure"
+      ],
+      "ans": 1,
+      "expl": "The article is explicit: 'In an interview, you rarely need to name H3 versus S2 versus geohash to score the point. What lands is explaining why a plain index fails on lat/lng, then reaching for the boring production option and walking the tradeoff out loud.' The reasoning is what shows understanding."
+    },
+    {
+      "cat": "Choosing an Approach",
+      "q": "What is the universal final step that every proximity search approach requires, regardless of which index structure is used?",
+      "opts": [
+        "Rebuilding the index to incorporate the query results for faster future queries",
+        "Post-filtering the candidate set with exact distance or geometry math to discard candidates that are inside the search window but too far away",
+        "Caching the result set for subsequent queries from the same location",
+        "Sorting the candidate set by insertion order to ensure consistent results"
+      ],
+      "ans": 1,
+      "expl": "The article repeats this throughout and ends with it: the index only generates a candidate set. It narrows 'check every row' down to a small patch of the map. You always finish with exact distance or geometry math on that handful. 'Spatial tree for shapes. Encoded cells for moving points. And always, always post-filter.'"
+    }
+  ]
+}

@@ -1,0 +1,415 @@
+{
+  "title": "Elasticsearch",
+  "subtitle": "35 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "elasticsearch_quiz_progress",
+  "questions": [
+    {
+      "cat": "Basic Concepts",
+      "q": "What is an Elasticsearch document?",
+      "opts": [
+        "A website or blog post indexed by a web crawler",
+        "Any individual unit of data being searched over, stored as a JSON object",
+        "A schema definition that describes what fields an index contains",
+        "A query result returned from a search operation"
+      ],
+      "ans": 1,
+      "expl": "A document is the individual unit of data you search over — not necessarily a website or blog post. It's just a JSON object, like a book with fields for title, author, and price. Don't get hung up on the terminology."
+    },
+    {
+      "cat": "Basic Concepts",
+      "q": "What is an Elasticsearch index?",
+      "opts": [
+        "A data structure like a B-tree that speeds up search operations",
+        "A collection of documents, similar in concept to a database table",
+        "A mapping that defines the schema for stored documents",
+        "A single shard of data stored on one node"
+      ],
+      "ans": 1,
+      "expl": "An Elasticsearch index is a collection of documents, each with a unique ID and fields. Think of it like a database table. Searches run against these indices and return matching documents. Note: this overloads the general term 'index' which also refers to auxiliary data structures like inverted indexes."
+    },
+    {
+      "cat": "Basic Concepts",
+      "q": "What is a mapping in Elasticsearch and why does it matter?",
+      "opts": [
+        "A routing table that maps document IDs to the shards that hold them",
+        "The schema of an index — it defines which fields are searchable, their data types, and how they are processed; unmapped fields waste memory",
+        "A configuration file that maps Elasticsearch nodes to physical servers",
+        "A translation layer that maps SQL queries to Elasticsearch query syntax"
+      ],
+      "ans": 1,
+      "expl": "A mapping is the schema of an index. It defines fields, their types, and how they're processed. Crucially, only mapped fields are searchable. Including fields you don't search on wastes memory and can hurt cluster performance. Careful mapping design is one of the main levers for query optimization."
+    },
+    {
+      "cat": "Basic Concepts",
+      "q": "What is the difference between a 'keyword' and a 'text' field type in Elasticsearch?",
+      "opts": [
+        "Keyword fields support fuzzy matching; text fields require exact matches",
+        "Keyword fields are treated as whole values (like a hash table lookup); text fields are tokenized for full-text search (like a reverse index)",
+        "Keyword fields are stored on disk; text fields are kept in memory",
+        "Keyword fields support sorting; text fields do not"
+      ],
+      "ans": 1,
+      "expl": "A keyword field is treated as a whole, unsplit value — ideal for exact match lookups like IDs (think: hash table). A text field is tokenized and indexed for full-text search — ideal for searching within content like titles or descriptions (think: inverted index). Using the wrong type leads to poor performance or incorrect results."
+    },
+    {
+      "cat": "Documents & Updates",
+      "q": "What is the _version field in an Elasticsearch document response and what is it used for?",
+      "opts": [
+        "It tracks the Elasticsearch version that created the document",
+        "It enables optimistic concurrency control — specifying version=N in an update ensures the update only succeeds if the document hasn't changed since version N",
+        "It records how many times the document has been replicated across shards",
+        "It stores the schema version of the mapping at the time the document was indexed"
+      ],
+      "ans": 1,
+      "expl": "The _version field increments on every update. Specifying ?version=1 in an update request means 'only apply this update if the document is still at version 1.' If another process updated it first, the request fails with a conflict error, giving clients a chance to retry — classic optimistic concurrency control."
+    },
+    {
+      "cat": "Documents & Updates",
+      "q": "Why is using the _update endpoint (partial update) preferable to a full document PUT for concurrent systems?",
+      "opts": [
+        "The _update endpoint is faster because it skips the inverted index rebuild",
+        "A full PUT overwrites the entire document and can lose concurrent changes; _update lets you modify specific fields without fetching or overwriting the full document",
+        "The _update endpoint automatically resolves merge conflicts between concurrent writers",
+        "Full PUT operations require a cluster lock; _update operations do not"
+      ],
+      "ans": 1,
+      "expl": "In a distributed, concurrent system, a full PUT that replaces the entire document can overwrite changes made by another process between your read and write. The _update endpoint lets you specify only the fields you're changing, reducing the window for conflicts. It's especially important because Elasticsearch requests can arrive out of order across nodes."
+    },
+    {
+      "cat": "Search & Queries",
+      "q": "What does TF-IDF stand for and why is it relevant to Elasticsearch?",
+      "opts": [
+        "Total Fields — Indexed Documents Frequency; controls how many fields are scored per query",
+        "Term Frequency — Inverse Document Frequency; the default relevance scoring algorithm that ranks documents by how often a term appears in them vs. how common it is across all documents",
+        "Text Filter — Inverted Document Format; the underlying file format for Lucene segments",
+        "Token Frequency — Index Depth Factor; a parameter controlling search depth in nested queries"
+      ],
+      "ans": 1,
+      "expl": "TF-IDF scores documents by how often a term appears in a document (term frequency) divided by how common the term is across all documents (inverse document frequency). A rare word appearing many times in a document scores higher than a common word. This is the basis for Elasticsearch's default _score relevance ranking."
+    },
+    {
+      "cat": "Search & Queries",
+      "q": "What is the risk of from/size pagination beyond 10,000 results in Elasticsearch?",
+      "opts": [
+        "Elasticsearch enforces a hard limit of 10,000 results per index",
+        "The cluster must retrieve and sort all preceding documents on every request, making deep pagination prohibitively expensive",
+        "from/size pagination doesn't support filtering, only sorting",
+        "Results beyond 10,000 are stored on cold nodes that are too slow to page through"
+      ],
+      "ans": 1,
+      "expl": "With from/size pagination, Elasticsearch must retrieve and sort all preceding documents on every page request to determine the starting offset. For deep pagination (e.g., page 1,000 of 10-per-page results = from:9,990), this overhead becomes prohibitively expensive — hence the default 10,000 result limit."
+    },
+    {
+      "cat": "Search & Queries",
+      "q": "How does search_after pagination work and what is its main limitation?",
+      "opts": [
+        "It uses a server-side cursor to maintain state; the limitation is high memory usage on the cluster",
+        "It uses the sort values of the last document in the previous page as the starting point for the next page; the limitation is you can only move forward — no random page access",
+        "It uses document IDs from the previous page to fetch the next batch; the limitation is it only works with keyword fields",
+        "It caches the full result set server-side; the limitation is the cache expires after 1 minute"
+      ],
+      "ans": 1,
+      "expl": "search_after uses the sort values of the last result as the starting point for the next query — efficient even for deep pagination since it doesn't need to sort preceding documents. The tradeoff: state must be maintained client-side (the last sort values), and you can only page forward sequentially, not jump to an arbitrary page."
+    },
+    {
+      "cat": "Search & Queries",
+      "q": "What problem does Point in Time (PIT) API solve that search_after alone doesn't?",
+      "opts": [
+        "PIT allows backward pagination through results",
+        "PIT creates a consistent snapshot of the index so results don't shift between pages as underlying data is updated or deleted",
+        "PIT enables cross-index searches that span multiple Elasticsearch clusters",
+        "PIT caches query results on the coordinating node for faster repeat pagination"
+      ],
+      "ans": 1,
+      "expl": "search_after alone risks missing documents or seeing duplicates if the underlying index changes between page requests (inserts, deletes, updates). PIT creates a consistent snapshot (point in time) of the index state. All pages of the same search see the same data view, even as the live index changes."
+    },
+    {
+      "cat": "Geospatial Search",
+      "q": "What is the difference between geo_point and geo_shape field types in Elasticsearch?",
+      "opts": [
+        "geo_point stores decimal coordinates; geo_shape stores integer grid cell IDs",
+        "geo_point stores a single lat/lng pair (for things like restaurant locations); geo_shape stores arbitrary geometries like polygons, lines, and circles (for delivery zones, city boundaries)",
+        "geo_point supports radius queries; geo_shape only supports bounding box queries",
+        "geo_point is indexed; geo_shape is stored but not indexed"
+      ],
+      "ans": 1,
+      "expl": "geo_point is for single coordinate pairs — a driver's location, a restaurant pin, a user check-in. geo_shape handles arbitrary geometries — a delivery zone polygon, a road as a line, a city boundary. Both are indexed and searchable, but for different spatial query types."
+    },
+    {
+      "cat": "Geospatial Search",
+      "q": "What indexing structure does Elasticsearch use for geo_point fields, and why is it better than separate B-tree indexes on latitude and longitude?",
+      "opts": [
+        "A geohash sorted set, same as Redis — better because it reuses existing infrastructure",
+        "A BKD tree (block k-d tree) — better because it indexes both coordinates together in 2D space, allowing efficient narrowing of the search space without the strip problem of 1D indexes",
+        "An R-tree of bounding rectangles — better because it supports both points and polygons in one index",
+        "A quadtree — better because it adapts cell size to data density"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch uses a BKD tree (a disk-optimized block variant of the k-d tree) for geo_point fields. Unlike separate B-tree indexes on lat and lng, which each only sort one dimension and produce strips, a BKD tree indexes both coordinates together in 2D, allowing efficient spatial narrowing without the full-table-scan problem."
+    },
+    {
+      "cat": "Cluster Architecture",
+      "q": "What is the role of a Master Node in an Elasticsearch cluster?",
+      "opts": [
+        "It receives all client search requests and distributes them to data nodes",
+        "It coordinates cluster-level operations: adding/removing nodes, creating/deleting indices. Only one is active at a time; others are master-eligible standbys",
+        "It stores the primary shard of every index in the cluster",
+        "It handles data ingestion and transformation before documents reach data nodes"
+      ],
+      "ans": 1,
+      "expl": "The master node is the 'admin' of the cluster — it performs cluster-level operations like adding nodes and managing indices. Only one node is the active master at a time; others that are master-eligible are on standby. When the cluster starts, master-eligible nodes run a leader election to choose the active master."
+    },
+    {
+      "cat": "Cluster Architecture",
+      "q": "What is a Coordinating Node and what does it do during a search?",
+      "opts": [
+        "It stores replicas of shards and serves read-only queries",
+        "It is the entry point for client requests — it parses the query, determines which shards to query, distributes the request, and merges partial results into the final response",
+        "It transforms and enriches documents before they are written to data nodes",
+        "It monitors cluster health and triggers shard rebalancing when nodes are added"
+      ],
+      "ans": 1,
+      "expl": "The coordinating node is the frontend of the cluster. It receives client requests, runs query planning to determine which shards to hit, distributes the query in parallel, and merges partial results from all shards into the final ranked response returned to the client."
+    },
+    {
+      "cat": "Cluster Architecture",
+      "q": "What are the two phases of query execution on a data node?",
+      "opts": [
+        "Index phase (build the inverted index) and search phase (query the index)",
+        "Query phase (identify matching document IDs using index structures) and fetch phase (optionally retrieve the source documents for those IDs)",
+        "Write phase (buffer incoming documents) and merge phase (flush buffered documents to segments)",
+        "Rank phase (score documents by relevance) and sort phase (order results by the sort criteria)"
+      ],
+      "ans": 1,
+      "expl": "Data node query execution has two phases: the query phase uses optimized index structures (inverted index, doc values, BKD trees) to identify matching document IDs and scores; the fetch phase retrieves the actual source documents for those IDs. The ideal query can be answered entirely in the query phase without ever touching source documents."
+    },
+    {
+      "cat": "Shards & Replicas",
+      "q": "What is the relationship between Elasticsearch shards and Lucene indexes?",
+      "opts": [
+        "Each Elasticsearch index maps to one Lucene index shared across all shards",
+        "Elasticsearch shards are 1:1 with Lucene indexes — each shard is backed by exactly one Lucene index",
+        "Lucene indexes are shared across shards for deduplication efficiency",
+        "Each shard contains multiple Lucene indexes, one per document type"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch shards are 1:1 with Lucene indexes. Every shard is backed by exactly one Lucene index. Many Elasticsearch operations (merging, splitting, refreshing, searching) are really proxy operations on the Lucene indexes underneath. The article summarizes Elasticsearch as 'a bunch of availability and scalability on top of a big bag of Lucene indexes.'"
+    },
+    {
+      "cat": "Shards & Replicas",
+      "q": "How do replicas improve both availability and throughput in Elasticsearch?",
+      "opts": [
+        "Replicas improve write throughput by distributing writes across copies; availability is a secondary benefit",
+        "Replicas provide high availability (failover if a primary shard fails) and increased read throughput — if a shard handles X TPS and you have Y replicas, you can handle X × Y TPS for reads",
+        "Replicas reduce indexing latency by pre-building inverted indexes in parallel",
+        "Replicas only improve availability; throughput requires adding more primary shards"
+      ],
+      "ans": 1,
+      "expl": "Replicas serve two purposes: high availability (if a primary shard fails, a replica can take over) and increased read throughput (the coordinating node distributes search requests across primary and replica shards, multiplying read capacity). If a shard handles X TPS and you add Y replicas, you can handle X × Y TPS for reads."
+    },
+    {
+      "cat": "Lucene Segments",
+      "q": "Lucene segments are immutable. How does Elasticsearch handle document updates?",
+      "opts": [
+        "Updates are applied in-place by patching the affected bytes within the segment",
+        "The old document is soft-deleted (marked in a deletion set) and a new document with the updated data is written to a new segment; the deleted document is cleaned up during segment merges",
+        "The segment containing the old document is locked, updated, and re-written atomically",
+        "Updates are queued in a write-ahead log and applied during the next segment flush"
+      ],
+      "ans": 1,
+      "expl": "Because segments are immutable, Elasticsearch can't modify them. Updates are handled by soft-deleting the old document (adding its ID to the segment's deletion set, where it's hidden from queries but still physically present) and inserting a new document. The old document is physically removed during segment merge. This is why updates have worse performance than inserts."
+    },
+    {
+      "cat": "Lucene Segments",
+      "q": "What happens to soft-deleted documents during a segment merge?",
+      "opts": [
+        "Soft-deleted documents are replicated to archive nodes before being removed",
+        "The merged segment physically omits the soft-deleted documents, reclaiming disk space and removing the deletion overhead from future queries",
+        "Soft-deleted documents are moved to a separate 'tombstone' segment for auditing",
+        "Segment merges preserve soft-deleted documents until a manual cleanup operation is run"
+      ],
+      "ans": 1,
+      "expl": "Each segment carries a set of deleted document IDs — queries pretend those documents don't exist. During a merge, the new merged segment is constructed without the deleted documents, physically reclaiming disk space and removing the performance penalty. This is why segment merge frequency matters for clusters with high delete/update rates."
+    },
+    {
+      "cat": "Lucene Segments",
+      "q": "What are the benefits of Lucene's immutable segment architecture?",
+      "opts": [
+        "Immutability allows Elasticsearch to avoid replication entirely for read-heavy workloads",
+        "Segments can be safely cached without consistency concerns, compressed more effectively, read concurrently without locks, and recovered more easily after crashes",
+        "Immutable segments allow Elasticsearch to use a simpler query planner with fewer optimization steps",
+        "Immutability guarantees that all writes are immediately visible to searches without a refresh"
+      ],
+      "ans": 1,
+      "expl": "Immutable segments unlock multiple optimizations: safe memory/SSD caching (data never changes, so cache is always valid), better compression (static data compresses more efficiently), lock-free concurrent reads (no writer can invalidate a reader), and simpler crash recovery (segment state is always consistent). The tradeoff is the need for periodic merges."
+    },
+    {
+      "cat": "Inverted Index",
+      "q": "What is an inverted index and how does it make full-text search fast?",
+      "opts": [
+        "A tree structure that stores documents sorted by their relevance score for common queries",
+        "A mapping from words/tokens to the list of documents containing them — turns an O(n) document scan into an O(1) lookup by term",
+        "A reverse-sorted B-tree that allows scanning documents in descending order of insertion",
+        "A hash of the entire document content used to detect duplicate documents"
+      ],
+      "ans": 1,
+      "expl": "An inverted index maps every unique token to the list of documents containing it (e.g., 'lazy' → [doc12, doc53]). Instead of scanning every document for a word, you look up the word in the index and get the matching document IDs instantly. It turns an O(n) scan into an O(1) lookup — the core of why Elasticsearch keyword search is fast."
+    },
+    {
+      "cat": "Inverted Index",
+      "q": "Why is an inverted index poorly suited for sorting results by a numeric field like price?",
+      "opts": [
+        "Inverted indexes only support string values, not numeric fields",
+        "The inverted index maps tokens to documents — not the other way around. To sort by price you need to read each matched document's price, which means accessing the full row-oriented data, not a contiguous column",
+        "Inverted indexes sort documents lexicographically, making numeric sort incorrect",
+        "Inverted indexes don't store field values at all — only document IDs"
+      ],
+      "ans": 1,
+      "expl": "The inverted index gives you document IDs for a term. To sort by price, you need the price value for each matched document — but in a row-oriented format you'd read entire documents to extract one field. This is the same problem columnar databases solve. Elasticsearch solves it with doc values."
+    },
+    {
+      "cat": "Doc Values",
+      "q": "What are doc values in Lucene and what problem do they solve?",
+      "opts": [
+        "Doc values are the raw JSON source of each document, used for the fetch phase",
+        "Doc values store field values in a columnar format — contiguous in memory per field across all documents in a segment — enabling efficient sorting and aggregations without reading full documents",
+        "Doc values are precomputed relevance scores cached per document for faster re-ranking",
+        "Doc values are the set of deleted document IDs tracked per segment"
+      ],
+      "ans": 1,
+      "expl": "Doc values store one field's values for all documents contiguously in memory (columnar format), similar to how analytics databases like Redshift work. To sort 1M matched documents by price, Elasticsearch reads a contiguous block of price values from doc values rather than reading each full document. This is what makes sorting and aggregations fast."
+    },
+    {
+      "cat": "Query Planning",
+      "q": "You're searching for 'bill nye' in an index where 'bill' appears in 5M documents and 'nye' appears in 500. What is the most efficient query execution order?",
+      "opts": [
+        "Load all documents containing 'bill' and do a string search for 'bill nye'",
+        "Load all documents containing 'nye' (500), then intersect with the documents containing 'bill' and do a string search for 'bill nye' in that small set",
+        "Load all documents containing 'bill' (5M), build a hash set, then scan 'nye' documents for intersection",
+        "Load all documents and do a full text scan for 'bill nye'"
+      ],
+      "ans": 1,
+      "expl": "Starting with the rarest term ('nye', 500 docs) and expanding from there is dramatically more efficient. Load the 500 'nye' documents, intersect with 'bill' documents using the inverted index, and string-search in the tiny resulting set. Loading 5M 'bill' documents first wastes enormous resources. This is exactly the kind of order optimization Elasticsearch's query planner performs."
+    },
+    {
+      "cat": "Query Planning",
+      "q": "What does the query planner in Elasticsearch use to decide the most efficient execution order?",
+      "opts": [
+        "The query planner always executes filters before full-text queries regardless of selectivity",
+        "Statistics about field types, keyword popularity, and document lengths — allowing it to dynamically choose the lowest-cost execution path based on actual data distribution",
+        "The query planner follows the order clauses appear in the JSON query body",
+        "The query planner uses the mapping types to determine which fields to evaluate first"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch's query planner keeps statistics on keyword frequency, document lengths, and field types. It uses these to dynamically choose between multiple valid execution plans, picking the one that minimizes work. This data-dependence is why database query planners are so powerful — they adapt to the actual data rather than following a fixed rule."
+    },
+    {
+      "cat": "Using Elasticsearch in Interviews",
+      "q": "What is the recommended relationship between Elasticsearch and your primary database in a system design?",
+      "opts": [
+        "Elasticsearch should be the primary database since it's faster than Postgres for all query types",
+        "Elasticsearch is a search index attached to an authoritative data store (like Postgres or DynamoDB) via CDC — the primary DB is the source of truth, Elasticsearch is for search",
+        "Elasticsearch and the primary database should be kept in sync using two-phase commit for consistency",
+        "Elasticsearch should replace the primary database once the dataset exceeds 100k documents"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch is a search engine, not a database. The canonical pattern in interviews is: authoritative data lives in a primary store (Postgres, DynamoDB), and Elasticsearch is populated via Change Data Capture (CDC). If the ES index is lost or corrupted, you can rebuild it from the source of truth. Never make ES your system of record."
+    },
+    {
+      "cat": "Using Elasticsearch in Interviews",
+      "q": "Why is Elasticsearch a poor fit for write-heavy workloads?",
+      "opts": [
+        "Elasticsearch doesn't support bulk insert operations, requiring one HTTP request per document",
+        "Updates require soft-deleting old documents and inserting new ones, segment merges are expensive, and the immutable segment architecture is optimized for reads not writes",
+        "Elasticsearch's eventual consistency model means writes are rejected during high load",
+        "Elasticsearch has a hard limit of 1,000 writes per second per node"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch is designed for read-heavy workloads. Updates are worse than inserts (soft delete + insert + future merge cleanup). High-frequency writes like impression counts or like counts cause constant segment churn. The article explicitly warns: 'if you're dealing with a write-heavy system, you might want to consider other options or implement a write buffer.'"
+    },
+    {
+      "cat": "Using Elasticsearch in Interviews",
+      "q": "What consistency model does Elasticsearch use, and what does this mean for your design?",
+      "opts": [
+        "Strong consistency — all reads reflect the most recent write",
+        "Eventual consistency — search results may be stale, sometimes significantly, so use cases requiring real-time accuracy may need alternatives",
+        "Read-your-writes consistency — a writer always sees their own updates immediately",
+        "Linearizable consistency — guaranteed by the master node coordinating all writes"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch is eventually consistent. Indexed documents aren't immediately visible — they appear after a refresh (default: 1 second). Replicas may lag further. If your use case can't tolerate stale results, you need to account for this or consider alternatives. This is a common gotcha in interview designs that use ES for real-time data."
+    },
+    {
+      "cat": "Using Elasticsearch in Interviews",
+      "q": "When is Elasticsearch overkill and a simpler solution is better?",
+      "opts": [
+        "When the dataset has more than 1 million documents",
+        "When the data is small (under ~100k documents) or doesn't change often — a simple query against the primary data store may be sufficient",
+        "When the search involves sorting and filtering, which Elasticsearch handles poorly",
+        "When the data is unstructured JSON, which Elasticsearch can't map correctly"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly states: 'Not all search problems require it! If your data is small (< 100k documents) or doesn't change often, there are many other and faster solutions.' Postgres with a full-text index handles many search problems. Only reach for Elasticsearch when you've identified a genuine limitation in simpler approaches."
+    },
+    {
+      "cat": "Using Elasticsearch in Interviews",
+      "q": "Why is denormalization important when designing data for Elasticsearch?",
+      "opts": [
+        "Elasticsearch requires flat documents — it doesn't support nested or array fields",
+        "Elasticsearch has no joins; related data must be embedded in documents so queries can be answered from 1–2 requests without cross-index lookups",
+        "Denormalized data reduces the number of shards needed, improving write throughput",
+        "Elasticsearch charges per field in the mapping, so fewer fields reduces cost"
+      ],
+      "ans": 1,
+      "expl": "Elasticsearch has no joins and no cross-index query merging. If data is normalized across multiple indexes, you can't join them at query time. You must denormalize on the write side — embedding related data into documents — so searches can be answered with 1–2 queries. This is a key design consideration in any ES-backed system."
+    },
+    {
+      "cat": "Architecture Lessons",
+      "q": "What broader system design lesson does the Lucene segment immutability model illustrate?",
+      "opts": [
+        "Immutability always reduces write throughput, so it should only be used for archival storage",
+        "Immutability at the right layer enables powerful optimizations — caching, compression, lock-free reads, and simpler crash recovery — that are much harder to achieve with mutable data",
+        "Immutability eliminates the need for replication since data can never be corrupted",
+        "Immutability shifts all complexity to the write path, making reads trivially simple"
+      ],
+      "ans": 1,
+      "expl": "One of the article's explicit lessons: immutability can be a powerful design tool when applied at the right layer. By making segments immutable, Lucene enables safe caching, better compression, lock-free concurrent reads, and simpler recovery. The tradeoff (periodic merges) is manageable compared to the benefits. This pattern applies broadly in infrastructure design."
+    },
+    {
+      "cat": "Architecture Lessons",
+      "q": "What is the role of the nested field type in Elasticsearch and what is its tradeoff vs. a separate index?",
+      "opts": [
+        "Nested fields enable joins between documents stored in different shards",
+        "Nested fields embed related documents (e.g., reviews inside a book) for efficient co-located queries; the tradeoff is updates to nested documents require re-indexing the entire parent, similar to a denormalization tradeoff",
+        "Nested fields compress related data together to reduce storage overhead",
+        "Nested fields are faster to index than flat fields because they batch related writes"
+      ],
+      "ans": 1,
+      "expl": "Nested fields embed related documents (e.g., reviews inside books) so queries can access them together without cross-index lookups. The tradeoff is normalization vs. denormalization: if reviews are infrequently updated and frequently queried alongside books, nesting is efficient. If reviews update often or are queried independently, a separate reviews index is better."
+    },
+    {
+      "cat": "Architecture Lessons",
+      "q": "What is Change Data Capture (CDC) and why is it important for keeping Elasticsearch in sync?",
+      "opts": [
+        "CDC is Elasticsearch's internal mechanism for syncing primary and replica shards",
+        "CDC captures changes from a primary database (inserts, updates, deletes) and streams them to Elasticsearch to keep the search index in sync with the source of truth",
+        "CDC is a cache invalidation strategy that removes stale Elasticsearch documents when the primary DB changes",
+        "CDC is Elasticsearch's cluster coordination protocol for maintaining consistent shard state"
+      ],
+      "ans": 1,
+      "expl": "CDC captures a stream of changes from a primary database (Postgres, DynamoDB, etc.) and applies them to Elasticsearch in near real-time. This keeps the ES search index synchronized with the authoritative data store. Failures in synchronization cause drift — documents in ES that don't reflect the current state of the primary DB — which is a common source of bugs."
+    },
+    {
+      "cat": "Architecture Lessons",
+      "q": "How does Elasticsearch's doc values structure relate to columnar databases like Redshift?",
+      "opts": [
+        "Both use inverted indexes to map column values to row IDs",
+        "Both store a single column's values contiguously in memory/disk so reading a field across many rows/documents is a sequential memory read rather than scattered row-level access",
+        "Both use immutable segments to eliminate write-write conflicts",
+        "Both require denormalized schemas to avoid join operations at query time"
+      ],
+      "ans": 1,
+      "expl": "Doc values and columnar databases like Redshift share the same key insight: storing one field/column's values contiguously for all documents/rows makes reading that field across many records a sequential memory scan. This is dramatically faster than row-oriented access where you'd read entire rows just to extract one field's value."
+    }
+  ]
+}

@@ -1,0 +1,439 @@
+{
+  "title": "Redis",
+  "subtitle": "35 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "redis_quiz_progress",
+  "questions": [
+    {
+      "cat": "Redis Basics",
+      "q": "Why does Redis execute commands on a single thread, and what does this guarantee?",
+      "opts": [
+        "Single-threading reduces memory usage by avoiding thread stack allocation",
+        "Command execution never needs locks and commands execute one at a time in order, making behavior easy to reason about",
+        "Single-threading allows Redis to use faster CPU cache lines than multi-threaded systems",
+        "It ensures all data is flushed to disk before the next command runs"
+      ],
+      "ans": 1,
+      "expl": "Redis's single-threaded design is deliberate: because only one command runs at a time, there are no race conditions and no locks needed. The mental model is simple — one command at a time, in order. For operations this simple, a single core is rarely the bottleneck."
+    },
+    {
+      "cat": "Redis Basics",
+      "q": "What are the two persistence modes in Redis and their key tradeoffs?",
+      "opts": [
+        "WAL (loses no data) and AOF (loses up to 1 minute of data)",
+        "RDB (periodic snapshots — a crash loses everything since the last snapshot) and AOF (logs every write — a crash loses up to 1 second of writes by default)",
+        "Sync mode (every write flushed to disk) and Async mode (writes buffered in memory)",
+        "Snapshot mode (instant recovery) and Streaming mode (continuous replication to disk)"
+      ],
+      "ans": 1,
+      "expl": "RDB takes periodic snapshots — a crash loses all writes since the last snapshot. AOF logs every write but only fsyncs once per second by default, so a crash can lose up to one second of acknowledged writes. Neither gives you the commit-is-on-disk guarantee of a relational database without extra configuration."
+    },
+    {
+      "cat": "Redis Basics",
+      "q": "What is the core underlying structure of Redis?",
+      "opts": [
+        "A relational table store where keys map to typed rows",
+        "A key-value store where every object is a value stored at a string key, and the value is where the data structure lives",
+        "A document store where keys map to JSON blobs",
+        "A graph store where keys represent nodes and values represent edges"
+      ],
+      "ans": 1,
+      "expl": "Redis is fundamentally a key-value store. Every object in Redis is a value at a string key — whether it's a string, hash, list, set, sorted set, or stream. When you create a sorted set, you're storing it as the value at whatever key you chose."
+    },
+    {
+      "cat": "Redis Basics",
+      "q": "Which of these is NOT a core data structure natively supported by Redis?",
+      "opts": [
+        "Sorted Sets",
+        "Streams",
+        "Geospatial Indexes",
+        "B-tree indexes"
+      ],
+      "ans": 3,
+      "expl": "Redis supports Strings, Hashes, Lists, Sets, Sorted Sets, Streams, and Geospatial Indexes as core data structures. Redis 8 also adds Bloom filters, JSON, and time series in core. B-tree indexes are a database engine concept — Redis has no such structure."
+    },
+    {
+      "cat": "Infrastructure",
+      "q": "How does Redis cluster sharding work?",
+      "opts": [
+        "Data is split by data type — all strings on one node, all hashes on another",
+        "Every key hashes to one of 16,384 hash slots, each slot is assigned to a node, and clients cache the slot-to-node mapping to connect directly",
+        "A central router node receives all requests and forwards them to the correct data node",
+        "Data is split by key length — short keys on primary nodes, long keys on replicas"
+      ],
+      "ans": 1,
+      "expl": "Redis cluster hashes every key to one of 16,384 hash slots. Each slot is assigned to a node. Clients cache the slot-to-node mapping and can compute which node owns a key, connecting directly. When you add a node, slots and their keys migrate to it."
+    },
+    {
+      "cat": "Infrastructure",
+      "q": "What happens when a Redis client sends a command to the wrong node in a cluster?",
+      "opts": [
+        "The wrong node forwards the request to the correct node transparently",
+        "The wrong node returns a MOVED reply pointing at the correct node — the node won't forward the request itself",
+        "The wrong node returns an error and drops the connection",
+        "The wrong node replicates the command to all nodes and the correct one executes it"
+      ],
+      "ans": 1,
+      "expl": "The node won't forward requests on your behalf. It replies with MOVED and the address of the correct node. This is why clients cache the slot map — to hit the right node on the first try and avoid the extra MOVED round trip."
+    },
+    {
+      "cat": "Infrastructure",
+      "q": "What is the replication failure mode that makes Redis unsuitable as a system of record?",
+      "opts": [
+        "Redis replicas use synchronous replication but can still fall behind under high load",
+        "Redis replication is asynchronous — the primary acknowledges a write before the replica has seen it, so a primary failure can cause acknowledged writes to vanish",
+        "Redis replicas compress data, so a failover may return different byte representations",
+        "Redis replicas only sync once per minute by default, causing large data loss windows"
+      ],
+      "ans": 1,
+      "expl": "Redis replication is asynchronous. The primary acknowledges your write before the replica has seen it. If the primary dies and a replica is promoted, the last moments of acknowledged writes can simply vanish. This is the deepest reason Redis isn't a system of record."
+    },
+    {
+      "cat": "Infrastructure",
+      "q": "What are hash tags in Redis and why are they useful?",
+      "opts": [
+        "A way to add metadata labels to keys for monitoring and observability",
+        "Only the part of the key inside {braces} gets hashed, ensuring keys with the same tag land on the same slot — enabling multi-key operations on related data",
+        "A compression scheme that hashes long key names to shorter internal identifiers",
+        "A TTL mechanism that automatically expires keys matching a pattern"
+      ],
+      "ans": 1,
+      "expl": "Hash tags make keys with the same {tag} hash to the same slot. So {user:123}:posts and {user:123}:likes always land on the same node, enabling MULTI transactions and other multi-key operations across both. Without hash tags, two keys might land on different nodes and cross-key operations would fail."
+    },
+    {
+      "cat": "Infrastructure",
+      "q": "What does READONLY do in Redis cluster mode and what is the tradeoff?",
+      "opts": [
+        "It prevents any writes to the cluster for the duration of a transaction",
+        "It allows a client connection to read from replicas instead of primaries, accepting reads that may lag behind the primary",
+        "It locks a key so only the current connection can read it",
+        "It enables read-your-writes consistency by routing reads to the primary that accepted the last write"
+      ],
+      "ans": 1,
+      "expl": "READONLY issued on a connection allows replica reads in cluster mode. Outside cluster mode you point read traffic at the replica directly. Either way, you're accepting reads that run a replication lag behind the primary — eventual consistency, not strong consistency."
+    },
+    {
+      "cat": "Performance",
+      "q": "Approximately how many writes per second can a single Redis node handle?",
+      "opts": [
+        "~1,000 writes/second",
+        "~10,000 writes/second",
+        "~100,000 writes/second",
+        "~1,000,000 writes/second"
+      ],
+      "ans": 2,
+      "expl": "A single Redis node can handle around 100,000 writes per second. Commands execute in microseconds, and over the network you see sub-millisecond reads. This speed is entirely a function of Redis's in-memory nature."
+    },
+    {
+      "cat": "Performance",
+      "q": "The article says the N+1 query pattern is 'ruinous against a SQL database but acceptable with Redis.' Why?",
+      "opts": [
+        "Redis has a query optimizer that automatically batches N+1 queries internally",
+        "Each Redis command costs the server microseconds, and you can pipeline commands or use MGET to pay one round trip instead of many — making N+1 far less damaging",
+        "Redis uses connection pooling that amortizes the cost of N+1 queries automatically",
+        "Redis caches the results of N+1 patterns and returns them from memory on repeat calls"
+      ],
+      "ans": 1,
+      "expl": "Redis commands execute in microseconds. You can pipeline multiple commands or use MGET to batch them into one round trip. The N+1 pattern still isn't ideal, but it won't sink your design the way it would with a SQL database where each query might cost milliseconds and hit disk."
+    },
+    {
+      "cat": "Redis as a Cache",
+      "q": "What is the difference between TTL expiration and eviction in Redis?",
+      "opts": [
+        "TTL expiration removes keys immediately; eviction waits until memory is 90% full",
+        "TTL expiration handles staleness — Redis never returns an expired key. Eviction handles memory pressure — Redis discards keys (e.g. LRU) when memory is full",
+        "TTL expiration is for strings only; eviction applies to all data types",
+        "TTL expiration is synchronous; eviction is an asynchronous background process"
+      ],
+      "ans": 1,
+      "expl": "TTL handles staleness: Redis guarantees you'll never read a key after its TTL expires. Out of the box, Redis rejects writes when memory is full — for a cache you configure an eviction policy like allkeys-lru so Redis discards least-recently-used keys to make room. These are two separate mechanisms."
+    },
+    {
+      "cat": "Redis as a Cache",
+      "q": "How does Redis approximate LRU eviction?",
+      "opts": [
+        "Redis maintains a doubly-linked list of all keys in access order",
+        "Redis samples a subset of keys and evicts the least recently used among the sample — accurate enough for a cache without the overhead of exact tracking",
+        "Redis uses a min-heap of access timestamps sorted by key hash",
+        "Redis tracks exact access order using a timestamp field embedded in each value"
+      ],
+      "ans": 1,
+      "expl": "Redis approximates LRU by sampling keys rather than tracking exact access order. Maintaining a true LRU list for millions of keys would be expensive. Sampling is plenty accurate for cache use cases."
+    },
+    {
+      "cat": "Distributed Locks",
+      "q": "What does the NX flag do in the command: SET lock:concert:343 my-token NX EX 30?",
+      "opts": [
+        "NX sets a 'no expiry' flag, overriding the EX 30",
+        "NX makes the SET succeed only if the key does NOT already exist — if the key exists, the command fails and you don't acquire the lock",
+        "NX means 'no cross-slot' — restricting the lock key to a single hash slot",
+        "NX enables atomic compare-and-swap behavior on the value"
+      ],
+      "ans": 1,
+      "expl": "NX (Not eXists) makes the SET succeed only if the key doesn't already exist. If it succeeds, you own the lock. If it fails, someone else holds it. The EX 30 adds a 30-second expiry so a crashed process can't hold the lock forever."
+    },
+    {
+      "cat": "Distributed Locks",
+      "q": "Why should you use a Lua script to release a Redis lock instead of just calling DEL?",
+      "opts": [
+        "DEL is slower than a Lua script for single-key deletions",
+        "Your lock may have expired and been acquired by someone else — a blind DEL removes their lock. A Lua script atomically checks the token matches yours before deleting",
+        "DEL doesn't work on keys with TTLs set by EX",
+        "Lua scripts bypass the Redis single-thread model for faster lock release"
+      ],
+      "ans": 1,
+      "expl": "If your lock expired and someone else acquired it, a blind DEL deletes their lock, not yours. The correct approach: check the key still holds your unique token, then delete. This check-and-delete must be atomic — a Lua script runs as a single command on Redis's single thread, ensuring atomicity."
+    },
+    {
+      "cat": "Distributed Locks",
+      "q": "What is the difference between pessimistic and optimistic locking in Redis?",
+      "opts": [
+        "Pessimistic locking uses TTLs; optimistic locking uses Lua scripts",
+        "Pessimistic locking (SET NX) grabs the lock before doing work. Optimistic locking (WATCH + MULTI/EXEC) proceeds without a lock and aborts the transaction if the watched key changed",
+        "Pessimistic locking works on a single node; optimistic locking requires a cluster",
+        "Pessimistic locking is for reads; optimistic locking is for writes"
+      ],
+      "ans": 1,
+      "expl": "The SET NX pattern is pessimistic — you grab the lock before doing work, blocking others. WATCH + MULTI/EXEC is optimistic — you proceed without a lock and Redis aborts the transaction if a watched key changed between your WATCH and EXEC. The article explicitly names this distinction."
+    },
+    {
+      "cat": "Distributed Locks",
+      "q": "What is the Redlock algorithm and why is it controversial?",
+      "opts": [
+        "Redlock uses a single Redis node with stronger fsync settings for durability; controversial because it's slower",
+        "Redlock acquires a lock on a majority of independent Redis nodes to survive a primary failure; controversial because a paused client can still act after its lock expires, and a fencing token is needed to truly prevent stale writes",
+        "Redlock is a cluster-wide lock that blocks all other operations; controversial because it hurts throughput",
+        "Redlock uses ZooKeeper under the hood; controversial because it adds an external dependency"
+      ],
+      "ans": 1,
+      "expl": "Redlock acquires the lock on a majority of independent Redis nodes so a single primary failure doesn't grant the lock to two holders. It's controversial because a paused or slow client can still act after its lock has expired. The standard defense is a fencing token — a monotonically increasing number that the storage layer uses to reject stale writes. Redis provides no built-in fencing token."
+    },
+    {
+      "cat": "Distributed Locks",
+      "q": "When should you NOT use a Redis lock for correctness?",
+      "opts": [
+        "When more than 10 app servers need to acquire the same lock",
+        "When a stale lock holder could corrupt data — in that case enforce the invariant at the data layer (e.g. conditional UPDATE WHERE version=X) or use a consensus system like ZooKeeper",
+        "When the lock needs to be held for more than 30 seconds",
+        "When the locked resource is stored in a SQL database rather than Redis"
+      ],
+      "ans": 1,
+      "expl": "The article is clear: treat a Redis lock as an efficiency tool that occasionally fails, not a correctness guarantee. If a stale lock holder would corrupt data, enforce the invariant where the data lives (e.g. SELECT FOR UPDATE or conditional UPDATE WHERE version=X) or use a consensus system like ZooKeeper or etcd."
+    },
+    {
+      "cat": "Leaderboards",
+      "q": "Why are Redis sorted sets a natural fit for leaderboards?",
+      "opts": [
+        "Sorted sets store data in insertion order, making it easy to show newest entries first",
+        "Sorted sets maintain ordered data queryable in O(log n) time with high write throughput and low read latency — all the properties a real-time leaderboard needs",
+        "Sorted sets automatically expire low-ranked entries after a configurable TTL",
+        "Sorted sets support full-text search on member names for filtering the leaderboard"
+      ],
+      "ans": 1,
+      "expl": "Sorted sets keep members ordered by score in O(log n) time. ZADD updates a member's score (its rank) in place. Combined with Redis's high write throughput and low read latency, this makes sorted sets ideal for real-time leaderboards at scale where SQL would struggle."
+    },
+    {
+      "cat": "Leaderboards",
+      "q": "What does ZREMRANGEBYRANK tiger_posts 0 -6 do?",
+      "opts": [
+        "Removes the top 6 ranked posts from the sorted set",
+        "Removes all entries from rank 0 up to the 6th-from-top, leaving exactly the top 5",
+        "Removes all entries with a score between 0 and 6",
+        "Removes entries at positions 0 and -6 (the lowest and 6th-from-top)"
+      ],
+      "ans": 1,
+      "expl": "Negative indexes in ZREMRANGEBYRANK count from the highest rank. Rank -6 is the 6th from the top. Removing ranks 0 through -6 clears everything from the lowest score up to and including the 6th-from-top, leaving exactly the top 5. This is how you cap a leaderboard to a fixed size."
+    },
+    {
+      "cat": "Rate Limiting",
+      "q": "In a fixed-window rate limiter with Redis, why should you only set the TTL/EXPIRY when INCR returns 1?",
+      "opts": [
+        "Because INCR returns 1 only when the counter reaches the rate limit",
+        "Because setting EXPIRE on every request keeps pushing the reset window forward — a steady stream of traffic would never get a fresh window. Setting it only on INCR=1 starts the window at the first request",
+        "Because Redis only allows one EXPIRE per key per second",
+        "Because calling EXPIRE after INCR creates a race condition that can corrupt the counter"
+      ],
+      "ans": 1,
+      "expl": "If you call EXPIRE on every request, you keep pushing the window's reset time forward. A steady stream of traffic never gets a clean window — the rate limiter would never reset. Setting EXPIRE only when INCR returns 1 (the first request in a new window) starts the window correctly."
+    },
+    {
+      "cat": "Rate Limiting",
+      "q": "How do you implement a sliding window rate limiter in Redis?",
+      "opts": [
+        "Use INCR with a key that includes the current minute timestamp, and compare against the limit",
+        "Use a sorted set with request timestamps as scores: ZREMRANGEBYSCORE to drop old entries, ZCARD to count remaining, ZADD to add the new request — all in a Lua script for atomicity",
+        "Use a Redis hash where each field is a second in the window and the value is the request count",
+        "Use a Redis list where each element is a request timestamp and LLEN gives the current count"
+      ],
+      "ans": 1,
+      "expl": "A sliding window uses a sorted set per user with timestamps as scores. On each request: ZREMRANGEBYSCORE drops entries older than the window, ZCARD counts what's left, and if under the limit, ZADD adds the new request. The whole sequence runs in a Lua script for atomicity."
+    },
+    {
+      "cat": "Proximity Search",
+      "q": "What data structure does Redis use internally for geospatial commands like GEOADD?",
+      "opts": [
+        "An R-tree of bounding rectangles stored in a hash",
+        "Geohashes — latitude and longitude interleaved into a single sortable value stored in a sorted set",
+        "A quadtree subdividing the globe into cells stored as nested hashes",
+        "A flat array of (lat, lng, member) tuples scanned linearly on each query"
+      ],
+      "ans": 1,
+      "expl": "Redis geospatial commands use geohashes under the hood — latitude and longitude are encoded into a single sortable integer value stored as the score in a sorted set. This is why GEOSEARCH can use sorted set range operations to find candidates efficiently."
+    },
+    {
+      "cat": "Proximity Search",
+      "q": "Why does GEOSEARCH return O(N + log M) results — what do N and M represent?",
+      "opts": [
+        "N is the number of nodes in the cluster; M is the number of shards storing geo data",
+        "N is candidates inside the grid-aligned bounding box (first pass), M is items within the exact radius after filtering (second pass)",
+        "N is the number of geohash levels traversed; M is the number of members in the result set",
+        "N is the total members in the geo index; M is the number of members matching the radius"
+      ],
+      "ans": 1,
+      "expl": "Geohash boxes are square and grid-aligned, so the first pass grabs N candidates inside the bounding box around the search area (the log term comes from seeking into the sorted set). A second pass filters those N candidates down to M items actually within the exact radius. This is the standard candidate-set-then-filter pattern."
+    },
+    {
+      "cat": "Streams",
+      "q": "What is the key difference between Redis Streams and Redis Pub/Sub?",
+      "opts": [
+        "Streams support multiple channels; Pub/Sub only supports one channel per connection",
+        "Streams persist messages so consumers can catch up on what they missed; Pub/Sub is ephemeral — if you're offline when a message is published, you miss it",
+        "Pub/Sub is faster for high-throughput scenarios; Streams are for low-throughput ordered processing",
+        "Streams require a cluster; Pub/Sub works on a single node only"
+      ],
+      "ans": 1,
+      "expl": "Streams are append-only logs — consumers can catch up on missed messages, consumer groups track which messages are pending, and XCLAIM allows a worker to claim a message from a dead worker. Pub/Sub is ephemeral: messages are delivered only to currently-connected subscribers. Miss it and it's gone."
+    },
+    {
+      "cat": "Streams",
+      "q": "How does a Redis stream consumer group handle a worker that dies mid-task?",
+      "opts": [
+        "The message is automatically re-queued after a fixed 30-second timeout",
+        "The consumer group tracks pending entries with idle times; when a worker's idle time climbs past a threshold, another worker can claim the message with XCLAIM or XAUTOCLAIM and restart the job",
+        "The consumer group marks the message as failed and sends it to a dead-letter queue",
+        "Redis automatically detects the dead worker via heartbeat and reassigns all its pending messages"
+      ],
+      "ans": 1,
+      "expl": "The consumer group tracks which items are pending with which worker, and each pending entry carries an idle time. When a worker dies, its entry's idle time keeps climbing. Another worker can claim it with XCLAIM (or XAUTOCLAIM). Since Redis can't tell a slow worker from a dead one, a message can be processed twice — make your processing idempotent."
+    },
+    {
+      "cat": "Streams",
+      "q": "When should you use Kafka instead of Redis Streams?",
+      "opts": [
+        "When your messages are larger than 1MB",
+        "When you need long retention, replay for many independent consumers, or durable ordered throughput at a scale where losing a message is unacceptable",
+        "When you need consumer groups — Redis Streams don't support them",
+        "When your producers and consumers are in different data centers"
+      ],
+      "ans": 1,
+      "expl": "Redis Streams are great for modest queues when Redis is already in your stack: background jobs, notification fan-out, work distribution. Kafka earns its operational complexity when you need long retention, replay for many independent consumers, or durable ordered throughput at a scale where losing a message is unacceptable."
+    },
+    {
+      "cat": "Pub/Sub",
+      "q": "What is the delivery guarantee of Redis Pub/Sub?",
+      "opts": [
+        "At-least-once — messages are retried until acknowledged by all subscribers",
+        "At-most-once — if a subscriber is offline when a message is published, it misses it entirely",
+        "Exactly-once — Redis deduplicates messages using message IDs",
+        "Best-effort with replay — subscribers can request missed messages up to 24 hours later"
+      ],
+      "ans": 1,
+      "expl": "Redis Pub/Sub is at-most-once delivery. Messages are delivered only to currently-connected subscribers. If a subscriber is offline when a message is published, it misses it entirely — messages are not persisted. For durability or replay, use Redis Streams or a message broker like Kafka."
+    },
+    {
+      "cat": "Pub/Sub",
+      "q": "What was the scalability limitation of classic Redis Pub/Sub in cluster mode, and how was it fixed in Redis 7?",
+      "opts": [
+        "Classic Pub/Sub required one connection per channel; Redis 7 allows one connection per node",
+        "Classic cluster Pub/Sub broadcast every message to every node, so adding nodes didn't add capacity; Redis 7's sharded Pub/Sub (SPUBLISH/SSUBSCRIBE) routes each channel to the shard that owns its slot",
+        "Classic Pub/Sub had a 64-channel limit per node; Redis 7 raised this to unlimited",
+        "Classic Pub/Sub didn't support wildcard subscriptions in cluster mode; Redis 7 added PSUBSCRIBE support"
+      ],
+      "ans": 1,
+      "expl": "Classic cluster Pub/Sub broadcast every message to every node — adding nodes added no capacity. Since Redis 7, sharded Pub/Sub (SPUBLISH/SSUBSCRIBE) routes each channel to the shard that owns its slot, just like any key. Capacity now scales with the cluster."
+    },
+    {
+      "cat": "Pub/Sub",
+      "q": "Why does a subscriber only need one TCP connection per node regardless of how many channels it subscribes to?",
+      "opts": [
+        "Redis multiplexes channels inside a single command pipeline",
+        "A subscriber holds one connection to a node and receives all subscribed channels over that single connection — connection overhead is per node, not per channel",
+        "Redis automatically merges multiple subscriptions into a single virtual channel",
+        "The RESP protocol allows multiple channels to share a connection via header multiplexing"
+      ],
+      "ans": 1,
+      "expl": "Connection overhead in Redis Pub/Sub is per node, not per channel. A subscriber holds one connection to a node and receives all of its subscribed channels over that single connection. With sharded Pub/Sub, each channel hashes to a slot, so a subscriber only needs connections to the nodes owning the channels it cares about."
+    },
+    {
+      "cat": "Pub/Sub",
+      "q": "Why does 'rolling your own Pub/Sub' with a Redis key storing subscriber addresses add more complexity than using native Pub/Sub?",
+      "opts": [
+        "Custom implementations can't use RESP protocol, requiring a slower HTTP fallback",
+        "It adds a third network hop (fetch subscribers → get addresses → send to each), requires establishing new TCP connections per message, and needs a heartbeat to detect dead servers — far more complexity than native Pub/Sub",
+        "Custom implementations can't handle more than 100 subscribers per topic",
+        "Redis keys storing sets of addresses are limited to 512MB, capping the number of subscribers"
+      ],
+      "ans": 1,
+      "expl": "Native Pub/Sub: 2 hops (client → Pub/Sub node → subscribers). Custom: 3 hops, and the third requires new TCP connections to each subscriber. Plus, you need a heartbeat mechanism to detect and remove dead servers from the subscriber map. Native Pub/Sub auto-removes channels with no active subscribers. Much more complexity for no real gain."
+    },
+    {
+      "cat": "Hot Keys",
+      "q": "What is the 'hot key' problem in Redis?",
+      "opts": [
+        "A key that hasn't been accessed in a long time and is about to be evicted",
+        "A single key that absorbs disproportionate traffic — all requests for it hit the one node owning its slot, overwhelming that node while others sit idle",
+        "A key with a very large value that takes too long to serialize",
+        "A key that is updated so frequently it causes replication lag on its slot's replica"
+      ],
+      "ans": 1,
+      "expl": "A hot key is one that gets far more traffic than other keys. In a Redis cluster, a key always lives on one node (the node owning its hash slot). If one key gets as much traffic as all other keys combined, that node gets overwhelmed while all other nodes are underutilized."
+    },
+    {
+      "cat": "Hot Keys",
+      "q": "How does the 'key copies' approach mitigate hot keys?",
+      "opts": [
+        "The hot key is replicated to all nodes so any node can serve it",
+        "The same data is stored under multiple keys (e.g. product:123:1 through :10) that hash to different slots on different nodes; readers pick a suffix at random to spread load",
+        "The hot key is compressed and split across multiple fields in a hash",
+        "Redis automatically detects hot keys and creates copies in background"
+      ],
+      "ans": 1,
+      "expl": "Store the same data under several keys (product:123:1 through product:123:10). These different keys hash to different slots on different nodes. Readers pick a random suffix, spreading load across nodes. Every write must fan out to all copies, and clients must know which keys are hot — the main operational cost."
+    },
+    {
+      "cat": "Hot Keys",
+      "q": "Why do read replicas NOT solve a write-hot key problem?",
+      "opts": [
+        "Replicas in Redis cluster mode don't support READONLY connections",
+        "Replicas only multiply read capacity — every write still lands on the one primary that owns the slot, so a write-heavy hot key is still a bottleneck on that primary",
+        "Replicas have slower write throughput than primaries due to replication overhead",
+        "Replicas don't help because hot keys always expire before replicas can sync them"
+      ],
+      "ans": 1,
+      "expl": "Read replicas multiply read capacity, which helps if the hot key is read-heavy. But every write still goes to the one primary owning the slot. If the hot key is write-hot (e.g. a counter being incremented constantly), replicas do nothing — all writes still hammer the same primary."
+    },
+    {
+      "cat": "When Not to Use Redis",
+      "q": "Which of these is a valid reason NOT to use Redis?",
+      "opts": [
+        "You need sub-millisecond read latency for simple key lookups",
+        "Your working set can't economically fit in RAM — memory is the most expensive place to store data, and Redis loses its core advantage if you're paging to disk",
+        "You need to run more than 100,000 reads per second",
+        "Your data changes more frequently than once per second"
+      ],
+      "ans": 1,
+      "expl": "Redis's speed comes entirely from keeping data in memory. If your working set can't fit in RAM, you're either spending a lot on memory or degrading to disk-based access — at which point a disk-optimized database is a better fit. The article lists this as one of the clear 'when not to use Redis' cases."
+    },
+    {
+      "cat": "When Not to Use Redis",
+      "q": "When is Kafka the right choice over Redis Streams?",
+      "opts": [
+        "When you need consumer groups with exactly-once delivery",
+        "When you need long retention, replay for many independent consumers, or durable ordered throughput where losing a message is unacceptable",
+        "When your message payload exceeds 1MB",
+        "When producers and consumers are in different programming languages"
+      ],
+      "ans": 1,
+      "expl": "Redis Streams are great when Redis is already in your stack and the queue is modest. Kafka earns its operational complexity for long retention, replay for many independent consumers, or durable ordered throughput at a scale where losing a message is unacceptable. Redis stream durability is only as good as your persistence settings."
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "title": "Proximity Search — Flashcards",
+  "subtitle": "38 cards across 7 categories · Click to flip",
+  "storageKey": "proximity_search_flashcards_progress",
+  "cards": [
+    {
+      "cat": "The Core Problem",
+      "type": "concept",
+      "q": "Why lat/lng queries can't use a regular B-tree",
+      "a": "A B-tree sorts on one dimension. Proximity needs 2D closeness. Flatten the map to one axis and geographic neighbors can land far apart in the index.",
+      "ex": ""
+    },
+    {
+      "cat": "The Core Problem",
+      "type": "concept",
+      "q": "Why a composite index on (lat, lng) doesn't help",
+      "a": "A composite B-tree still sorts by lat first, lng only to break ties. The result is a horizontal strip of the earth — still millions of irrelevant rows, no 2D distance ranking.",
+      "ex": ""
+    },
+    {
+      "cat": "The Core Problem",
+      "type": "concept",
+      "q": "What a spatial index actually does",
+      "a": "It doesn't give the final answer. It turns 'check every row' into a small candidate set. You still finish with exact distance math on that handful.",
+      "ex": ""
+    },
+    {
+      "cat": "The Core Problem",
+      "type": "concept",
+      "q": "Two approaches to proximity search",
+      "a": "1. Custom spatial trees — understand shapes, used for geometric data. 2. Encoded keys — turn lat/lng into a sortable key a regular B-tree can handle, used for moving points.",
+      "ex": ""
+    },
+    {
+      "cat": "The Core Problem",
+      "type": "concept",
+      "q": "Post-filtering (universal step)",
+      "a": "Every proximity approach ends the same way: take the candidate set from the index and apply exact distance or geometry math to discard anything too far away.",
+      "ex": ""
+    },
+    {
+      "cat": "Quadtrees",
+      "type": "def",
+      "q": "Quadtree",
+      "a": "A tree where each node splits into four quadrants recursively. Points live only in leaves. Subdivision continues until each leaf holds few enough points to scan directly.",
+      "ex": ""
+    },
+    {
+      "cat": "Quadtrees",
+      "type": "concept",
+      "q": "Quadtree's adaptive resolution",
+      "a": "Dense areas (like Manhattan) get deep subdivision with fine-grained cells. Sparse areas (like a lake) stay coarse. No space wasted on empty regions.",
+      "ex": ""
+    },
+    {
+      "cat": "Quadtrees",
+      "type": "concept",
+      "q": "Quadtree depth problem",
+      "a": "Splits always land at the geometric midpoint of a cell, not where data is. Dense clusters require many halvings before points separate — the busiest areas are the slowest to query.",
+      "ex": ""
+    },
+    {
+      "cat": "Quadtrees",
+      "type": "concept",
+      "q": "Why quadtrees struggle on disk",
+      "a": "They're pointer structures — each node sits at an arbitrary address. Following pointers means random disk reads per hop. Fine in RAM, painful on disk.",
+      "ex": ""
+    },
+    {
+      "cat": "Quadtrees",
+      "type": "concept",
+      "q": "Where quadtrees are still used",
+      "a": "In-memory use cases: Google Maps tile management, game engine collision detection. Not as on-disk database indexes.",
+      "ex": ""
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "type": "def",
+      "q": "k-d Tree",
+      "a": "A binary tree for multi-dimensional data that alternates splitting dimensions (x then y then x...) and always splits at the median. Depth is log(n) regardless of data clustering.",
+      "ex": ""
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "type": "concept",
+      "q": "Why median split beats midpoint split",
+      "a": "Splitting at the median always puts half the points on each side, however clustered they are. Splitting at the geometric midpoint can leave all points on one side in dense areas.",
+      "ex": "10 drivers, 9 on the east end: midpoint leaves 9 on one side. Median puts 5 on each side."
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "type": "def",
+      "q": "BKD Tree (Block k-d Tree)",
+      "a": "Points are packed into disk-page-sized blocks instead of one per node. Disk-friendly but essentially write-once — built from a batch of static data.",
+      "ex": ""
+    },
+    {
+      "cat": "k-d Trees & BKD Trees",
+      "type": "concept",
+      "q": "Which system uses BKD trees",
+      "a": "Elasticsearch uses BKD trees for its geo fields. A geo query in Elasticsearch is the k-d tree idea repackaged into a disk-friendly, block-structured index.",
+      "ex": ""
+    },
+    {
+      "cat": "R-Trees",
+      "type": "def",
+      "q": "R-Tree",
+      "a": "The first spatial index built for on-disk database use. Groups objects by Minimum Bounding Rectangles nested into a balanced tree, like a B-tree for spatial data.",
+      "ex": ""
+    },
+    {
+      "cat": "R-Trees",
+      "type": "def",
+      "q": "Minimum Bounding Rectangle (MBR)",
+      "a": "The smallest axis-aligned rectangle that fully contains an object. Points become zero-area rectangles, lines become slivers, polygons become boxes.",
+      "ex": ""
+    },
+    {
+      "cat": "R-Trees",
+      "type": "concept",
+      "q": "R-tree overlap problem",
+      "a": "Unlike quadtrees, R-tree bounding rectangles can overlap. A query point inside two MBRs forces the database to descend and search both branches — hurting performance.",
+      "ex": ""
+    },
+    {
+      "cat": "R-Trees",
+      "type": "def",
+      "q": "R*-Tree",
+      "a": "A refinement of the R-tree using smarter insertion heuristics to minimize rectangle overlap. What almost every modern R-tree implementation actually ships.",
+      "ex": ""
+    },
+    {
+      "cat": "R-Trees",
+      "type": "concept",
+      "q": "When to use R-trees",
+      "a": "When data is geometric — polygons, roads, delivery zones. When you need containment ('does this zone contain this address?') or intersection ('does this road cross this county?').",
+      "ex": ""
+    },
+    {
+      "cat": "R-Trees",
+      "type": "concept",
+      "q": "Which systems use R-trees",
+      "a": "PostGIS (via Postgres's GiST framework), SQLite Spatial, Oracle Spatial. PostGIS is the default for geometry-heavy workloads.",
+      "ex": ""
+    },
+    {
+      "cat": "Geohash",
+      "type": "def",
+      "q": "Geohash",
+      "a": "A hierarchical string key that subdivides the world into 32 cells per level. Points sharing a prefix are in the same cell at that level — i.e., near each other.",
+      "ex": "5 chars ≈ 5km box. 9 chars ≈ 5m box."
+    },
+    {
+      "cat": "Geohash",
+      "type": "concept",
+      "q": "Why geohash enables B-tree proximity queries",
+      "a": "Shared prefix = shared cell = geographic proximity. A WHERE geohash LIKE 'dr5ru%' is a regular B-tree prefix scan — no spatial extension needed.",
+      "ex": ""
+    },
+    {
+      "cat": "Geohash",
+      "type": "concept",
+      "q": "Space-filling curve",
+      "a": "A single line threaded through 2D space so points close on the map stay close along the line. Geohash and S2 lay their cells along a space-filling curve so a range scan sweeps up a neighborhood.",
+      "ex": ""
+    },
+    {
+      "cat": "Geohash",
+      "type": "concept",
+      "q": "Geohash boundary problem",
+      "a": "Two points a meter apart can have completely different prefixes if they straddle a cell boundary. A naive prefix scan misses the neighbor across the boundary.",
+      "ex": ""
+    },
+    {
+      "cat": "Geohash",
+      "type": "concept",
+      "q": "3x3 trick (neighbor fix)",
+      "a": "Query your cell plus all 8 neighboring cells (a 3x3 grid), then post-filter by exact distance. Ensures no nearby point is missed regardless of boundary position.",
+      "ex": ""
+    },
+    {
+      "cat": "Geohash",
+      "type": "concept",
+      "q": "How Redis uses geohash",
+      "a": "GEOADD interleaves lat/lng bits into a 52-bit geohash integer stored as a sorted set score. Nearby queries use ZRANGEBYSCORE — a range scan on those scores.",
+      "ex": ""
+    },
+    {
+      "cat": "S2",
+      "type": "def",
+      "q": "S2 (Google's cell system)",
+      "a": "Projects the globe onto a cube's six faces to produce cells of roughly equal area anywhere on earth. Each cell has a 64-bit hierarchical ID. Handles spherical geometry correctly.",
+      "ex": ""
+    },
+    {
+      "cat": "S2",
+      "type": "concept",
+      "q": "Why S2 beats geohash at global scale",
+      "a": "Geohash treats lat/lng as a flat rectangle — cells shrink to slivers near the poles. S2's spherical projection keeps cell areas roughly equal everywhere and handles antimeridian crossings correctly.",
+      "ex": ""
+    },
+    {
+      "cat": "S2",
+      "type": "concept",
+      "q": "Antimeridian problem",
+      "a": "The 180° longitude line where coordinates wrap from +180 to -180. Flat geohash mangles polygons that cross it. S2 handles it correctly because it works on a sphere.",
+      "ex": ""
+    },
+    {
+      "cat": "S2",
+      "type": "concept",
+      "q": "Which system uses S2",
+      "a": "MongoDB's 2dsphere index is built on S2 cells.",
+      "ex": ""
+    },
+    {
+      "cat": "H3",
+      "type": "def",
+      "q": "H3 (Uber's cell system)",
+      "a": "An open-source hexagonal grid system where each cell has a 64-bit hierarchical ID. All 6 neighbors are equidistant. Used by Uber for dispatch and surge pricing.",
+      "ex": ""
+    },
+    {
+      "cat": "H3",
+      "type": "concept",
+      "q": "Why hexagons vs squares",
+      "a": "Square cells have 4 edge-neighbors (closer) and 4 corner-neighbors (farther). Hexagon cells have 6 neighbors all roughly equidistant — cleaner for ring queries and heat maps.",
+      "ex": ""
+    },
+    {
+      "cat": "H3",
+      "type": "concept",
+      "q": "How H3 proximity queries work",
+      "a": "H3 IDs aren't on a space-filling curve so nearby IDs aren't numerically close. Use grid math to compute neighboring cell IDs, then WHERE h3_cell IN (list) on a plain integer index.",
+      "ex": ""
+    },
+    {
+      "cat": "H3",
+      "type": "concept",
+      "q": "Uber's H3 dispatch pattern",
+      "a": "Snap each driver to an H3 cell. On rider request, query the rider's cell + surrounding ring with WHERE h3_cell IN (...). Post-filter by exact distance. Cheap writes, no spatial extension.",
+      "ex": ""
+    },
+    {
+      "cat": "Choosing an Approach",
+      "type": "tradeoff",
+      "q": "Custom spatial tree — when to use",
+      "a": "When data is geometric (polygons, roads, delivery zones) and you need containment or intersection queries. Worth the cost of a spatial extension and slower writes.",
+      "ex": "PostGIS for 'does this delivery zone contain this address?'"
+    },
+    {
+      "cat": "Choosing an Approach",
+      "type": "tradeoff",
+      "q": "Encoded keys — when to use",
+      "a": "When data is mostly moving points (drivers, users, devices). Cheap writes (single integer update), fast candidate generation, no spatial extension. Limited to points.",
+      "ex": "Geohash/H3/S2 for driver locations updating millions of times per second."
+    },
+    {
+      "cat": "Choosing an Approach",
+      "type": "concept",
+      "q": "Write performance: trees vs encoded keys",
+      "a": "R-tree rebalancing is expensive. BKD trees are write-once. Encoded keys (geohash, H3) are a single integer update per location change — scales to millions of writes per second.",
+      "ex": ""
+    },
+    {
+      "cat": "Choosing an Approach",
+      "type": "concept",
+      "q": "What to say in an interview about proximity search",
+      "a": "Explain why a plain lat/lng index fails → pick one approach → walk the tradeoffs. Naming H3 vs S2 vs geohash is a bonus. The reasoning is what shows you understand the problem.",
+      "ex": ""
+    }
+  ]
+}

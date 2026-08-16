@@ -335,12 +335,3 @@ Add 20-30% for headroom
 ❌ Ignoring security
 ❌ No monitoring/alerting
 
----
-
-# Related Articles
-
-- [System Design Fundamentals]({% post_url /systems_design/2024-06-13-System-design-fundamentals %})
-- [Data Structures for System Design]({% post_url /systems_design/2024-06-13-System-design-data-structures %})
-- [Scalability Patterns]({% post_url /systems_design/2024-06-13-Scalability-patterns %})
-- [System Design Drills]({% post_url /systems_design/2024-06-13-System-design-drills %})
-

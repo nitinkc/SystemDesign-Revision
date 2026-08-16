@@ -1,0 +1,379 @@
+{
+  "title": "Vector Databases",
+  "subtitle": "30 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "vector_databases_quiz_progress",
+  "questions": [
+    {
+      "cat": "Fundamentals",
+      "q": "What is a vector (embedding) in the context of vector databases?",
+      "opts": [
+        "A compressed binary representation of a file",
+        "An array of numbers that represents an object, where similar objects have similar vectors",
+        "A hash value used to uniquely identify a document",
+        "A pointer to a row in a traditional relational database"
+      ],
+      "ans": 1,
+      "expl": "A vector (or embedding) is an array of numbers representing something — a word, image, user, or product. The magic is that similar things end up with similar vectors, reflecting semantic relationships geometrically."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "Typical embedding dimensions range from 128 to 1536. How much raw memory does a single 1536-dimension float32 vector consume?",
+      "opts": [
+        "About 600 bytes",
+        "About 6KB",
+        "About 60KB",
+        "About 600KB"
+      ],
+      "ans": 1,
+      "expl": "Each float32 dimension is 4 bytes. 1536 × 4 = 6,144 bytes ≈ 6KB. This is bigger than most people expect, and it adds up fast — 1 million vectors is ~6GB before index overhead."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "Why can't traditional databases answer 'find me documents similar to this one' efficiently?",
+      "opts": [
+        "Traditional databases don't support floating point numbers",
+        "Traditional databases are great at exact lookups but have no native concept of similarity search",
+        "Traditional databases compress data too aggressively for similarity comparisons",
+        "Traditional databases lack support for arrays as column types"
+      ],
+      "ans": 1,
+      "expl": "Traditional databases excel at exact lookups (give me user ID 12345) but have no native mechanism for similarity search across high-dimensional vectors. That's the core problem vector databases solve."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "What does 'recall' mean in the context of Approximate Nearest Neighbor search?",
+      "opts": [
+        "The fraction of queries that return in under 10ms",
+        "Of the true top-K nearest neighbors, the fraction that the ANN search actually found",
+        "The percentage of vectors that fit into RAM",
+        "The accuracy of the embedding model on a test set"
+      ],
+      "ans": 1,
+      "expl": "Recall measures ANN quality: of the true top-K nearest neighbors, what fraction did we actually find? A recall of 0.95 means we found 95% of the true nearest neighbors — usually good enough for real applications."
+    },
+    {
+      "cat": "Fundamentals",
+      "q": "What are the three core tradeoffs that every vector database forces you to balance?",
+      "opts": [
+        "Cost, correctness, and complexity",
+        "Recall, latency, and memory",
+        "Throughput, durability, and consistency",
+        "Indexing time, query time, and storage"
+      ],
+      "ans": 1,
+      "expl": "Every vector database design involves smooth tradeoffs between recall (how accurate are results?), latency (how fast can we return results?), and memory (how much space does the index consume, especially RAM?)."
+    },
+    {
+      "cat": "Similarity Metrics",
+      "q": "Cosine similarity measures the angle between two vectors and ignores magnitude. When is this particularly useful?",
+      "opts": [
+        "When vectors have very different numbers of dimensions",
+        "When embeddings are normalized, which most embedding models produce",
+        "When comparing binary vectors using bitwise operations",
+        "When computing similarity between integers rather than floats"
+      ],
+      "ans": 1,
+      "expl": "Cosine similarity is ideal when embeddings are normalized (magnitude = 1), which most embedding models produce. It measures direction alone, so two vectors pointing the same way score 1.0 regardless of their lengths."
+    },
+    {
+      "cat": "Similarity Metrics",
+      "q": "Which similarity metric is most naturally suited to Locality Sensitive Hashing using random hyperplanes?",
+      "opts": [
+        "Euclidean (L2) distance",
+        "Dot product",
+        "Cosine similarity",
+        "Hamming distance"
+      ],
+      "ans": 2,
+      "expl": "Random hyperplane LSH works by checking which side of a hyperplane a vector falls on — this directly corresponds to cosine similarity. Vectors at a small angle share most hyperplane sides, producing similar hashes."
+    },
+    {
+      "cat": "Similarity Metrics",
+      "q": "What is the key difference between dot product and cosine similarity?",
+      "opts": [
+        "Dot product only works for 2D vectors",
+        "Cosine similarity measures direction only; dot product also incorporates the magnitudes of both vectors",
+        "Dot product requires binary vectors; cosine works on floats",
+        "Cosine similarity is always faster to compute than dot product"
+      ],
+      "ans": 1,
+      "expl": "Cosine similarity normalizes for magnitude, measuring only the angle between vectors. Dot product = cosine similarity × (magnitude of A) × (magnitude of B). Some systems use dot product because it's slightly faster to compute."
+    },
+    {
+      "cat": "Indexing — HNSW",
+      "q": "HNSW's design is analogous to which classical data structure?",
+      "opts": [
+        "B-trees",
+        "Bloom filters",
+        "Skip lists",
+        "Hash maps"
+      ],
+      "ans": 2,
+      "expl": "HNSW applies the same idea as skip lists: add 'express lane' layers above a base structure. Skip lists have O(log n) search by jumping over elements at higher layers — HNSW does the same in high-dimensional vector space."
+    },
+    {
+      "cat": "Indexing — HNSW",
+      "q": "When searching an HNSW index, what is the correct traversal order?",
+      "opts": [
+        "Start at the densest bottom layer (Layer 0) and work upward",
+        "Start at the sparse top layer, greedily navigate toward the query, drop to denser layers, finish with a local search at Layer 0",
+        "Start at a random node in Layer 0 and do breadth-first search",
+        "Query all layers simultaneously and merge results"
+      ],
+      "ans": 1,
+      "expl": "HNSW search starts at a sparse top layer, greedily moves toward the target, drops to progressively denser layers, and does a thorough local search at Layer 0 where all vectors live. Top layers 'zoom in' to the right region quickly."
+    },
+    {
+      "cat": "Indexing — HNSW",
+      "q": "What is the main memory cost drawback of HNSW compared to simpler indexes?",
+      "opts": [
+        "HNSW requires storing all vectors in GPU memory",
+        "HNSW must store the graph structure (edges) on top of the raw vectors, roughly doubling memory usage",
+        "HNSW compresses vectors, requiring decompression at query time",
+        "HNSW needs a separate machine for each layer of the graph"
+      ],
+      "ans": 1,
+      "expl": "HNSW stores a multi-layer graph where each vector is a node with edges to its nearest neighbors. This graph structure roughly doubles the memory required compared to storing raw vectors alone."
+    },
+    {
+      "cat": "Indexing — HNSW",
+      "q": "What happens to HNSW graph quality over time with many inserts?",
+      "opts": [
+        "Nothing — HNSW is fully self-balancing like a red-black tree",
+        "Graph structure can degrade since new vectors may not be as well-connected as those present during initial build",
+        "HNSW automatically promotes the most-connected vectors to higher layers",
+        "Insert order has no effect on HNSW quality"
+      ],
+      "ans": 1,
+      "expl": "New vectors inserted into HNSW find their place and establish connections, but they may not integrate as well as vectors present during the initial build. Over time, graph quality can degrade, which is one reason for periodic index rebuilds."
+    },
+    {
+      "cat": "Indexing — IVF & LSH",
+      "q": "What is the core idea behind IVF (Inverted File Index) for vector search?",
+      "opts": [
+        "It builds a multi-layer graph like HNSW but using inverted edges",
+        "It partitions vectors into clusters using k-means; at query time only the closest clusters are searched",
+        "It hashes vectors so similar vectors collide in the same bucket",
+        "It stores vectors as a binary tree sorted by magnitude"
+      ],
+      "ans": 1,
+      "expl": "IVF clusters vectors using k-means, each cluster with a centroid. At query time, you find the closest centroids then search only within those clusters — potentially skipping 99%+ of comparisons."
+    },
+    {
+      "cat": "Indexing — IVF & LSH",
+      "q": "In IVF, what does the parameter 'nprobe' control?",
+      "opts": [
+        "The number of dimensions in the embedding",
+        "How many clusters are searched at query time — higher nprobe means better recall but slower queries",
+        "The number of k-means iterations during index build",
+        "The maximum number of results returned per query"
+      ],
+      "ans": 1,
+      "expl": "nprobe controls how many clusters are searched at query time. Higher nprobe → more clusters searched → better recall but higher latency. It's the key tuning knob for the recall/latency tradeoff in IVF."
+    },
+    {
+      "cat": "Indexing — IVF & LSH",
+      "q": "How does LSH (Locality Sensitive Hashing) differ fundamentally from regular hash functions?",
+      "opts": [
+        "LSH uses cryptographic hashing for security; regular hashes don't",
+        "Regular hash functions try to avoid collisions; LSH is designed so similar items are likely to collide in the same bucket",
+        "LSH only works for integer vectors; regular hashing works for any type",
+        "LSH stores vectors in sorted order; regular hashing uses random ordering"
+      ],
+      "ans": 1,
+      "expl": "Regular hash functions avoid collisions to distribute items evenly. LSH deliberately causes collisions for similar items — vectors that are geometrically close hash to the same bucket, enabling fast similarity search."
+    },
+    {
+      "cat": "Indexing — Annoy",
+      "q": "What is Annoy's killer feature that made it popular at companies like Spotify?",
+      "opts": [
+        "It achieves higher recall than HNSW on all datasets",
+        "Its indexes can be memory-mapped (mmap'd), allowing multiple processes to share an index and work with indexes larger than RAM",
+        "It supports real-time inserts without index rebuilds",
+        "It automatically selects the optimal number of trees based on dataset size"
+      ],
+      "ans": 1,
+      "expl": "Annoy stores its entire index as a single file that can be mmap'd into memory. This means multiple processes share the same index without copying, indexes can exceed RAM size, and loading is instant."
+    },
+    {
+      "cat": "Indexing — Annoy",
+      "q": "What is Annoy's critical limitation that makes it unsuitable for real-time applications?",
+      "opts": [
+        "Annoy only supports cosine similarity, not Euclidean distance",
+        "Annoy indexes are immutable — you cannot add or remove vectors without rebuilding the entire index",
+        "Annoy requires GPU acceleration for acceptable query latency",
+        "Annoy only works with embeddings of 128 dimensions or fewer"
+      ],
+      "ans": 1,
+      "expl": "Once built, an Annoy index cannot be modified. Adding or removing a single vector requires rebuilding the entire index from scratch. This makes it great for static datasets but unsuitable for real-time writes."
+    },
+    {
+      "cat": "Filtering & Hybrid Search",
+      "q": "What is the key risk of post-filtering in vector search?",
+      "opts": [
+        "Post-filtering always returns too many results, causing high latency",
+        "If the filter is very restrictive, you may not find K results after filtering the top-N vector results",
+        "Post-filtering is incompatible with HNSW indexes",
+        "Post-filtering requires re-ranking all results from scratch"
+      ],
+      "ans": 1,
+      "expl": "Post-filtering finds top-N similar vectors then applies the filter. If the filter is very restrictive (e.g., in-stock items < 1% of catalog), you may not find K results in your top-N. You can increase N but that means more work."
+    },
+    {
+      "cat": "Filtering & Hybrid Search",
+      "q": "How does Pinecone handle metadata filtering differently from pgvector?",
+      "opts": [
+        "Pinecone relies on the query planner to choose between the vector index and B-tree index",
+        "Pinecone applies filters during ANN search by intersecting metadata inverted indexes with vector search in a single operation",
+        "Pinecone only supports post-filtering for performance reasons",
+        "Pinecone converts all metadata to vectors and does a secondary vector search"
+      ],
+      "ans": 1,
+      "expl": "Pinecone maintains inverted indexes on metadata fields alongside the vector index and intersects them during ANN search — not before or after. This makes filtering a first-class operation rather than a tacked-on step."
+    },
+    {
+      "cat": "Filtering & Hybrid Search",
+      "q": "What is 'hybrid search' in the context of vector databases?",
+      "opts": [
+        "Combining HNSW and IVF indexes for the same query",
+        "Running both full-text keyword search and vector similarity search simultaneously and merging the results",
+        "Using both CPU and GPU to accelerate a single vector search query",
+        "Searching across multiple vector databases and deduplicating results"
+      ],
+      "ans": 1,
+      "expl": "Hybrid search combines full-text keyword matching with vector similarity search. A query like 'red running shoes' might use keyword matching for 'red' while using vector similarity for semantic relevance — often giving better results than either alone."
+    },
+    {
+      "cat": "Index Maintenance",
+      "q": "Why are vector database updates typically more expensive than updates in traditional databases?",
+      "opts": [
+        "Vector DBs must re-train the embedding model on every update",
+        "Updating a vector in HNSW means finding its place in a multi-layer graph and updating connections at each layer, not just modifying a row",
+        "Vector DBs store data on slower disk tiers by default",
+        "Vector DBs must re-cluster all vectors using k-means after every insert"
+      ],
+      "ans": 1,
+      "expl": "Traditional DBs handle updates in real-time because they're designed for it. In HNSW, each new vector must find its place in a multi-layer graph and establish connections — expensive at scale, and graph quality can degrade with many inserts."
+    },
+    {
+      "cat": "Index Maintenance",
+      "q": "What is the 'hot and cold index' pattern used for in vector databases?",
+      "opts": [
+        "Hot index stores frequently accessed vectors in GPU memory; cold index is on disk",
+        "A small hot index holds recent inserts for immediate searchability; a large cold index holds older data. Queries search both. Periodically, hot is merged into cold with a full rebuild.",
+        "Hot index uses HNSW; cold index uses IVF for faster rebuilds",
+        "Hot index stores high-similarity vectors; cold index stores low-similarity ones"
+      ],
+      "ans": 1,
+      "expl": "Because inserting into a large HNSW index is expensive, many systems maintain a small hot index (even just a flat list) for recent inserts and a large optimized cold index for older data. Queries search both and merge. The hot index is periodically rebuilt into the cold index."
+    },
+    {
+      "cat": "Index Maintenance",
+      "q": "How are deletions typically handled in vector databases?",
+      "opts": [
+        "Vectors are immediately removed from the HNSW graph and connections are re-wired",
+        "Most systems use soft deletes — marking vectors as deleted — rather than actually removing them, until a rebuild or compaction",
+        "Deletions are queued and applied during nightly batch jobs only",
+        "Deleted vectors are moved to a cold index and excluded from queries automatically"
+      ],
+      "ans": 1,
+      "expl": "Most vector DBs use soft deletes: mark the vector as deleted rather than actually removing it from the index. This means deleted vectors still consume space and can slow queries until you rebuild or compact the index."
+    },
+    {
+      "cat": "Choosing a Vector DB",
+      "q": "What is the article's primary recommendation for getting started with vector search?",
+      "opts": [
+        "Always use a purpose-built vector DB like Pinecone from day one for production readiness",
+        "Start with extensions to databases you're already using (pgvector, ES kNN, Redis Vector Search) before reaching for a dedicated vector DB",
+        "Build your own HNSW implementation to understand the internals before using a third-party solution",
+        "Start with Chroma for prototyping and migrate directly to Milvus for production"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly says 'start simple.' Extensions like pgvector handle millions of vectors and avoid operational overhead of another system. Only reach for a dedicated vector DB when scale or features demand it."
+    },
+    {
+      "cat": "Choosing a Vector DB",
+      "q": "At roughly what scale should you consider migrating to a purpose-built vector database?",
+      "opts": [
+        "More than 1 million vectors",
+        "More than 10 million vectors",
+        "More than 100 million vectors",
+        "More than 1 billion vectors"
+      ],
+      "ans": 2,
+      "expl": "The article's rule of thumb: if you're dealing with more than 100 million vectors, consider a purpose-built vector database. Below that, extensions to existing databases typically handle the load without the operational overhead."
+    },
+    {
+      "cat": "Choosing a Vector DB",
+      "q": "Which purpose-built vector database is described as fully managed and serverless?",
+      "opts": [
+        "Milvus",
+        "Weaviate",
+        "Qdrant",
+        "Pinecone"
+      ],
+      "ans": 3,
+      "expl": "Pinecone is fully managed and serverless. You just call an API — no infrastructure to run. The trade-off is cost and less control compared to self-hosted options like Milvus, Weaviate, or Qdrant."
+    },
+    {
+      "cat": "Interview Applications",
+      "q": "What is a RAG system and how does a vector database fit in?",
+      "opts": [
+        "RAG systems use vector databases as the primary source of truth, replacing traditional databases entirely",
+        "Vector search retrieves relevant documents from a knowledge base, which are then passed as context to an LLM to synthesize an answer",
+        "RAG uses the vector database to store LLM responses for caching and deduplication",
+        "RAG trains a new embedding model for each query using the vector database as training data"
+      ],
+      "ans": 1,
+      "expl": "In RAG, a user query is embedded and used to search the vector database for relevant documents. Those documents are passed as context to an LLM which synthesizes an answer. The vector DB enables the LLM to 'know' about custom or recent data."
+    },
+    {
+      "cat": "Interview Applications",
+      "q": "In a two-stage retrieval architecture, what role does the vector database play?",
+      "opts": [
+        "The vector database is the final ranker, producing the exact top-K results served to users",
+        "The vector database acts as a fast candidate generator (e.g., top 1000), and a more sophisticated model reranks the candidates to produce the final results",
+        "The vector database handles keyword search while a separate model handles semantic search",
+        "The vector database stores user feedback used to retrain the embedding model"
+      ],
+      "ans": 1,
+      "expl": "In two-stage retrieval, the vector database is the lightweight first stage — fast but approximate, returning a large candidate set (maybe top 1000). A slower, more powerful reranker then refines these to produce the final results. Common in recommendation systems."
+    },
+    {
+      "cat": "Gotchas & Limitations",
+      "q": "What is 'embedding drift' and why is it operationally challenging?",
+      "opts": [
+        "Embedding drift is when vectors gradually move toward zero due to floating point rounding",
+        "When you update your embedding model, old embeddings are incompatible with new ones — requiring re-embedding everything or running multiple indexes during transition",
+        "Embedding drift refers to clusters shifting position in IVF after many inserts",
+        "Embedding drift occurs when similar items receive increasingly dissimilar vectors due to model overfitting"
+      ],
+      "ans": 1,
+      "expl": "If you change your embedding model, all old embeddings become incompatible — they live in a different vector space. You must either re-embed everything (expensive) or maintain multiple indexes during the transition."
+    },
+    {
+      "cat": "Gotchas & Limitations",
+      "q": "The article says 'vector databases are not transactional databases.' What does this mean in practice?",
+      "opts": [
+        "Vector databases cannot run on the same machine as transactional databases",
+        "Your authoritative data should live in a primary database; the vector DB is an index for similarity search, not the source of truth",
+        "Vector databases support transactions but only for up to 100 vectors at a time",
+        "Vector databases must be rebuilt from scratch after any failed transaction"
+      ],
+      "ans": 1,
+      "expl": "Vector databases are optimized for similarity search, not general-purpose data management. Keep authoritative data in a traditional database; use the vector DB as a search index. They lack ACID guarantees and complex query support."
+    },
+    {
+      "cat": "Gotchas & Limitations",
+      "q": "What is the 'cold start' problem specific to vector-based personalization systems?",
+      "opts": [
+        "Index build time is slow when starting from zero vectors",
+        "New users have no behavior to embed, so there's no vector to use for finding similar users or items — fallback strategies are needed",
+        "Cold environments cause floating point precision errors in similarity computations",
+        "The first query after server startup is slow because the index must be loaded into RAM"
+      ],
+      "ans": 1,
+      "expl": "If you personalize by embedding user behavior, new users have no behavior. There's nothing to embed, so you can't find similar users or recommend based on their taste. You need explicit fallback strategies for new users."
+    }
+  ]
+}

@@ -88,17 +88,26 @@ extra_css:
   - css/custom.css
 
 nav:
-  - Home: index.md
+  - Home: quiz/index.md
   - Quiz :
       - quiz/index.md
-      - In a Hurry - Core Concepts: quiz/core_concepts_quiz.md
-      - In a Hurry - Key Technologies: quiz/key_technologies_quiz.md
-      - Core concepts - Networking Essentials: quiz/networking-essentials-quiz.md
-      - Core concepts - API Design: quiz/api-design-quiz.md
-      - Core concepts - Data Modeling: quiz/data-modeling-quiz-dark.md
-      - Core concepts - DB Indexing: quiz/db-indexing-quiz.md
-      - Core concepts - Sharding: quiz/sharding-quiz.md
-      - Technologies - Time Series DB: quiz/time-series-databases-quiz.md
+      - In a Hurry:
+          - Core Concepts: quiz/core_concepts_quiz.md
+          - Key Technologies: quiz/key_technologies_quiz.md
+      - Core concepts :
+          - Networking Essentials: quiz/networking-essentials-quiz.md
+          - API Design: quiz/api-design-quiz.md
+          - Data Modeling: quiz/data-modeling-quiz-dark.md
+          - DB Indexing: quiz/db-indexing-quiz.md
+          - Sharding: quiz/sharding-quiz.md
+      - Key Technologies :
+          - Redis: quiz/redis-quiz.md
+          - ElasticSearch: quiz/elasticsearch-quiz.md
+      - Advanced Topic :
+          - Proximity Search: quiz/proximity-search-quiz.md
+          - Vector DB: quiz/vector-db-quiz.md
+          - Time Series DB: quiz/time-series-databases-quiz.md
+
   - Flashcards:
       - flashcards/index.md
       - Data Modelling: flashcards/data-modeling-flashcards.md
