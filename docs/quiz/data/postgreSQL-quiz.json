@@ -1,0 +1,415 @@
+{
+  "title": "PostgreSQL",
+  "subtitle": "35 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "postgresql_quiz_progress",
+  "questions": [
+    {
+      "cat": "Indexing",
+      "q": "What index type does PostgreSQL use by default and what query types does it handle well?",
+      "opts": [
+        "GIN index — optimized for full-text search and JSONB queries",
+        "B-tree index — handles exact matches, range queries, and ORDER BY on indexed columns",
+        "GiST index — handles both geospatial and full-text queries",
+        "Hash index — optimized for exact matches only"
+      ],
+      "ans": 1,
+      "expl": "PostgreSQL's default is a B-tree index, which handles exact matches (WHERE email = 'x'), range queries (WHERE created_at > '2024-01-01'), and ORDER BY when the sort column matches the index. PostgreSQL automatically creates a B-tree index on the primary key column."
+    },
+    {
+      "cat": "Indexing",
+      "q": "What are the three costs of adding an index to a PostgreSQL table?",
+      "opts": [
+        "Slower reads, higher CPU usage, and increased replication lag",
+        "Slower writes (index must be updated), additional disk space, and the query planner may ignore it for sequential scans",
+        "Increased lock contention, higher memory usage, and slower vacuum operations",
+        "Slower backups, reduced WAL throughput, and higher connection overhead"
+      ],
+      "ans": 1,
+      "expl": "Every index: (1) makes writes slower because the index must be updated on every insert/update; (2) takes up disk space; (3) may not even be used if the query planner determines a sequential scan is faster. A common interview trap is suggesting indexes on every column."
+    },
+    {
+      "cat": "Indexing",
+      "q": "What is a GIN index and when should you use it in PostgreSQL?",
+      "opts": [
+        "A generalized index for geospatial data — used for proximity and containment queries",
+        "A Generalized Inverted Index that maps each token to its locations — used for full-text search and JSONB queries",
+        "A graph index for storing and querying hierarchical data relationships",
+        "A global index that spans multiple partitions for cross-partition queries"
+      ],
+      "ans": 1,
+      "expl": "GIN (Generalized Inverted Index) works like a book index — it maps each word or element to all the locations where it appears. Perfect for full-text search (tsvector columns) and JSONB columns. For full-text search, it supports word stemming, relevance ranking, multiple languages, and AND/OR/NOT queries."
+    },
+    {
+      "cat": "Indexing",
+      "q": "What is a covering index and what problem does it solve?",
+      "opts": [
+        "An index that covers all tables in a JOIN to avoid cross-table lookups",
+        "An index that includes all columns a query needs so PostgreSQL can satisfy the entire query from the index without touching the table",
+        "An index that covers all rows in a table regardless of their values",
+        "A partial index that covers only active records to reduce index size"
+      ],
+      "ans": 1,
+      "expl": "Normally, PostgreSQL uses an index to find row locations, then fetches the full row from the table. A covering index (using INCLUDE) stores additional columns in the index itself, so queries can be satisfied entirely from the index without a second table lookup. Tradeoff: larger index size, slightly slower writes."
+    },
+    {
+      "cat": "Indexing",
+      "q": "What is a partial index and when is it useful?",
+      "opts": [
+        "An index that only covers the first half of column values for smaller tables",
+        "An index on a subset of rows matching a WHERE condition — smaller and faster when most queries only need a fraction of rows (e.g., only active users)",
+        "An index that partially covers a JSONB document's nested fields",
+        "An index built incrementally on large tables to avoid write blocking during creation"
+      ],
+      "ans": 1,
+      "expl": "A partial index only indexes rows matching a WHERE clause (e.g., WHERE status = 'active'). It's useful when most queries target a subset of data, when many rows are 'inactive' or 'deleted' and don't need indexing, and when you want to reduce index size and maintenance overhead."
+    },
+    {
+      "cat": "Full-Text & JSONB Search",
+      "q": "When should you use PostgreSQL's built-in full-text search instead of Elasticsearch?",
+      "opts": [
+        "Always — PostgreSQL full-text search is equivalent to Elasticsearch in all scenarios",
+        "For simpler use cases that don't need sophisticated relevancy scoring, faceted search, fuzzy matching, or distributed search across very large datasets",
+        "Only when the dataset is smaller than 1 million documents",
+        "Never — Elasticsearch should always be preferred for any text search"
+      ],
+      "ans": 1,
+      "expl": "Start with PostgreSQL's built-in full-text search (GIN index on tsvector) for simpler cases — it handles stemming, relevance ranking, multiple languages, and complex AND/OR/NOT. Only reach for Elasticsearch when you need sophisticated relevancy scoring, faceted search, fuzzy 'search as you type', or distributed search at very large scale."
+    },
+    {
+      "cat": "Full-Text & JSONB Search",
+      "q": "What is the advantage of JSONB columns with GIN indexes in PostgreSQL?",
+      "opts": [
+        "JSONB columns store data more compactly than regular columns, reducing disk usage",
+        "JSONB gives the flexibility of NoSQL (flexible schemas, new attributes without schema changes) while still allowing efficient indexed queries on the JSON content",
+        "JSONB columns are automatically replicated faster than regular columns",
+        "JSONB eliminates the need for any other index types on the same table"
+      ],
+      "ans": 1,
+      "expl": "JSONB with a GIN index lets you store flexible, varying metadata (like post attributes that differ per post type) without adding new columns for every possibility — just like NoSQL. But unlike NoSQL, you can still run efficient indexed queries on the JSON content (e.g., WHERE metadata @> '{\"type\": \"video\"}')."
+    },
+    {
+      "cat": "Geospatial",
+      "q": "What PostgreSQL extension enables geospatial queries and what index type does it use?",
+      "opts": [
+        "pgVector with a HNSW index — for vector similarity-based spatial queries",
+        "PostGIS with a GiST index — for spatial data types and proximity/containment queries",
+        "pgSpatial with a BKD index — for 2D coordinate-based queries",
+        "pgGeo with a GIN index — for geographic full-text and point queries"
+      ],
+      "ans": 1,
+      "expl": "PostGIS adds spatial data types (geo_point, geo_shape) and spatial functions to PostgreSQL. It uses a GiST (Generalized Search Tree) index for efficient spatial lookups using bounding-box strategies. GiST enables queries like 'find all posts within 5km' without scanning every row."
+    },
+    {
+      "cat": "Write Performance",
+      "q": "What is the correct sequence of steps when a write occurs in PostgreSQL?",
+      "opts": [
+        "Data pages updated → WAL written → index updated → background flush",
+        "WAL record generated + buffer cache modified in memory → WAL flushed to disk at commit → dirty pages written to disk asynchronously → indexes updated",
+        "Index updated → WAL written → buffer cache modified → background flush",
+        "WAL written → data pages flushed immediately → indexes updated → commit confirmed"
+      ],
+      "ans": 1,
+      "expl": "On a write: (1) PostgreSQL modifies data pages in the buffer cache (in memory) and generates a WAL record simultaneously. (2) At commit, WAL records are flushed to disk — this sequential write is what makes the transaction durable. (3) Dirty data pages are later written to disk asynchronously by the background writer. Index updates also go through the WAL."
+    },
+    {
+      "cat": "Write Performance",
+      "q": "What is the approximate write throughput limit of a well-tuned single PostgreSQL node?",
+      "opts": [
+        "~500 simple inserts per second per core",
+        "~5,000 simple inserts per second per core; ~1,000–2,000 updates with index modifications",
+        "~50,000 simple inserts per second per core",
+        "~500,000 simple inserts per second per core"
+      ],
+      "ans": 1,
+      "expl": "A well-tuned PostgreSQL instance on good hardware handles ~5,000 simple inserts per second per core, ~1,000–2,000 updates with index modifications per core, and complex multi-table transactions in the hundreds per second. Write throughput is primarily bottlenecked by WAL flush speed (disk I/O) — the synchronous step before commit."
+    },
+    {
+      "cat": "Write Performance",
+      "q": "Why do more indexes slow down writes in PostgreSQL?",
+      "opts": [
+        "More indexes increase lock contention, causing transactions to queue behind each other",
+        "Each index requires its own WAL entries and memory updates on every write — more indexes means more work per write operation",
+        "More indexes increase the buffer cache pressure, forcing more disk reads during writes",
+        "PostgreSQL rebuilds all indexes after every write to maintain sorted order"
+      ],
+      "ans": 1,
+      "expl": "Each index on a table must be updated on every insert/update, and each update requires its own WAL entries and memory operations. A table with 5 indexes requires more work per write than one with 1 index. This is why the number of indexes is a key factor in write throughput and why you shouldn't index every column."
+    },
+    {
+      "cat": "Write Performance",
+      "q": "What is PgBouncer and why is it important for PostgreSQL deployments?",
+      "opts": [
+        "A caching layer that stores frequently read rows in memory to reduce database load",
+        "A connection pooler that multiplexes many application connections onto a smaller pool of database connections, avoiding the overhead of PostgreSQL forking a new OS process per connection",
+        "A load balancer that distributes queries across multiple PostgreSQL read replicas",
+        "A replication manager that synchronizes writes between primary and replica nodes"
+      ],
+      "ans": 1,
+      "expl": "PostgreSQL forks a new OS process for each connection — hundreds of connections consume significant memory and CPU for context switching. PgBouncer sits in front of PostgreSQL and multiplexes many application connections onto fewer database connections. Essential when running many application instances, especially microservices."
+    },
+    {
+      "cat": "Write Performance",
+      "q": "What is table partitioning in PostgreSQL and how does it help write performance?",
+      "opts": [
+        "Splitting a table across multiple database servers to distribute write load",
+        "Splitting a large table into smaller physical sub-tables (e.g., by month) — enabling concurrent writes to different partitions, localized index updates, and efficient bulk loads",
+        "Dividing table rows between primary and replica nodes based on access frequency",
+        "Creating separate schemas for different data types to reduce lock contention"
+      ],
+      "ans": 1,
+      "expl": "Partitioning splits a logical table into smaller physical tables (e.g., posts_2024_01, posts_2024_02). Benefits for writes: different sessions can write to different partitions simultaneously (more concurrency); index updates only affect the relevant partition (not the full table); bulk loads can be done partition by partition. Also helps reads by scanning only recent partitions."
+    },
+    {
+      "cat": "Replication",
+      "q": "What is the key difference between synchronous and asynchronous PostgreSQL replication?",
+      "opts": [
+        "Synchronous replication copies schema changes only; asynchronous replication copies data",
+        "Asynchronous (default) confirms writes immediately and replicates in the background — best performance but risk of data loss on primary failure. Synchronous waits for at least one replica to confirm before committing — stronger durability but adds latency to every write",
+        "Synchronous replication requires physical replication slots; asynchronous uses logical replication",
+        "Asynchronous replication is only available in managed services like AWS RDS"
+      ],
+      "ans": 1,
+      "expl": "Asynchronous replication: primary confirms the write immediately, replicates to replicas in background. Fast writes, but if the primary fails during replication, recent committed writes can be lost. Synchronous replication: primary waits for at least one replica to acknowledge before confirming to the client. Guaranteed durability on multiple nodes, but every write has added round-trip latency."
+    },
+    {
+      "cat": "Replication",
+      "q": "What is 'read-your-writes' consistency and why is it a concern with read replicas?",
+      "opts": [
+        "The guarantee that a user always reads from the same replica to avoid inconsistency",
+        "If a user makes a change and immediately reads it back, they might see stale data if their read hits a replica that hasn't caught up to the primary yet",
+        "A consistency mode where each read must be confirmed by a quorum of replicas",
+        "The requirement that write operations are always followed by a read to verify success"
+      ],
+      "ans": 1,
+      "expl": "With asynchronous replication, replicas lag behind the primary. If a user writes data and immediately reads it back, and the read hits a lagging replica, they won't see their own change. This 'read-your-writes' consistency violation is a key tradeoff to discuss when proposing read replicas in an interview."
+    },
+    {
+      "cat": "Replication",
+      "q": "How do read replicas improve performance in a read-heavy application?",
+      "opts": [
+        "Replicas handle both reads and writes, doubling total database throughput",
+        "Read queries can be distributed across multiple replica instances while writes still go to the primary — multiplying read throughput by the number of replicas",
+        "Replicas cache frequently read data in memory, reducing primary database load",
+        "Replicas serve queries from a snapshot, avoiding lock contention with write transactions"
+      ],
+      "ans": 1,
+      "expl": "By distributing read queries across N replicas, you multiply read throughput by N. In a social media platform, browsing feeds and viewing profiles can all hit replicas, while only writes (creating posts, updating profiles) go to the primary. This is effective because most applications are read-heavy."
+    },
+    {
+      "cat": "ACID & Transactions",
+      "q": "What does Atomicity guarantee in a PostgreSQL transaction?",
+      "opts": [
+        "That all transactions execute simultaneously without blocking each other",
+        "That either all operations in a transaction succeed or none do — a partial failure rolls back all changes",
+        "That each transaction sees a consistent snapshot of data at the time it started",
+        "That committed transaction data is permanently stored even if the server crashes"
+      ],
+      "ans": 1,
+      "expl": "Atomicity means all-or-nothing. In a bank transfer (deduct from A, add to B), if the system crashes after the deduction but before the addition, PostgreSQL rolls back the entire transaction. Money never disappears into thin air. This prevents partial failures from leaving the database in an inconsistent state."
+    },
+    {
+      "cat": "ACID & Transactions",
+      "q": "What is the difference between 'Consistency' in ACID vs 'Consistency' in the CAP Theorem?",
+      "opts": [
+        "ACID consistency is about data durability; CAP consistency is about transaction isolation",
+        "ACID consistency means the database always follows all defined rules and constraints. CAP consistency means every read receives the most recent write (or an error)",
+        "ACID consistency is enforced by the application; CAP consistency is enforced by the database",
+        "They mean the same thing — both refer to data integrity across the system"
+      ],
+      "ans": 1,
+      "expl": "These are two different concepts that share the same word. ACID Consistency: transactions can only bring the database from one valid state to another — all defined rules (foreign keys, CHECK constraints, unique constraints) are always enforced. CAP Consistency: every node in a distributed system returns the most recent write. Confusingly overloaded terminology."
+    },
+    {
+      "cat": "ACID & Transactions",
+      "q": "What is PostgreSQL's default transaction isolation level and what anomaly does it allow?",
+      "opts": [
+        "Repeatable Read — prevents dirty reads and non-repeatable reads but allows phantom reads",
+        "Read Committed — prevents dirty reads but allows non-repeatable reads (the same query can return different results within a transaction as other transactions commit)",
+        "Serializable — prevents all anomalies but requires retry logic for conflicts",
+        "Read Uncommitted — allows dirty reads but prevents phantom reads"
+      ],
+      "ans": 1,
+      "expl": "PostgreSQL's default is Read Committed — a transaction only sees data committed before each individual query started. This prevents dirty reads (reading uncommitted changes) but allows non-repeatable reads (the same query can return different results within a transaction as other transactions commit between queries)."
+    },
+    {
+      "cat": "ACID & Transactions",
+      "q": "What is notable about PostgreSQL's Repeatable Read isolation level compared to the SQL standard?",
+      "opts": [
+        "PostgreSQL's Repeatable Read is weaker than the standard — it still allows non-repeatable reads",
+        "PostgreSQL's Repeatable Read is stronger than the SQL standard requires — it prevents both non-repeatable reads AND phantom reads, which the standard only requires Serializable to prevent",
+        "PostgreSQL's Repeatable Read requires retry logic like Serializable",
+        "PostgreSQL's Repeatable Read is identical to Read Committed in practice"
+      ],
+      "ans": 1,
+      "expl": "The SQL standard says Repeatable Read should prevent non-repeatable reads but allow phantom reads. PostgreSQL goes further — its Repeatable Read implementation also prevents phantom reads due to its MVCC architecture. This means you might not need Serializable in PostgreSQL for cases where you would in other databases."
+    },
+    {
+      "cat": "Concurrency",
+      "q": "In the auction bidding scenario, why does a basic BEGIN/COMMIT transaction fail to prevent two users from placing conflicting bids simultaneously?",
+      "opts": [
+        "Transactions don't work with concurrent connections in PostgreSQL",
+        "With Read Committed isolation (the default), both transactions can read the same max bid before either commits, so both proceed with stale data — the check and insert aren't truly atomic",
+        "PostgreSQL doesn't support concurrent writes to the same table",
+        "Transactions only protect against application-level errors, not database-level concurrency"
+      ],
+      "ans": 1,
+      "expl": "With Read Committed, Transaction A and Transaction B can both read maxBid=$90 before either commits. Both think their bid is valid. A commits first (setting maxBid to $100). B then inserts a $95 bid even though it shouldn't be accepted — its UPDATE ... WHERE maxBid < 100 updates 0 rows, but the INSERT still goes through. The check and insert aren't atomic."
+    },
+    {
+      "cat": "Concurrency",
+      "q": "What does SELECT ... FOR UPDATE do and when should you use it?",
+      "opts": [
+        "It creates a read-only snapshot of the selected rows for the duration of the transaction",
+        "It locks the selected rows so other transactions using FOR UPDATE must wait — ensuring your check-then-modify sequence is atomic for those specific rows",
+        "It upgrades the transaction to Serializable isolation level automatically",
+        "It marks rows as pending update so the query planner can optimize write batching"
+      ],
+      "ans": 1,
+      "expl": "SELECT ... FOR UPDATE acquires a row-level lock on the selected rows. Other transactions that try to SELECT ... FOR UPDATE the same rows will block until your transaction commits or rolls back. This makes check-then-modify sequences atomic for those rows — the right tool when you know exactly which rows need to be locked."
+    },
+    {
+      "cat": "Concurrency",
+      "q": "What is Optimistic Concurrency Control (OCC) and when does it work well?",
+      "opts": [
+        "A locking strategy that optimistically grants all lock requests and resolves conflicts later",
+        "Read data with a version number, do your work, then at commit time check if the version changed — retry if it did. Works well when conflicts are rare; bad when conflicts are frequent",
+        "A PostgreSQL isolation level that optimistically proceeds without locking and reverts on conflict",
+        "A caching strategy that optimistically serves stale data and refreshes in the background"
+      ],
+      "ans": 1,
+      "expl": "OCC avoids holding locks by reading a version number, performing work, then checking at commit time whether the version changed (meaning someone else modified it first). If changed, retry. This works well when conflicts are rare (most transactions succeed without retrying). It's a bad fit when conflicts are frequent — many retries waste work. PostgreSQL doesn't have built-in OCC syntax but you can implement it with a version column."
+    },
+    {
+      "cat": "Concurrency",
+      "q": "When should you use Serializable isolation vs. row-level locking?",
+      "opts": [
+        "Use Serializable for simple single-row operations; use row-level locking for complex multi-table transactions",
+        "Use row-level locking when you know exactly which rows need atomic updates (more efficient, no retries needed). Use Serializable for complex transactions where it's hard to reason about which rows to lock (simpler code but requires retry logic)",
+        "Use Serializable in production; use row-level locking only in development",
+        "Always use Serializable — row-level locking introduces too much deadlock risk"
+      ],
+      "ans": 1,
+      "expl": "Row-level locking (FOR UPDATE) is preferred when you know exactly which rows need to be locked — lower overhead, no retries, scales better. Serializable is for complex transactions involving many tables/rows where it's hard to reason about what to lock — simpler to implement but requires application retry logic and doesn't scale as well under high concurrency."
+    },
+    {
+      "cat": "Performance Limits",
+      "q": "At what rough scale should you start considering partitioning, sharding, or alternatives for PostgreSQL tables?",
+      "opts": [
+        "Tables with more than 10,000 rows start having performance issues",
+        "Tables past ~100M rows become unwieldy; complex joins are challenging with tables >10M rows; performance drops significantly when working set exceeds available RAM",
+        "Tables with more than 1 billion rows need sharding; all other sizes are fine",
+        "There are no practical limits — PostgreSQL scales linearly with hardware"
+      ],
+      "ans": 1,
+      "expl": "Rough rules of thumb: tables get unwieldy past 100M rows; full-text search works well up to tens of millions of documents; complex joins become challenging with tables >10M rows; performance drops significantly when working set exceeds available RAM. These aren't hard limits but signal when to consider partitioning, sharding, or alternatives."
+    },
+    {
+      "cat": "Performance Limits",
+      "q": "Why is keeping the working set in RAM so important for PostgreSQL performance?",
+      "opts": [
+        "PostgreSQL can only process queries for data that fits in RAM",
+        "Queries satisfied from memory are orders of magnitude faster than those requiring disk access — RAM vs. disk I/O is the single biggest performance factor",
+        "PostgreSQL uses RAM for WAL storage, and insufficient RAM causes write failures",
+        "RAM-resident data can use hash indexes instead of B-trees for O(1) lookups"
+      ],
+      "ans": 1,
+      "expl": "The article calls memory 'king when it comes to performance.' The gap between RAM access speed and disk access speed is orders of magnitude. A query that scans data already in the buffer cache is dramatically faster than one that must fetch pages from disk. Keeping frequently accessed data (the working set) in RAM is the most impactful performance optimization."
+    },
+    {
+      "cat": "Sharding",
+      "q": "How does PostgreSQL sharding differ from DynamoDB sharding?",
+      "opts": [
+        "PostgreSQL shards automatically based on query patterns; DynamoDB requires manual shard key selection",
+        "PostgreSQL has no built-in sharding — you implement it manually or use tools like Citus. DynamoDB handles sharding automatically based on your partition key",
+        "PostgreSQL uses range-based sharding; DynamoDB uses hash-based sharding exclusively",
+        "PostgreSQL sharding is only available in the enterprise version; DynamoDB sharding is free"
+      ],
+      "ans": 1,
+      "expl": "Unlike DynamoDB which handles sharding automatically when you specify a partition key, PostgreSQL has no built-in sharding solution. You must implement sharding manually (managing multiple PostgreSQL instances, routing logic, cross-shard queries) or use managed solutions like Citus. This added complexity is a key consideration when deciding to shard PostgreSQL."
+    },
+    {
+      "cat": "Sharding",
+      "q": "Why should you shard on the column you query by most often?",
+      "opts": [
+        "Querying the shard key column is faster because it avoids index lookups",
+        "Sharding on the query column ensures related data lives on the same shard, enabling single-shard queries and avoiding expensive scatter-gather operations across all shards",
+        "The shard key column must have high cardinality, which is only possible for frequently queried columns",
+        "PostgreSQL's query planner can only optimize queries on the shard key column"
+      ],
+      "ans": 1,
+      "expl": "If you shard posts by user_id and your most common query is 'get all posts by user X', all that user's posts live on one shard — a fast single-shard query. If you sharded by something else, 'get all posts by user X' becomes a scatter-gather across all shards. Shard key choice determines whether common queries are fast (single shard) or slow (scatter-gather)."
+    },
+    {
+      "cat": "When to Use PostgreSQL",
+      "q": "What should be your default database choice in a system design interview and why?",
+      "opts": [
+        "NoSQL — it scales better and is more flexible than any relational database",
+        "PostgreSQL — it provides ACID compliance, handles structured and unstructured data (JSONB), includes full-text search and geospatial support, and scales reads through replication",
+        "Redis — it's faster than all disk-based databases for most workloads",
+        "DynamoDB — it's fully managed and scales automatically without sharding decisions"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly says: 'PostgreSQL should be your default choice in system design interviews unless specific requirements demand otherwise.' It provides ACID guarantees, handles structured + unstructured data (JSONB), has built-in full-text search (often replacing Elasticsearch), geospatial support (PostGIS), and scales reads effectively via replication. Start with PostgreSQL and justify deviations."
+    },
+    {
+      "cat": "When to Use PostgreSQL",
+      "q": "When is extreme write throughput (millions of writes/second) a reason to look beyond PostgreSQL?",
+      "opts": [
+        "Never — PostgreSQL with enough shards can always match any write throughput requirement",
+        "When each write's WAL entry and index updates create I/O bottlenecks that sharding alone can't resolve cost-effectively — at that scale, Cassandra or Redis may be better fits",
+        "When writes exceed 5,000/second on a single node — sharding is never appropriate for PostgreSQL",
+        "Only when writing to more than 10 tables simultaneously in a single transaction"
+      ],
+      "ans": 1,
+      "expl": "Each PostgreSQL write requires WAL entries and index updates, creating I/O bottlenecks even with the fastest storage. For millions of writes per second, even sharding many PostgreSQL nodes adds complexity and latency. At that scale, consider Cassandra (write-optimized LSM tree) for event streaming or Redis (in-memory) for real-time counters."
+    },
+    {
+      "cat": "When to Use PostgreSQL",
+      "q": "Why does PostgreSQL's single-primary architecture struggle with global multi-region active-active deployments?",
+      "opts": [
+        "PostgreSQL can't replicate across geographic regions due to network latency",
+        "PostgreSQL's single-primary design means one region must accept all writes — true active-active (multiple regions accepting writes simultaneously) creates conflict resolution challenges PostgreSQL wasn't designed to handle, and cross-region synchronous replication adds substantial latency",
+        "PostgreSQL doesn't support more than 3 replicas, making global distribution impossible",
+        "Multi-region deployments require a consensus protocol that PostgreSQL lacks"
+      ],
+      "ans": 1,
+      "expl": "PostgreSQL has one primary that accepts writes. For true active-active (multiple regions accepting writes), you'd need conflict resolution for simultaneous writes — something PostgreSQL wasn't designed for. Cross-region synchronous replication also adds round-trip latency to every write. For global active-active, consider CockroachDB (global ACID) or Cassandra/DynamoDB (eventual consistency at global scale)."
+    },
+    {
+      "cat": "When to Use PostgreSQL",
+      "q": "Is 'I need scale' alone a good reason to choose a NoSQL database over PostgreSQL in an interview?",
+      "opts": [
+        "Yes — NoSQL databases always scale better than PostgreSQL",
+        "No — PostgreSQL can handle significant scale with partitioning, sharding, and replication. Scale alone is not a valid reason to avoid PostgreSQL; specific bottlenecks must be identified",
+        "Yes — PostgreSQL can't handle more than 1 million rows per table",
+        "No — but only if you're using a managed service like AWS RDS"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly states: 'Scalability alone is not a good reason to choose an alternative to PostgreSQL.' PostgreSQL scales reads via replication, writes via partitioning and sharding. You need to identify a specific bottleneck (extreme write throughput, global active-active, simple key-value patterns) before reaching for an alternative. 'NoSQL scales better' without specifics is a weak argument."
+    },
+    {
+      "cat": "Write Performance",
+      "q": "What is write offloading and what types of writes is it suited for?",
+      "opts": [
+        "Moving write operations to read replicas to reduce primary database load",
+        "Sending non-critical writes to a message queue (like Kafka) for asynchronous batch processing by background workers — suited for analytics, activity logs, metrics aggregation, and non-critical updates like 'last seen' timestamps",
+        "Compressing write payloads before sending to reduce WAL entry size",
+        "Deferring writes until off-peak hours using PostgreSQL's built-in scheduler"
+      ],
+      "ans": 1,
+      "expl": "Write offloading routes non-urgent writes to a message queue (Kafka, SQS), then background workers process them in batches and write to PostgreSQL. Suited for: analytics events, activity logs, metrics, 'last seen' timestamps — things that don't need to be immediately reflected in user-facing reads. Not suitable for transactional writes where immediate consistency is required."
+    },
+    {
+      "cat": "ACID & Transactions",
+      "q": "What does Durability guarantee in PostgreSQL and how is it achieved?",
+      "opts": [
+        "That data is replicated to at least one replica before being acknowledged to the client",
+        "That once PostgreSQL confirms a transaction as committed, changes persist even through crashes — achieved via WAL, where log records are flushed to disk before the transaction is confirmed",
+        "That all data is checksummed and verified on every read to detect corruption",
+        "That committed data is immediately written to data files before confirming to the client"
+      ],
+      "ans": 1,
+      "expl": "Durability is guaranteed by the Write-Ahead Log (WAL). When you commit a transaction, PostgreSQL flushes WAL records to disk before confirming success. Even if the server crashes immediately after, PostgreSQL can replay the WAL on restart to recover committed changes — even if the actual data pages hadn't been written to disk yet."
+    }
+  ]
+}

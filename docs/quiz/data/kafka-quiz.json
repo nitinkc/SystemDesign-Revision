@@ -1,0 +1,403 @@
+{
+  "title": "Kafka",
+  "subtitle": "32 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "kafka_quiz_progress",
+  "questions": [
+    {
+      "cat": "Core Concepts",
+      "q": "What is a Kafka partition?",
+      "opts": [
+        "A logical grouping of topics that share a common producer",
+        "An ordered, immutable sequence of messages that is continually appended to — like an append-only log file",
+        "A physical server in the Kafka cluster responsible for storing all data",
+        "A consumer group assignment that maps topics to individual consumers"
+      ],
+      "ans": 1,
+      "expl": "A partition is an ordered, immutable sequence of messages continuously appended to — essentially a log file. Partitions are how Kafka scales: they allow messages to be consumed in parallel and distributed across brokers."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What is the difference between a topic and a partition in Kafka?",
+      "opts": [
+        "Topics store messages; partitions store metadata about those messages",
+        "A topic is a logical grouping of messages; a partition is the physical grouping — a topic can span multiple partitions across different brokers",
+        "Topics are for producers; partitions are for consumers",
+        "Topics are replicated; partitions are not"
+      ],
+      "ans": 1,
+      "expl": "A topic is a logical grouping of messages — how you organize and subscribe to data. A partition is the physical unit — an actual log file on a broker. A single topic can have many partitions spread across many brokers, enabling parallel consumption and horizontal scaling."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What is a Kafka broker?",
+      "opts": [
+        "A client library that helps producers serialize messages before sending",
+        "An individual server (physical or virtual) responsible for storing data and serving clients",
+        "The coordination service that manages leader election across the cluster",
+        "A routing layer that sits between producers and partitions"
+      ],
+      "ans": 1,
+      "expl": "A broker is simply an individual server in the Kafka cluster. Each broker stores data (partitions) and serves clients (producers and consumers). Adding more brokers increases both storage capacity and the number of clients you can serve."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What are the four fields of a Kafka message/record?",
+      "opts": [
+        "Topic, partition, offset, and checksum",
+        "Value (payload), key, timestamp, and headers",
+        "Producer ID, consumer ID, sequence number, and payload",
+        "Topic, key, value, and replication factor"
+      ],
+      "ans": 1,
+      "expl": "A Kafka record has four fields, all technically optional: value (the payload), key (used to determine partition routing), timestamp (when the message was created or ingested), and headers (key-value metadata pairs, like HTTP headers)."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What is an offset in Kafka?",
+      "opts": [
+        "The number of bytes between the start of a partition and the current message",
+        "A unique sequential identifier assigned to each message within a partition, used by consumers to track their reading progress",
+        "The lag between when a message is produced and when it is consumed",
+        "The position of a partition's leader replica within the broker cluster"
+      ],
+      "ans": 1,
+      "expl": "Each message in a partition gets a unique offset — a sequential ID indicating its position. Consumers use offsets to track progress. When a consumer restarts, it reads its last committed offset and resumes from there. Ordering within a partition is determined by offsets, not timestamps."
+    },
+    {
+      "cat": "Partitioning",
+      "q": "How does Kafka determine which partition a message goes to when a key is provided?",
+      "opts": [
+        "The producer manually specifies the partition number in the message headers",
+        "Kafka hashes the key (using murmur2 by default) and takes the modulo with the number of partitions: partition = hash(key) % num_partitions",
+        "Kafka assigns partitions round-robin regardless of the key",
+        "The broker cluster controller assigns partitions based on current load"
+      ],
+      "ans": 1,
+      "expl": "When a key is provided, Kafka hashes it using murmur2 by default and computes partition = hash(key) % num_partitions. Messages with the same key always go to the same partition, which is what preserves ordering for related messages."
+    },
+    {
+      "cat": "Partitioning",
+      "q": "What happens when a Kafka message is sent without a key?",
+      "opts": [
+        "The message is rejected — keys are required for Kafka to function",
+        "Modern Kafka clients use a 'sticky' partitioner that batches to one partition for efficiency, then rotates — producing roughly even distribution over time but losing ordering guarantees",
+        "The message is broadcast to all partitions simultaneously",
+        "Kafka assigns it to partition 0 by default"
+      ],
+      "ans": 1,
+      "expl": "Without a key, modern Kafka clients use a sticky partitioner — batching messages to one partition for efficiency before rotating to the next. This produces roughly even distribution over time but loses the ability to guarantee ordering for related messages since they may land on different partitions."
+    },
+    {
+      "cat": "Partitioning",
+      "q": "Why is the choice of partition key so critical in system design?",
+      "opts": [
+        "A bad key increases message size, hurting throughput",
+        "A bad key creates hot partitions — some partitions get overwhelmed with traffic while others sit idle, negating the benefits of distribution",
+        "A bad key prevents consumers from committing offsets correctly",
+        "A bad key forces Kafka to use replication factor 1, reducing durability"
+      ],
+      "ans": 1,
+      "expl": "The partition key determines how load is distributed. A poorly chosen key causes hot partitions — one partition receiving far more traffic than others. Good keys distribute messages evenly across the partition space. The article calls partitioning strategy 'the main decision you make when dealing with Kafka clusters.'"
+    },
+    {
+      "cat": "Partitioning",
+      "q": "An Ad Click Aggregator partitions by ad_id. Nike launches a viral Lebron James ad. What problem occurs and what are two ways to fix it?",
+      "opts": [
+        "The partition for that ad_id runs out of disk space; fix by increasing retention.bytes or adding a new broker",
+        "A hot partition forms because all clicks for that ad hit one partition; fix with random salting (add a random suffix to the key) or a compound key (ad_id + region or user segment)",
+        "The consumer group loses track of offsets for that ad; fix by resetting offsets or using a dead letter queue",
+        "Replication falls behind because the leader is overwhelmed; fix by increasing the replication factor"
+      ],
+      "ans": 1,
+      "expl": "All clicks for the viral ad hash to the same partition, creating a hot partition. Two fixes: (1) Random salting — append a random number to the ad_id so clicks spread across multiple partitions (complicates aggregation); (2) Compound key — use ad_id + region or user_segment to distribute load while preserving some grouping."
+    },
+    {
+      "cat": "Consumer Groups",
+      "q": "How does a Kafka consumer group ensure each message is processed by only one consumer?",
+      "opts": [
+        "Each consumer in the group maintains a lock on the messages it's reading",
+        "Each partition is assigned to exactly one consumer in the group — so messages in a partition are processed by only one consumer at a time",
+        "The broker tracks which messages have been delivered and prevents re-delivery to other consumers in the group",
+        "Consumer groups use a coordinator node that routes each message to an available consumer"
+      ],
+      "ans": 1,
+      "expl": "In a consumer group, each partition is assigned to exactly one consumer. Since messages within a partition are consumed by one consumer, each message is effectively processed once under normal operation. If a consumer fails, Kafka rebalances and redistributes its partitions to remaining consumers."
+    },
+    {
+      "cat": "Consumer Groups",
+      "q": "What happens to partitions when a consumer in a group fails?",
+      "opts": [
+        "The failed consumer's partitions are paused until it restarts",
+        "Kafka rebalances the consumer group, redistributing the failed consumer's partitions among the remaining active consumers",
+        "The partition leader broker temporarily takes over processing for the failed consumer",
+        "The messages in the failed consumer's partitions are moved to a dead letter queue"
+      ],
+      "ans": 1,
+      "expl": "When a consumer in a group fails, Kafka triggers a rebalance. The failed consumer's partitions are redistributed among the remaining consumers in the group, ensuring all partitions continue to be processed. The new consumer picks up from the last committed offset."
+    },
+    {
+      "cat": "Consumer Groups",
+      "q": "What is the maximum useful number of consumers in a consumer group for a topic with N partitions?",
+      "opts": [
+        "Unlimited — Kafka can distribute one partition to multiple consumers simultaneously",
+        "N consumers — adding more than N consumers means some consumers sit idle since each partition is assigned to at most one consumer",
+        "N/2 consumers — Kafka reserves half the consumer slots for failover",
+        "2N consumers — Kafka assigns each partition to a primary and backup consumer"
+      ],
+      "ans": 1,
+      "expl": "Since each partition is assigned to exactly one consumer in a group, having more consumers than partitions means the extra consumers sit idle — they have no partitions to read from. The maximum parallelism is equal to the number of partitions. This is why adding partitions is how you scale consumer throughput."
+    },
+    {
+      "cat": "Delivery Semantics",
+      "q": "What delivery guarantee does Kafka provide by default, and what causes it?",
+      "opts": [
+        "Exactly-once — Kafka deduplicates all messages automatically",
+        "At-least-once — if a consumer crashes after processing a message but before committing its offset, the message will be reprocessed after restart",
+        "At-most-once — messages are acknowledged before processing to avoid duplicates",
+        "Best-effort — Kafka makes no delivery guarantees without additional configuration"
+      ],
+      "ans": 1,
+      "expl": "Kafka's default is at-least-once delivery. If a consumer processes a message and then crashes before committing its offset, Kafka will re-deliver that message after restart (the consumer resumes from the last committed offset). Exactly-once semantics are possible but require additional configuration: idempotent producers + transactional APIs."
+    },
+    {
+      "cat": "Delivery Semantics",
+      "q": "What does setting acks=all on a Kafka producer do?",
+      "opts": [
+        "The producer waits for all consumers to acknowledge they've processed the message",
+        "The message is acknowledged only when all in-sync replicas (ISR) have received it — the strongest durability guarantee available",
+        "The message is sent to all brokers simultaneously rather than just the partition leader",
+        "The producer receives acknowledgment from the controller rather than the partition leader"
+      ],
+      "ans": 1,
+      "expl": "acks=all means the leader only acknowledges the write after all in-sync replicas (ISR) have also received it. This is the strongest durability guarantee — even if the leader immediately fails after acknowledging, the data exists on all in-sync replicas and won't be lost."
+    },
+    {
+      "cat": "Delivery Semantics",
+      "q": "When should you commit a consumer offset, and what is the tradeoff?",
+      "opts": [
+        "Always commit immediately upon receiving a message to minimize reprocessing",
+        "Commit only after the work associated with the message is fully complete — the more work done per message, the more reprocessing risk if the consumer fails before committing",
+        "Commit offsets on a fixed timer (every 5 seconds) regardless of processing status",
+        "Never commit offsets manually — Kafka auto-commits after every poll"
+      ],
+      "ans": 1,
+      "expl": "Committing before work is done risks losing the message (at-most-once). Committing after work completes risks reprocessing (at-least-once). The article uses Design a Web Crawler as an example: don't commit the offset until raw HTML is safely stored in S3. More work per message = more reprocessing risk on failure, so keeping consumer work small is a good strategy."
+    },
+    {
+      "cat": "Replication & Fault Tolerance",
+      "q": "How does Kafka's leader-follower replication model work?",
+      "opts": [
+        "All brokers receive writes simultaneously; the fastest acknowledgment wins",
+        "Each partition has one leader replica that handles all writes; follower replicas passively replicate from the leader. If the leader fails, the controller promotes an in-sync follower",
+        "Producers write to follower replicas first; the controller forwards to the leader after quorum",
+        "Leaders and followers alternate roles on a rotating schedule to distribute write load"
+      ],
+      "ans": 1,
+      "expl": "Each partition has a single leader replica that handles all writes (and reads by default). Followers passively replicate from the leader, staying in sync. When a leader fails, the cluster controller promotes one of the in-sync follower replicas to leader, minimizing downtime and data loss."
+    },
+    {
+      "cat": "Replication & Fault Tolerance",
+      "q": "What is a replication factor of 3 in Kafka and what does it protect against?",
+      "opts": [
+        "3 copies of each topic (not partition) are maintained across brokers",
+        "Each partition has 3 total replicas (1 leader + 2 followers) on different brokers — the data remains available if one broker fails, and can survive a second broker failure if the remaining in-sync replica is promoted",
+        "Each message is written 3 times to the same partition for redundancy",
+        "3 consumer groups can independently read each partition simultaneously"
+      ],
+      "ans": 1,
+      "expl": "A replication factor of 3 means each partition has 3 copies across 3 different brokers. If one broker fails, 2 copies remain. A common configuration: 1 leader + 2 followers per partition. The cluster can survive a broker failure with no data loss and no interruption (a follower is promoted to leader)."
+    },
+    {
+      "cat": "Replication & Fault Tolerance",
+      "q": "The article says 'Kafka is always available, sometimes consistent.' What does this mean in an interview context?",
+      "opts": [
+        "Kafka guarantees availability over consistency, meaning reads may return stale data during network partitions",
+        "It's not realistic to ask 'what if Kafka goes down' — Kafka itself is highly available. The more relevant failure scenario is a consumer going down, and you should design around that",
+        "Kafka uses eventual consistency for replication, so follower replicas may lag the leader",
+        "Kafka prioritizes write availability over read consistency during broker failures"
+      ],
+      "ans": 1,
+      "expl": "The article explicitly says asking 'what happens if Kafka goes down?' is unrealistic and you can gently push back on interviewers who ask it. The far more relevant and likely failure is a consumer going down. Design around consumer failures: offset management, rebalancing, retry topics, and DLQs."
+    },
+    {
+      "cat": "Message Queue vs Stream",
+      "q": "What is the key difference between using Kafka as a message queue vs. as a stream?",
+      "opts": [
+        "Message queues use topics; streams use partitions directly",
+        "As a message queue, each message is processed by one consumer in a group and effectively consumed. As a stream, the log is retained and can be replayed, multiple independent consumer groups can read the same data, and processing is continuous",
+        "Message queues delete messages after consumption; streams compress messages instead",
+        "Message queues support ordering; streams do not"
+      ],
+      "ans": 1,
+      "expl": "Both modes use offset commits for tracking. The difference is consumption pattern: as a queue, one consumer group processes each message and moves on (though Kafka retains based on retention policy). As a stream, the log is retained for replay, multiple independent consumer groups can read the same data at their own pace, and processing is continuous."
+    },
+    {
+      "cat": "Message Queue vs Stream",
+      "q": "Which of these use cases best fits Kafka as a message queue (vs. a stream)?",
+      "opts": [
+        "Aggregating ad click events in real-time to compute click-through rates",
+        "Ensuring users enter a concert ticket booking page in the order they arrived — a virtual waiting queue",
+        "Sending the same event to multiple independent analytics systems simultaneously",
+        "Allowing multiple consumer groups to replay historical data for different purposes"
+      ],
+      "ans": 1,
+      "expl": "A virtual waiting queue for Ticketmaster is a classic message queue use case: each user event should be processed by exactly one consumer, in order, exactly once. Stream use cases (ad click aggregation, fan-out to multiple consumers, replay) involve continuous processing or multiple independent consumers reading the same data."
+    },
+    {
+      "cat": "Scalability",
+      "q": "What is a rough estimate for a single Kafka broker's throughput and storage capacity?",
+      "opts": [
+        "~10K messages/second and ~100GB storage",
+        "~1M messages/second and ~1TB storage (varies significantly with message size and hardware)",
+        "~100K messages/second and ~10TB storage",
+        "~10M messages/second and ~100TB storage"
+      ],
+      "ans": 1,
+      "expl": "On good hardware, a single broker can handle around 1M messages/second and store around 1TB of data. These are rough estimates that depend heavily on message size and hardware specs, but they're useful for estimating in an interview whether scaling is even a concern for your design."
+    },
+    {
+      "cat": "Scalability",
+      "q": "When adding brokers to scale Kafka, what else must you ensure?",
+      "opts": [
+        "You must increase acks settings to account for the additional brokers",
+        "Your topics must have sufficient partitions to take advantage of the new brokers — under-partitioned topics can't distribute load across new brokers",
+        "You must restart all consumers to trigger rebalancing across the new brokers",
+        "You must reconfigure all producer keys to include the new broker addresses"
+      ],
+      "ans": 1,
+      "expl": "Adding brokers without enough partitions means the new brokers sit underutilized. Partitions are the unit of parallelism in Kafka — if you have 3 brokers but only 3 partitions, adding a 4th broker gains you nothing until you also increase the number of partitions. More partitions enable more parallelism and better load distribution."
+    },
+    {
+      "cat": "Scalability",
+      "q": "What is the anti-pattern of storing large blobs in Kafka, and what is the correct approach?",
+      "opts": [
+        "Large blobs slow down consumer offset commits; instead split them into smaller chunks",
+        "Kafka isn't meant to store large files — store the file in a distributed system like S3 and put a small pointer message (the S3 location) in Kafka instead",
+        "Large blobs should be stored in a separate Kafka topic with higher retention",
+        "Compress large blobs with GZIP before sending to Kafka to keep message size manageable"
+      ],
+      "ans": 1,
+      "expl": "Kafka is designed for small messages processed quickly, not large file storage. A common anti-pattern is putting videos in Kafka for transcoding workers. The correct approach: store the video in S3, put a small Kafka message containing the S3 URL. The message is tiny and serves as a pointer. This avoids memory pressure, poor network utilization, and throughput degradation."
+    },
+    {
+      "cat": "Fault Tolerance & Errors",
+      "q": "Why should you enable idempotent producer mode when using retries?",
+      "opts": [
+        "Idempotent mode compresses retry messages to reduce network overhead",
+        "Without idempotent mode, a retry after a network timeout can result in duplicate messages if the original message was actually received; idempotent mode ensures each message is written exactly once",
+        "Idempotent mode allows retries to target different partitions if the original partition is unavailable",
+        "Idempotent mode enables the producer to verify message integrity using checksums"
+      ],
+      "ans": 1,
+      "expl": "When a producer retries a message (e.g., after a network timeout), it's possible the original message was received but the acknowledgment was lost. Without idempotent mode, the retry creates a duplicate. Idempotent mode assigns each message a sequence number so Kafka can detect and discard duplicates, giving you exactly-once writes at the producer level."
+    },
+    {
+      "cat": "Fault Tolerance & Errors",
+      "q": "How does Kafka handle consumer-side retries, since Kafka doesn't support them out of the box?",
+      "opts": [
+        "Kafka supports consumer retries via the retry.backoff.ms configuration on the consumer",
+        "Failed messages are moved to a retry topic; a separate consumer processes retries and eventually moves messages to a dead letter queue (DLQ) after too many failures",
+        "Consumers re-seek to the failed offset automatically after a configurable timeout",
+        "The consumer group coordinator handles retries by reassigning failed messages to another consumer"
+      ],
+      "ans": 1,
+      "expl": "Unlike SQS, Kafka doesn't support consumer retries natively. The common pattern: when a message fails processing, publish it to a retry topic. A separate consumer processes the retry topic. After a maximum number of retries, move the message to a dead letter queue (DLQ) for investigation. This is why the article notes they chose SQS over Kafka for Design a Web Crawler — to get built-in retry and DLQ support."
+    },
+    {
+      "cat": "Fault Tolerance & Errors",
+      "q": "What is a Dead Letter Queue (DLQ) in Kafka?",
+      "opts": [
+        "A Kafka topic with infinite retention used as the primary data store",
+        "A topic where messages that have failed processing too many times are stored for later investigation",
+        "A special partition that receives messages when the consumer group rebalances",
+        "A Kafka log compaction topic that retains only the latest value per key"
+      ],
+      "ans": 1,
+      "expl": "A DLQ is a topic where messages that have exhausted their retries are sent instead of being dropped or blocking the main consumer. It allows operators to inspect failed messages, understand why they failed, and decide whether to replay them or discard them — without blocking the main processing pipeline."
+    },
+    {
+      "cat": "Performance",
+      "q": "What are two built-in ways to improve Kafka producer throughput?",
+      "opts": [
+        "Increasing replication factor and enabling rack-aware assignment",
+        "Batching multiple messages in a single send() call and enabling message compression (GZIP, Snappy, LZ4) to reduce message size",
+        "Using sticky partitioner and increasing consumer group size",
+        "Enabling acks=0 and increasing max.poll.records on consumers"
+      ],
+      "ans": 1,
+      "expl": "Two key producer throughput optimizations: (1) Batching — send multiple messages in one send() call to reduce network overhead (Kafka producers naturally batch before sending); (2) Compression — GZIP, Snappy, or LZ4 reduce message size, allowing more data per network round trip. The article also notes that partitioning strategy is arguably the biggest performance lever."
+    },
+    {
+      "cat": "Performance",
+      "q": "What is the recommended maximum message size in Kafka and why?",
+      "opts": [
+        "Under 10KB — Kafka's network protocol has overhead that makes larger messages inefficient",
+        "Under 1MB — to ensure optimal performance via reduced memory pressure and better network utilization",
+        "Under 10MB — the default broker configuration rejects larger messages",
+        "Under 100KB — to stay within a single partition page for efficient reads"
+      ],
+      "ans": 1,
+      "expl": "The article recommends keeping messages under 1MB for optimal performance. While message.max.bytes is configurable, large messages increase memory pressure, hurt network utilization, and slow throughput. Large data (like videos) should be stored externally (S3) with only a pointer in Kafka."
+    },
+    {
+      "cat": "When to Use Kafka",
+      "q": "Which scenario is best suited for Kafka as an asynchronous message queue?",
+      "opts": [
+        "Aggregating real-time sensor readings for a live dashboard that must reflect data within 100ms",
+        "Processing video transcoding after upload — make the standard definition video available immediately and queue the transcoding job asynchronously",
+        "Synchronizing database writes across multiple shards with exactly-once guarantees",
+        "Serving user profile reads with low latency at high throughput"
+      ],
+      "ans": 1,
+      "expl": "Video transcoding is the canonical async queue use case from the article: make the SD video immediately available, then put a message in Kafka with the video's S3 location for the transcoding worker to pick up asynchronously when capacity is available. The producer (upload service) and consumer (transcoder) are decoupled and scale independently."
+    },
+    {
+      "cat": "When to Use Kafka",
+      "q": "When should you choose SQS over Kafka?",
+      "opts": [
+        "When you need to process more than 1M messages per second",
+        "When you want built-in retry logic and dead letter queue support without implementing it yourself",
+        "When you need strict message ordering across multiple partitions",
+        "When you need multiple consumer groups to read the same messages independently"
+      ],
+      "ans": 1,
+      "expl": "SQS provides built-in retry and DLQ functionality that Kafka lacks natively. The article explicitly notes this tradeoff in Design a Web Crawler: they chose SQS over Kafka specifically to avoid implementing custom retry and DLQ logic. If you need simple queue semantics with built-in failure handling, SQS is often simpler than Kafka."
+    },
+    {
+      "cat": "When to Use Kafka",
+      "q": "What should be the FIRST topic you discuss in an interview when scaling a Kafka-based system?",
+      "opts": [
+        "Replication factor and acks settings for durability",
+        "Partitioning strategy — how you'll partition data and how you'll handle hot partitions",
+        "Number of brokers to add and how to distribute them across availability zones",
+        "Consumer group configuration and offset commit strategy"
+      ],
+      "ans": 1,
+      "expl": "The article is explicit: 'discussing the partition strategy should just about always be where you start.' Partitioning is the main architectural decision in Kafka — it determines how load is distributed, whether ordering is preserved, and whether hot partitions will be a problem. Everything else (broker count, consumer scaling) follows from getting partitioning right."
+    },
+    {
+      "cat": "Retention & Log Compaction",
+      "q": "What is Kafka's default message retention period and how is it configured?",
+      "opts": [
+        "24 hours, configured via retention.hours",
+        "7 days, configured via retention.ms and retention.bytes settings on the topic",
+        "30 days, configured via log.retention.days in the broker config",
+        "Indefinite by default — messages are only removed by explicit deletion"
+      ],
+      "ans": 1,
+      "expl": "Kafka's default retention policy keeps messages for 7 days. This is configured via retention.ms (time-based) and retention.bytes (size-based) settings per topic. In an interview, if you need longer retention for replay or auditing, you can increase these settings — just account for the storage cost impact."
+    },
+    {
+      "cat": "Retention & Log Compaction",
+      "q": "Why is Kafka described as a 'distributed commit log'?",
+      "opts": [
+        "Because it uses a write-ahead log internally for crash recovery",
+        "Because each partition is an append-only log — messages are written sequentially and assigned offsets, and once written they're never modified in-place",
+        "Because producers must commit a transaction log before messages are visible to consumers",
+        "Because the controller logs all cluster metadata changes to a central commit log"
+      ],
+      "ans": 1,
+      "expl": "Kafka is called a distributed commit log because each partition functions as an append-only, ordered, immutable log. Messages are sequentially appended and assigned offsets. They're never modified in-place — only eventually removed by retention policies or log compaction. This immutability is central to Kafka's performance, reliability, and replication simplicity."
+    }
+  ]
+}

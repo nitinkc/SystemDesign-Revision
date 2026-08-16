@@ -103,6 +103,10 @@ nav:
       - Key Technologies :
           - Redis: quiz/redis-quiz.md
           - ElasticSearch: quiz/elasticsearch-quiz.md
+          - Kafka: quiz/kafka-quiz.md
+          - API Gateway: quiz/api-gateway-quiz.md
+          - Cassandra: quiz/cassandra-quiz.md
+          - PostGreSQL: quiz/postgreSQL-quiz.md
       - Advanced Topic :
           - Proximity Search: quiz/proximity-search-quiz.md
           - Vector DB: quiz/vector-db-quiz.md

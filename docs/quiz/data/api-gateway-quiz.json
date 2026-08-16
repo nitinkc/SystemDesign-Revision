@@ -1,0 +1,495 @@
+{
+  "title": "API Gateway Mastery Quiz",
+  "subtitle": "35 questions across 10 categories testing deep system design principles, security, and traffic management.",
+  "storageKey": "api_gateway_quiz_progress",
+  "questions": [
+    {
+      "cat": "Core Concepts",
+      "q": "What is the primary architectural difference between a Reverse Proxy and an API Gateway?",
+      "opts": [
+        "A Reverse Proxy only handles incoming traffic, while an API Gateway handles both inbound and outbound.",
+        "An API Gateway provides higher-level logic like request transformation, authentication, and rate limiting, whereas a Reverse Proxy primarily focuses on load balancing and TLS termination.",
+        "There is no difference; they are two names for the exact same architectural component.",
+        "A Reverse Proxy can only handle HTTP traffic, while an API Gateway can handle any protocol including TCP and UDP."
+      ],
+      "correct": 1,
+      "explanation": "While all API Gateways act as reverse proxies, the distinction lies in the 'intelligence.' A reverse proxy (like Nginx) is optimized for routing and load balancing. An API Gateway adds 'cross-cutting concerns' like authentication, rate limiting, request aggregation, and protocol translation."
+    },
+    {
+      "cat": "Authentication & Security",
+      "q": "When implementing JWT authentication at the API Gateway level, what is a significant security risk if not handled correctly?",
+      "opts": [
+        "JWTs are too large to be passed in headers.",
+        "The Gateway may validate the signature but fail to check if the token has been revoked.",
+        "The Gateway cannot decrypt the payload.",
+        "The Gateway will automatically expose the private key to the client."
+      ],
+      "correct": 1,
+      "explanation": "Since JWTs are stateless, once issued, they are valid until they expire. If a user logs out or a token is stolen, the Gateway cannot 'invalidate' it without a denylist (like a Redis cache), which adds a stateful check to a stateless process."
+    },
+    {
+      "cat": "Rate Limiting",
+      "q": "Which algorithm is most suitable for handling 'bursty' traffic while maintaining a steady long-term flow?",
+      "opts": [
+        "Fixed Window Counter",
+        "Leaky Bucket",
+        "Token Bucket",
+        "Sliding Window Log"
+      ],
+      "correct": 2,
+      "explanation": "The Token Bucket algorithm allows for bursts of traffic (up to the bucket size) while ensuring the long-term average rate is maintained. The Leaky Bucket enforces a constant outflow rate, which is less ideal for bursty web traffic."
+    },
+    {
+      "cat": "Request Aggregation",
+      "q": "In a 'Backend for Frontend' (BFF) pattern, how does the API Gateway help reduce mobile app latency?",
+      "opts": [
+        "By encrypting the data before it reaches the phone.",
+        "By aggregating multiple downstream microservice calls into a single response for the mobile client.",
+        "By hosting the frontend assets on the same server as the gateway.",
+        "By automatically converting all requests to GraphQL."
+      ],
+      "correct": 1,
+      "explanation": "Mobile devices often face high-latency networks. Instead of the mobile app making 5 separate calls to 5 different services (User, Orders, Inventory, etc.), the Gateway/BFF makes those calls in parallel and returns one consolidated JSON object."
+    },
+    {
+      "cat": "Circuit Breaking",
+      "q": "What is the purpose of the 'Half-Open' state in a Circuit Breaker pattern implemented at the Gateway?",
+      "opts": [
+        "To completely block all traffic to the failing service.",
+        "To allow a small percentage of traffic through to test if the service has recovered.",
+        "To redirect traffic to a secondary database.",
+        "To automatically restart the downstream container."
+      ],
+      "correct": 1,
+      "explanation": "The Half-Open state is a trial phase. After a timeout in the 'Open' state, the Gateway allows a few requests through. If they succeed, the circuit closes; if they fail, it re-opens."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "Why might 'Least Connections' be preferable to 'Round Robin' for an API Gateway routing to long-running tasks?",
+      "opts": [
+        "Round Robin is too fast for the network to handle.",
+        "Least Connections ensures that requests are sent to the server with the fewest active sessions, preventing a single server from getting stuck with many slow requests.",
+        "Least Connections is the only way to handle SSL certificates.",
+        "Round Robin does not support HTTP headers."
+      ],
+      "correct": 1,
+      "explanation": "Round Robin assumes all requests take the same amount of time. If some requests take 10ms and others take 10 seconds, Round Robin will eventually overwhelm a server with many long-running requests. Least Connections balances based on current load."
+    },
+    {
+      "cat": "Caching Strategies",
+      "q": "Where is the best place to implement caching for data that changes very infrequently (e.g., a product catalog)?",
+      "opts": [
+        "Only in the database.",
+        "At the Edge (CDN).",
+        "Only in the application code.",
+        "Only in the client's browser."
+      ],
+      "correct": 1,
+      "explanation": "For data that changes infrequently, caching at the Edge (CDN) is most efficient as it reduces the request's travel distance to the user and offloads traffic from your origin servers."
+    },
+    {
+      "cat": "Observability",
+      "q": "What is 'Distributed Tracing' and why is it vital for an API Gateway architecture?",
+      "opts": [
+        "It records the total number of requests per second.",
+        "It tracks a single request as it moves through multiple microservices using a unique Trace ID.",
+        "It encrypts the logs so only admins can see them.",
+        "It provides a visual map of the database schema."
+      ],
+      "correct": 1,
+      "explanation": "In a microservices architecture, a request might touch 10 different services. Distributed tracing allows you to see exactly where a bottleneck or error occurred in that chain by following a unique ID generated at the Gateway."
+    },
+    {
+      "cat": "Performance & Latency",
+      "q": "How does 'Request Transformation' at the Gateway impact system latency?",
+      "opts": [
+        "It always improves latency by simplifying the client's request.",
+        "It adds overhead because the Gateway must parse, modify, and re-serialize the request body.",
+        "It has no impact on latency.",
+        "It reduces latency by removing the need for the database."
+      ],
+      "correct": 1,
+      "explanation": "Every operation the Gateway performs (header manipulation, body parsing, auth checks) consumes CPU cycles and adds milliseconds to the total round-trip time. It is a trade-off between architectural cleanliness and raw speed."
+    },
+    {
+      "cat": "Security",
+      "q": "What is a 'WAF' (Web Application Firewall) and how does it differ from an API Gateway?",
+      "opts": [
+        "A WAF is for internal routing; an API Gateway is for external.",
+        "A WAF focuses on filtering out common web attacks (SQLi, XSS), while an API Gateway focuses on API management (routing, rate limiting, auth).",
+        "A WAF handles only HTTPS; an API Gateway handles only HTTP.",
+        "They are identical components."
+      ],
+      "correct": 1,
+      "explanation": "While they often sit in front of each other, a WAF is a security layer looking for malicious patterns. An API Gateway is an orchestration layer looking at API logic (who is the user? which service do they need?)."
+    },
+    {
+      "cat": "Scalability",
+      "q": "To achieve high availability, how should an API Gateway be deployed?",
+      "opts": [
+        "As a single, very large instance in one region.",
+        "As a stateless cluster across multiple availability zones with a load balancer in front of it.",
+        "Inside a single database server.",
+        "On a single developer's machine for testing."
+      ],
+      "correct": 1,
+      "explanation": "API Gateways should be stateless to allow any instance to handle any request. Deploying them across multiple Availability Zones (AZs) ensures that if one data center goes down, the API remains reachable."
+    },
+    {
+      "cat": "Data Model & Protocols",
+      "q": "The Gateway translates a client's 'GraphQL' request into multiple 'gRPC' calls. What is this known as?",
+      "opts": [
+        "Protocol Translation",
+        "Data Shredding",
+        "Payload Compression",
+        "Shadowing"
+      ],
+      "correct": 0,
+      "explanation": "API Gateways often act as a bridge between modern frontend protocols (like GraphQL or REST/JSON) and high-performance internal protocols (like gRPC or Thrift)."
+    },
+    {
+      "cat": "Error Handling",
+      "q": "If a downstream service is down, what is the best practice for the Gateway's response?",
+      "opts": [
+        "Return a 500 Internal Server Error with a full stack trace.",
+        "Return a 504 Gateway Timeout with no message.",
+        "Return a 503 Service Unavailable or a meaningful custom error message with a 'Retry-After' header.",
+        "Hang the connection until the service comes back up."
+      ],
+      "correct": 2,
+      "explanation": "Good API design involves providing the client with actionable information. A 503 status code with a 'Retry-After' header tells the client (or the client's retry logic) that the error is temporary and when to try again."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What is 'Sticky Sessions' and why is it generally discouraged in modern API Gateway designs?",
+      "opts": [
+        "It ensures a user is always routed to the same server, making it harder to scale horizontally and manage load.",
+        "It makes the connection faster by keeping the socket open.",
+        "It allows the Gateway to remember the user's password.",
+        "It is required for all RESTful APIs."
+      ],
+      "correct": 0,
+      "explanation": "Sticky sessions tie a client to a specific backend instance. This leads to 'hot spots' where one server is overloaded while others are idle. Modern designs prefer statelessness, using distributed caches (like Redis) to share session data."
+    },
+    {
+      "cat": "Security",
+      "q": "How can an API Gateway protect against a Denial of Service (DoS) attack from a single malicious user?",
+      "opts": [
+        "By deleting the user's account immediately.",
+        "By implementing per-API-key or per-IP rate limiting.",
+        "By shutting down the entire Gateway.",
+        "By slowing down the internet speed for everyone."
+      ],
+      "correct": 1,
+      "explanation": "Rate limiting is the primary defense against DoS. By tracking the number of requests from a specific identifier (IP, API Key, or JWT Subject), the Gateway can drop requests that exceed a defined threshold."
+    },
+    {
+      "cat": "Request Aggregation",
+      "q": "What is the 'Fan-out' pattern in the context of an API Gateway?",
+      "opts": [
+        "One request from the client triggers multiple concurrent requests to different backend services.",
+        "One backend service sending requests to many clients.",
+        "The Gateway splitting a single large request into many small requests for a single service.",
+        "The Gateway duplicating a request for logging purposes."
+      ],
+      "correct": 0,
+      "explanation": "Fan-out occurs when a gateway receives a single request and 'fans out' to multiple backend microservices to gather the necessary data, then aggregates the results before sending them back."
+    },
+    {
+      "cat": "Observability",
+      "q": "What is 'Log Correlation'?",
+      "opts": [
+        "Combining different types of logs (error, info, debug) into one file.",
+        "Attaching a unique Request ID at the Gateway that persists through all downstream services for easier debugging.",
+        "Matching logs from the database with logs from the frontend.",
+        "Deleting logs after 24 hours to save space."
+      ],
+      "correct": 1,
+      "explanation": "Log correlation involves injecting a unique ID (e.g., `X-Correlation-ID`) into the headers at the Gateway. This allows developers to search for that specific ID in a centralized logging system (like ELK or Datadog) to see the entire journey of a request."
+    },
+    {
+      "cat": "Rate Limiting",
+      "q": "Which rate limiting strategy is most 'fair' for multiple users sharing the same IP?",
+      "opts": [
+        "Fixed Window",
+        "Token Bucket",
+        "Leaky Bucket",
+        "Sliding Window Counter"
+      ],
+      "correct": 3,
+      "explanation": "Sliding Window Counter is often considered more 'fair' and accurate than Fixed Window because it smooths out the boundary spikes that occur at the end of a fixed time window (e.g., 11:59:59 to 12:00:01)."
+    },
+    {
+      "cat": "Performance & Latency",
+      "q": "What is 'Backpressure' in an API Gateway context?",
+      "opts": [
+        "The Gateway slowing down the rate of incoming requests when downstream services are overloaded.",
+        "The Gateway increasing the memory of the server.",
+        "The client forcing the Gateway to respond faster.",
+        "The Gateway automatically scaling up more servers."
+      ],
+      "correct": 0,
+      "explanation": "Backpressure is a signal from the downstream service (or the Gateway itself) to the upstream caller (the client) to slow down. This prevents the system from being overwhelmed and crashing."
+    },
+    {
+      "cat": "Authentication & Security",
+      "q": "What is 'Scopes' in the context of OAuth2 and API Gateways?",
+      "opts": [
+        "The physical size of the JWT token.",
+        "The specific permissions granted to an access token (e.g., 'read:profile', 'write:orders').",
+        "The geographical region where the API is hosted.",
+        "The number of times a token can be used."
+      ],
+      "correct": 1,
+      "explanation": "Scopes define what an application is allowed to do on behalf of a user. The Gateway checks these scopes to ensure that even if a token is valid, the user has the permission to perform the specific action."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "Why would you choose a 'Sidecar' pattern over an API Gateway for certain microservice communications?",
+      "opts": [
+        "Sidecars are better for external traffic; Gateways are better for internal.",
+        "Sidecars (like Envoy in a Service Mesh) handle service-to-service (East-West) communication, while Gateways handle North-South traffic.",
+        "Sidecars are always faster than Gateways.",
+        "Sidecars do not require any configuration."
+      ],
+      "correct": 1,
+      "explanation": "A common architectural pattern is to use an API Gateway for external traffic (North-South) and a Service Mesh with Sidecars for internal microservice communication (East-West). This allows for fine-grained control over internal retries, mTLS, and observability."
+    },
+    {
+      "cat": "Security",
+      "q": "What is 'Request Signing' and why use it at the Gateway?",
+      "opts": [
+        "Adding a digital signature to the request body to ensure integrity and authenticity.",
+        "Using a physical key to unlock a server.",
+        "Encrypting the entire request body with AES-256.",
+        "Signing a contract with a third-party API provider."
+      ],
+      "correct": 0,
+      "explanation": "Request signing ensures that the request body wasn't tampered with during transit. The Gateway verifies the signature using a public key before forwarding the request to the backend."
+    },
+    {
+      "cat": "Request Aggregation",
+      "q": "What is a major disadvantage of the Request Aggregation pattern at the Gateway?",
+      "opts": [
+        "It makes the frontend code cleaner.",
+        "It can lead to the Gateway becoming a 'Monolithic' point of failure and a bottleneck.",
+        "It reduces the number of database calls.",
+        "It is the only way to use JWTs."
+      ],
+      "correct": 1,
+      "explanation": "If a Gateway does too much 'heavy lifting' (complex business logic, heavy data transformation, etc.), it becomes a 'Fat Gateway.' This creates a single point of failure and makes it harder to scale the Gateway independently of the business logic."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "What is 'Weighted Load Balancing'?",
+      "opts": [
+        "Assigning more traffic to servers with higher specifications (CPU/RAM).",
+        "Distributing traffic based on the weight of the request body.",
+        "Randomly choosing a server every time.",
+        "Only sending traffic to the server that has the lowest latency."
+      ],
+      "correct": 0,
+      "explanation": "Weighted Load Balancing allows you to send more traffic to powerful servers and less to older/weaker ones, ensuring that the workload is distributed proportionally to the capacity of the infrastructure."
+    },
+    {
+      "cat": "Performance & Latency",
+      "q": "What is 'Connection Pooling' in an API Gateway?",
+      "opts": [
+        "Keeping a set of open connections to the backend services to avoid the overhead of the TCP/TLS handshake for every request.",
+        "Grouping users into pools based on their subscription level.",
+        "Storing multiple copies of the database in different regions.",
+        "Allowing multiple users to share the same API key."
+      ],
+      "correct": 0,
+      "explanation": "Establishing a new TCP/TLS connection for every single request is expensive (the '3-way handshake'). Connection pooling keeps a 'pool' of warm connections ready, significantly reducing latency for frequent requests."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What does 'Idempotency' mean in the context of API Gateway retries?",
+      "opts": [
+        "The ability to perform the same operation multiple times with the same result.",
+        "The speed at which a request is processed.",
+        "The ability to handle different types of data.",
+        "The process of making an API 'idempotent' by using a unique request key."
+      ],
+      "correct": 0,
+      "explanation": "Idempotency is crucial for retries. If a Gateway retries a POST request because it didn't receive an ACK, the operation must be idempotent (e.g., using an Idempotency-Key) to prevent the user from being charged twice or creating two duplicate records."
+    },
+    {
+      "cat": "Observability",
+      "q": "Which metric is the most critical to monitor at the Gateway level to detect a system-wide outage?",
+      "opts": [
+        "Request Latency (P99)",
+        "Error Rate (5xx)",
+        "Throughput (RPS)",
+        "CPU Usage"
+      ],
+      "correct": 1,
+      "explanation": "While all are important, the Error Rate (specifically 5xx errors) is the most direct indicator of service health. If the Gateway is returning 5xx errors for all routes, the system is likely down."
+    },
+    {
+      "cat": "Security",
+      "q": "What is 'CORS' and how does the Gateway handle it?",
+      "opts": [
+        "Cross-Origin Resource Sharing: The Gateway checks if the requesting domain is allowed to access the API.",
+        "Cross-Operating Resource Sharing: The Gateway allows different OS's to talk.",
+        "Common Object Request System: The Gateway manages file paths.",
+        "Ciphertext Optimization Request System: The Gateway handles encryption."
+      ],
+      "correct": 0,
+      "explanation": "CORS is a browser security feature. The Gateway often acts as the central place to manage CORS headers, ensuring that only authorized websites can make requests to your backend APIs."
+    },
+    {
+      "cat": "Performance & Latency",
+      "q": "What is the 'Cold Start' problem in Serverless Gateways?",
+      "opts": [
+        "The first request to a serverless function takes longer because the environment needs to be initialized.",
+        "The time it takes for the database to start.",
+        "When the Gateway runs out of memory.",
+        "The time it takes for the user to load the page."
+      ],
+      "correct": 0,
+      "explanation": "If you use a serverless function (like AWS Lambda) as an API Gateway, the first request after a period of inactivity will be slow because the provider has to 'spin up' the execution environment."
+    },
+    {
+      "cat": "Data Model & Protocols",
+      "q": "Which protocol is generally preferred for internal microservice communication due to its binary format and multiplexing capabilities?",
+      "opts": [
+        "HTTP/1.1",
+        "gRPC",
+        "SOAP",
+        "SMTP"
+      ],
+      "correct": 1,
+      "explanation": "gRPC uses Protocol Buffers (binary) and HTTP/2, making it significantly faster and more efficient than REST/JSON for internal service-to-service (East-West) communication."
+    },
+    {
+      "cat": "Rate Limiting",
+      "q": "How would you implement a 'Tiered' rate limit (e.g., Free vs. Premium users)?",
+      "opts": [
+        "By assigning a different rate limit value based on the user's identity in the JWT or API Key.",
+        "By creating two different Gateways.",
+        "By making the Premium users' requests faster at the network level.",
+        "By charging the Free users more money."
+      ],
+      "correct": 0,
+      "explanation": "The Gateway identifies the user (via a token/key), looks up their 'tier' in a database or cache, and applies the corresponding limit (e.g., 100 requests/min for Free, 5000 requests/min for Premium)."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What is the 'Circuit Breaker' pattern trying to prevent?",
+      "opts": [
+        "Cascading Failures",
+        "Data Corruption",
+        "SQL Injection",
+        "Slow Network Speed"
+      ],
+      "correct": 0,
+      "explanation": "Cascading failures occur when one service's failure causes other services to hang while waiting for it, eventually exhausting the Gateway's resources and bringing down the entire system. Circuit breakers 'trip' to stop this."
+    },
+    {
+      "cat": "Security",
+      "q": "What is a 'Shadow API' and how can a Gateway help identify it?",
+      "opts": [
+        "An API that is used by the shadow government.",
+        "An undocumented API that is still active and reachable; the Gateway can help by providing a centralized registry of all active routes.",
+        "An API that is only reachable via a VPN.",
+        "An API that has been deleted but still has data."
+      ],
+      "correct": 1,
+      "explanation": "Shadow APIs are security risks because they aren't monitored or secured properly. An API Gateway acts as the 'source of truth' for all exposed endpoints; any traffic not going through the Gateway can help identify unauthorized 'shadow' entry points."
+    },
+    {
+      "cat": "Performance & Latency",
+      "q": "How does 'Payload Compression' affect the Gateway?",
+      "opts": [
+        "It reduces the amount of data sent over the wire but increases the Gateway's CPU usage to compress/decompress.",
+        "It increases the amount of data sent but makes it faster.",
+        "It only works for images.",
+        "It has no effect on the Gateway."
+      ],
+      "correct": 0,
+      "explanation": "Compressing the JSON body (using Gzip or Brotli) reduces the payload size (good for mobile/slow networks) but requires the Gateway to perform the compression/decompression work on every request."
+    },
+    {
+      "cat": "Load Balancing",
+      "q": "What is 'Health Checking' in an API Gateway?",
+      "opts": [
+        "A periodic request sent by the Gateway to a backend service to ensure it is still alive and healthy.",
+        "Checking if the user's health is okay.",
+        "Checking if the Gateway's hardware is working.",
+        "Monitoring the CPU of the client's phone."
+      ],
+      "correct": 0,
+      "explanation": "The Gateway maintains a list of healthy backend instances. It 'pings' them regularly. If a service fails the health check, the Gateway automatically stops routing traffic to that instance."
+    },
+    {
+      "cat": "Core Concepts",
+      "q": "What is the 'BFF' (Backend for Frontend) pattern?",
+      "opts": [
+        "One backend specifically tailored for mobile apps, and another for web apps, both served by the Gateway.",
+        "A frontend that is built with a backend in it.",
+        "A way to make the Gateway faster by moving the frontend to the backend.",
+        "A pattern where the Gateway is actually a frontend server."
+      ],
+      "correct": 0,
+      "explanation": "The BFF pattern acknowledges that different clients (mobile vs. desktop) have different data needs. Instead of one generic API, you create specific 'backends' (often just a layer of logic) that the Gateway routes to based on the client type."
+    },
+    {
+      "cat": "Request Aggregation",
+      "q": "When using request aggregation, what happens if one of the 3 downstream calls fails?",
+      "opts": [
+        "The Gateway should return a partial success (the 2 successful calls) and an error for the failed one.",
+        "The Gateway must return a 500 error for the whole request.",
+        "The Gateway should ignore the failure and return nothing.",
+        "The Gateway should retry the failed call infinitely."
+      ],
+      "correct": 0,
+      "explanation": "This depends on the business logic, but 'Partial Success' is a common pattern. The Gateway should decide if the missing data is critical; if not, it returns the available data with a warning/error field for the missing piece."
+    },
+    {
+      "cat": "Security",
+      "q": "What is 'API Key' rotation and why is it important?",
+      "opts": [
+        "The process of changing an API key regularly to limit the damage if a key is leaked.",
+        "The process of making the API key longer.",
+        "The process of making the key work for different users.",
+        "The process of moving the key to a different database."
+      ],
+      "correct": 0,
+      "explanation": "If a key is hardcoded in a client app and leaked, an attacker can use it indefinitely. Rotation ensures that keys are only valid for a certain period, reducing the 'blast radius' of a leak."
+    },
+    {
+      "cat": "Observability",
+      "q": "What is 'P99 Latency'?",
+      "opts": [
+        "The latency of the fastest 1% of requests.",
+        "The latency of the slowest 1% of requests.",
+        "The average latency of all requests.",
+        "The latency of the 99th percentile of requests (the 'tail' latency)."
+      ],
+      "correct": 2,
+      "explanation": "P99 is a standard metric for high-scale systems. It tells you the maximum latency experienced by the slowest 1% of your users. If your P99 is high, it means a small but significant portion of your users are having a very poor experience."
+    },
+    {
+      "cat": "Data Model & Protocols",
+      "q": "Which of the following is a characteristic of a 'Stateless' API Gateway?",
+      "opts": [
+        "It does not store session data (like login state) locally; it relies on tokens (like JWTs) passed in every request.",
+        "It can only be used with REST APIs.",
+        "It does not allow for any configuration changes.",
+        "It does not support any form of authentication."
+      ],
+      "correct": 0,
+      "explanation": "Statelessness is key for scalability. Because the Gateway doesn't 'remember' the user between requests, any instance of the Gateway can handle any request from any user at any time."
+    },
+    {
+      "cat": "Security",
+      "q": "What is 'Request Validation' at the Gateway?",
+      "opts": [
+        "Checking if the request body contains valid JSON and matches the expected schema before hitting the backend.",
+        "Checking if the user is a real human"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,427 @@
+{
+  "title": "Cassandra",
+  "subtitle": "35 questions covering all key topics · Shuffled each attempt",
+  "storageKey": "cassandra_quiz_progress",
+  "questions": [
+    {
+      "cat": "Data Model",
+      "q": "What is a Cassandra keyspace?",
+      "opts": [
+        "A single table that groups related rows together",
+        "The top-level organizational unit, equivalent to a database in relational systems — it defines replication strategies and owns user-defined types",
+        "A named query that maps partition keys to physical nodes",
+        "A configuration file that defines consistency levels for the cluster"
+      ],
+      "ans": 1,
+      "expl": "A keyspace is Cassandra's equivalent of a database in relational systems. It's the top-level unit that owns tables and defines replication strategies (how many replicas, which data centers). You'd have one keyspace per application or logical domain."
+    },
+    {
+      "cat": "Data Model",
+      "q": "How does Cassandra's wide-column design differ from a relational database?",
+      "opts": [
+        "Cassandra stores rows in sorted order by default; relational databases don't",
+        "Not all columns need to be specified per row — each row can have a different set of columns, making Cassandra more flexible than relational databases that require a value (even NULL) for every column",
+        "Cassandra columns are stored in a separate file from row data, enabling faster column scans",
+        "Cassandra uses column families instead of tables, which support automatic sharding"
+      ],
+      "ans": 1,
+      "expl": "Cassandra is a wide-column database — columns can vary per row. A row doesn't need entries for every column defined in the schema (unlike relational DBs that require at least NULL). This makes Cassandra flexible for sparse data or schemas with many optional fields."
+    },
+    {
+      "cat": "Data Model",
+      "q": "What happens when there is a write conflict between replicas on the same column in Cassandra?",
+      "opts": [
+        "Cassandra runs a distributed transaction to determine which write should win",
+        "The conflict is resolved via 'last write wins' — every column has a timestamp and the most recent write takes precedence",
+        "Cassandra rejects both conflicting writes and requires the application to retry",
+        "The conflict is sent to the coordinator node, which merges the values"
+      ],
+      "ans": 1,
+      "expl": "Every column in Cassandra has a timestamp denoting when it was written. When replicas have conflicting values for the same column, Cassandra resolves it via 'last write wins' — the write with the more recent timestamp is kept. No distributed transaction is needed."
+    },
+    {
+      "cat": "Primary Key",
+      "q": "What is the difference between a partition key and a clustering key in Cassandra?",
+      "opts": [
+        "The partition key determines replication factor; the clustering key determines consistency level",
+        "The partition key determines which node(s) store the row; the clustering key determines the sorted order of rows within a partition",
+        "The partition key is required; the clustering key is used only for secondary indexes",
+        "The partition key is hashed for distribution; the clustering key is stored as a plain value"
+      ],
+      "ans": 1,
+      "expl": "The partition key determines which partition (and therefore which node) a row lives on — it's what Cassandra hashes for data distribution. The clustering key determines the sorted order of rows within a partition. Together they form the primary key. The partition key is mandatory; clustering keys are optional."
+    },
+    {
+      "cat": "Primary Key",
+      "q": "Why did Discord use Snowflake IDs (message_id) rather than a created_at timestamp as the clustering key for messages?",
+      "opts": [
+        "Snowflake IDs are smaller than timestamps, reducing storage overhead per row",
+        "Timestamps can collide even at millisecond granularity, while Snowflake IDs are chronologically sortable UUIDs that guarantee uniqueness",
+        "Cassandra doesn't support timestamp types as clustering keys",
+        "Snowflake IDs enable faster range scans than timestamps in LSM tree indexes"
+      ],
+      "ans": 1,
+      "expl": "A Snowflake ID is a chronologically sortable UUID — it preserves time ordering (like a timestamp) while guaranteeing uniqueness (no two Snowflake IDs are the same, unlike timestamps where millisecond-level collisions are possible in high-throughput systems like Discord)."
+    },
+    {
+      "cat": "Primary Key",
+      "q": "What does a composite partition key like PRIMARY KEY ((channel_id, bucket), message_id) achieve compared to PRIMARY KEY (channel_id, message_id)?",
+      "opts": [
+        "It allows the partition to span multiple nodes for higher throughput",
+        "It limits partition size by splitting data across multiple partitions — one per (channel_id, bucket) combination — preventing any single partition from growing indefinitely",
+        "It adds a secondary index on bucket for faster range queries",
+        "It enables Cassandra to replicate buckets independently for better availability"
+      ],
+      "ans": 1,
+      "expl": "With only channel_id as the partition key, a very active channel accumulates all messages in one partition that grows forever. Adding bucket (representing 10 days of data) to the partition key splits data across multiple partitions — one per 10-day window per channel — capping partition size and preventing unbounded growth."
+    },
+    {
+      "cat": "Consistent Hashing",
+      "q": "What problem does traditional modulo hashing (hash(value) % num_nodes) have in distributed systems?",
+      "opts": [
+        "It's too slow to compute for large datasets",
+        "Adding or removing a node changes the modulo, causing most values to be remapped to different nodes — requiring massive data movement across the cluster",
+        "It produces uneven hash distributions for string keys",
+        "It doesn't support replication across multiple data centers"
+      ],
+      "ans": 1,
+      "expl": "With hash(value) % num_nodes, changing num_nodes (adding or removing a node) causes almost every value to hash to a different node. In a database this means massive data migration. Consistent hashing solves this by only affecting data near the added/removed node."
+    },
+    {
+      "cat": "Consistent Hashing",
+      "q": "How does consistent hashing work in Cassandra?",
+      "opts": [
+        "Values are hashed to a fixed array of 1024 buckets and nodes are assigned ranges of buckets",
+        "Values are hashed to integers on a virtual ring; the ring is walked clockwise to find the first node, and that node stores the value",
+        "Values are hashed using a cryptographic function and assigned to nodes alphabetically by node ID",
+        "Values are assigned to nodes using round-robin across a sorted list of node hashes"
+      ],
+      "ans": 1,
+      "expl": "Consistent hashing maps both values and nodes to positions on a virtual ring. When a value is hashed, you walk the ring clockwise from that position to find the first node — that node stores the value. Adding a node only affects values between it and the previous node, minimizing data movement."
+    },
+    {
+      "cat": "Consistent Hashing",
+      "q": "What are vnodes (virtual nodes) in Cassandra and what problem do they solve?",
+      "opts": [
+        "Vnodes are read-only replicas that handle query traffic without accepting writes",
+        "Vnodes map multiple ring positions to each physical node, distributing load more evenly and allowing larger physical nodes to own more vnodes proportional to their resources",
+        "Vnodes are temporary nodes used during cluster rebalancing to hold data in transit",
+        "Vnodes are logical partitions within a single physical node for parallel query execution"
+      ],
+      "ans": 1,
+      "expl": "Simple consistent hashing can still result in uneven load if nodes happen to cluster on the ring. Vnodes solve this by mapping multiple ring positions to each physical node, producing more even distribution. They also allow resource-proportional assignment — a larger machine can own more vnodes than a smaller one."
+    },
+    {
+      "cat": "Replication",
+      "q": "How does Cassandra determine which nodes to replicate a partition to?",
+      "opts": [
+        "The cluster controller randomly selects replica nodes from available nodes",
+        "Starting from the vnode the data hashes to, Cassandra scans clockwise to find additional vnodes — skipping vnodes on the same physical node as existing replicas",
+        "Replicas are assigned based on geographic proximity to the partition's primary node",
+        "The coordinator node holds all replicas in memory until a flush threshold is reached"
+      ],
+      "ans": 1,
+      "expl": "After hashing data to a vnode, Cassandra scans clockwise to find additional replica vnodes. It skips vnodes on the same physical node as already-selected replicas — ensuring that one physical node failure doesn't take down multiple replicas simultaneously."
+    },
+    {
+      "cat": "Replication",
+      "q": "What is the difference between SimpleStrategy and NetworkTopologyStrategy replication?",
+      "opts": [
+        "SimpleStrategy supports multiple keyspaces; NetworkTopologyStrategy supports only one",
+        "SimpleStrategy places replicas by scanning clockwise — fine for single-datacenter deployments. NetworkTopologyStrategy is datacenter and rack-aware, spreading replicas across datacenters and racks for production resilience",
+        "SimpleStrategy replicates synchronously; NetworkTopologyStrategy replicates asynchronously",
+        "SimpleStrategy uses consistent hashing; NetworkTopologyStrategy uses range-based partitioning"
+      ],
+      "ans": 1,
+      "expl": "SimpleStrategy just scans clockwise — simple but only appropriate for testing or single-datacenter deployments. NetworkTopologyStrategy is recommended for production because it spreads replicas across datacenters and racks, so a real-world outage (a rack going down, a datacenter failing) doesn't take out all replicas."
+    },
+    {
+      "cat": "Consistency",
+      "q": "What does the QUORUM consistency level guarantee when applied to both reads and writes?",
+      "opts": [
+        "All replicas must acknowledge both reads and writes, providing the strongest consistency",
+        "A majority (n/2 + 1) of replicas must respond to both reads and writes, guaranteeing at least one overlapping node has seen the write before a read succeeds",
+        "A single replica must acknowledge writes; a majority must acknowledge reads",
+        "QUORUM guarantees strong consistency only when combined with SERIAL isolation"
+      ],
+      "ans": 1,
+      "expl": "With QUORUM on both reads and writes (n/2 + 1 replicas), there's guaranteed overlap: at least one replica that participated in the write will also participate in the read. This means any read will see the latest write. With 3 replicas, 2 must acknowledge writes and 2 must respond to reads — guaranteeing one shared node."
+    },
+    {
+      "cat": "Consistency",
+      "q": "What ACID guarantees does Cassandra provide?",
+      "opts": [
+        "Full ACID guarantees including multi-row transactions and rollback support",
+        "Only atomic and isolated writes at the row level within a partition — no multi-row transactions, no JOINs, no cross-partition consistency",
+        "Atomicity and consistency only — isolation and durability require additional configuration",
+        "Full ACID within a single partition, partial ACID across partitions"
+      ],
+      "ans": 1,
+      "expl": "Cassandra does not offer transaction support or ACID guarantees in the traditional sense. It only supports atomic and isolated writes at the row level within a partition. There are no multi-row transactions, no referential integrity, and no cross-partition consistency guarantees."
+    },
+    {
+      "cat": "Storage Model (LSM Tree)",
+      "q": "What are the three core constructs of Cassandra's LSM tree storage model?",
+      "opts": [
+        "B-tree index, heap file, and write-ahead log",
+        "Commit log (write-ahead log), Memtable (in-memory sorted structure), and SSTable (immutable sorted file on disk)",
+        "Segment log, page cache, and bloom filter index",
+        "Redo log, buffer pool, and compaction file"
+      ],
+      "ans": 1,
+      "expl": "Cassandra's LSM tree is built on three constructs: the Commit Log (write-ahead log for durability), the Memtable (in-memory sorted structure that absorbs writes), and the SSTable (immutable sorted file on disk produced when the Memtable is flushed). Together they enable fast writes while maintaining durability."
+    },
+    {
+      "cat": "Storage Model (LSM Tree)",
+      "q": "What is the correct sequence of steps when a write arrives at a Cassandra node?",
+      "opts": [
+        "Memtable → Commit Log → SSTable flush",
+        "Commit Log → Memtable → SSTable flush (when threshold hit) → Commit log entries removed",
+        "SSTable → Commit Log → Memtable",
+        "Memtable → SSTable → Commit Log cleanup"
+      ],
+      "ans": 1,
+      "expl": "Write order: (1) Write to Commit Log for durability — if the node crashes while the write is in-memory, the log enables recovery. (2) Write to Memtable for fast in-memory access. (3) When Memtable hits a size threshold or time elapses, flush to an immutable SSTable on disk. (4) Remove corresponding Commit Log entries since the data is now safely on disk."
+    },
+    {
+      "cat": "Storage Model (LSM Tree)",
+      "q": "How does Cassandra handle reads when data may be spread across a Memtable and multiple SSTables?",
+      "opts": [
+        "Cassandra reads all SSTables and merges them, then checks the Memtable last",
+        "Cassandra checks the Memtable first (most recent data), then uses a bloom filter to identify which SSTables might have the data, then reads SSTables newest to oldest",
+        "Cassandra queries all nodes in parallel and returns the first response",
+        "Cassandra reconstructs the full row by replaying the Commit Log from the beginning"
+      ],
+      "ans": 1,
+      "expl": "Read order: check Memtable first (it has the most recent writes). If not found, use the per-SSTable bloom filter to skip SSTables that definitely don't have the key. Then read qualifying SSTables from newest to oldest to find the latest version of the data. SSTable data is sorted by primary key for efficient lookups."
+    },
+    {
+      "cat": "Storage Model (LSM Tree)",
+      "q": "What is compaction in Cassandra and why is it necessary?",
+      "opts": [
+        "Compaction compresses SSTables using GZIP to reduce disk usage",
+        "Compaction merges multiple SSTables into fewer, consolidated SSTables — removing tombstones (deleted rows) and redundant versions of updated rows to prevent SSTable bloat",
+        "Compaction moves hot data from disk to the Memtable for faster reads",
+        "Compaction rebalances partitions across nodes when the cluster size changes"
+      ],
+      "ans": 1,
+      "expl": "As SSTables accumulate from Memtable flushes, reads get more expensive (more files to check) and disk usage grows with redundant data. Compaction merges SSTables, removes tombstones (delete markers), and consolidates updates into the final row state. It's efficient because SSTables are already sorted by primary key."
+    },
+    {
+      "cat": "Storage Model (LSM Tree)",
+      "q": "How does Cassandra handle deletes, and what is a tombstone?",
+      "opts": [
+        "Cassandra immediately removes deleted rows from the Memtable and all SSTables",
+        "A 'tombstone' entry is written to mark a row as deleted; the actual data isn't removed until compaction merges and cleans up that SSTable",
+        "Deleted rows are moved to a separate archive SSTable for eventual cleanup",
+        "Cassandra marks deleted rows in the Commit Log and skips them during reads"
+      ],
+      "ans": 1,
+      "expl": "Because SSTables are immutable, Cassandra can't delete in-place. Instead it writes a tombstone — a special marker indicating the row was deleted. Queries pretend tombstoned rows don't exist. During compaction, tombstones are removed along with the deleted data, reclaiming disk space."
+    },
+    {
+      "cat": "Gossip",
+      "q": "What is the gossip protocol in Cassandra and what does it enable?",
+      "opts": [
+        "A client-side caching protocol that gossips cached results between application servers",
+        "A peer-to-peer information-sharing protocol where nodes exchange cluster state (alive nodes, schema, etc.) — giving every node full cluster knowledge and eliminating single points of failure",
+        "A write coordination protocol that gossips proposed writes to all replicas before committing",
+        "A monitoring protocol that gossips metrics to a central observability service"
+      ],
+      "ans": 1,
+      "expl": "Gossip is Cassandra's peer-to-peer protocol for distributing cluster information. Nodes periodically exchange state about which nodes are alive, what the schema is, etc. Because every node knows about every other node, any node can serve as a query coordinator — there's no single coordinator node that could become a single point of failure."
+    },
+    {
+      "cat": "Gossip",
+      "q": "What are seed nodes in Cassandra's gossip protocol and why are they needed?",
+      "opts": [
+        "Seed nodes store the master copy of all data and are never used for replication",
+        "Designated gossip hotspots that all nodes bias toward when gossiping — ensuring information reaches the whole cluster and preventing isolated sub-clusters from forming",
+        "Bootstrap nodes that hold no data but coordinate initial cluster setup",
+        "Nodes that seed new data into the cluster from external data sources"
+      ],
+      "ans": 1,
+      "expl": "Without seed nodes, it's possible for sub-clusters to form where some nodes only gossip among themselves and never receive updates from the rest of the cluster. Seed nodes are 'guaranteed hotspots' — all nodes bias toward gossiping with them, ensuring information propagates across the entire cluster."
+    },
+    {
+      "cat": "Fault Tolerance",
+      "q": "What is the Phi Accrual Failure Detector and how does Cassandra use it?",
+      "opts": [
+        "A mathematical formula for calculating optimal replication factor based on node failure rates",
+        "A technique where each node independently decides whether another node is available based on gossip responses — 'convicting' unresponsive nodes and stopping writes to them until they heartbeat again",
+        "A detector that monitors SSTable corruption and triggers automatic repair",
+        "A protocol for detecting and resolving write conflicts between replicas"
+      ],
+      "ans": 1,
+      "expl": "Each Cassandra node independently uses the Phi Accrual Failure Detector during gossip to decide if other nodes are responsive. An unresponsive node is 'convicted' and writes are no longer routed to it. Critically, Cassandra never considers a node truly 'down' unless an admin decommissions it — preventing temporary issues from triggering costly rebalances."
+    },
+    {
+      "cat": "Fault Tolerance",
+      "q": "What are hinted handoffs in Cassandra?",
+      "opts": [
+        "Hints written to the Commit Log so a crashed node can recover its pending writes on restart",
+        "When a coordinator can't write to an offline node, it temporarily stores the write as a 'hint' and delivers it to that node once it comes back online",
+        "A mechanism for passing write ownership from a primary replica to a secondary replica during high load",
+        "Metadata hints stored in SSTables that point to the location of tombstones for faster compaction"
+      ],
+      "ans": 1,
+      "expl": "When a coordinator needs to write to an offline node, it stores the data as a 'hint' temporarily. When the offline node comes back online, the coordinator (or another node holding the hint) sends the data. This allows writes to proceed even when a replica is temporarily down, maintaining availability without losing the data."
+    },
+    {
+      "cat": "Query Routing",
+      "q": "Which node in a Cassandra cluster handles query coordination, and how does it know where to route queries?",
+      "opts": [
+        "A dedicated master node always handles coordination; other nodes only store data",
+        "Any node can become the coordinator — all nodes know the full cluster state via gossip, can perform consistent hashing calculations, and know the replication/consistency configuration",
+        "The node with the lowest load automatically becomes coordinator for each query",
+        "The seed node always coordinates queries to ensure cluster state is always current"
+      ],
+      "ans": 1,
+      "expl": "Any Cassandra node can serve as query coordinator — there's no dedicated coordinator node (no single point of failure). Because all nodes know the full cluster state via gossip and can perform consistent hashing calculations, any node can determine where the relevant partitions live and route the query to the appropriate replica nodes."
+    },
+    {
+      "cat": "Data Modeling",
+      "q": "How does Cassandra data modeling differ fundamentally from relational database modeling?",
+      "opts": [
+        "Cassandra models are entity-relationship driven; relational models are query driven",
+        "Cassandra data modeling is query-driven — you design tables around your access patterns first, often denormalizing data across tables. Relational modeling is entity-driven — normalize data and use JOINs to combine it at query time",
+        "Cassandra requires more normalization than relational databases due to partition size constraints",
+        "Cassandra and relational databases use identical modeling approaches but different syntax"
+      ],
+      "ans": 1,
+      "expl": "In relational DBs, you normalize data into entities and use JOINs at query time. Cassandra has no JOINs and no referential integrity. Instead, you model around access patterns first — what queries will be run — and denormalize (duplicate) data across tables as needed to answer each query from a single partition."
+    },
+    {
+      "cat": "Data Modeling",
+      "q": "Why is partition size an important consideration in Cassandra schema design?",
+      "opts": [
+        "Cassandra charges per partition, so smaller partitions reduce operational costs",
+        "Large partitions hurt performance and can hit hard limits — data should be modeled so partitions stay bounded and don't grow indefinitely",
+        "Cassandra replicates entire partitions atomically, so large partitions cause replication lag",
+        "Large partitions can't use bloom filters, making reads much slower"
+      ],
+      "ans": 1,
+      "expl": "Cassandra performs poorly with very large partitions — it's a well-known operational issue. Discord observed this firsthand with busy channel partitions growing unboundedly. Good schema design caps partition size (e.g., Discord's bucket approach splitting by 10-day windows) so no partition grows indefinitely and query performance remains predictable."
+    },
+    {
+      "cat": "Data Modeling",
+      "q": "What is denormalization in the context of Cassandra and why is it necessary?",
+      "opts": [
+        "Removing columns from a table to reduce storage overhead",
+        "Duplicating data across multiple tables so each access pattern can be served from a single partition without JOINs or cross-partition queries",
+        "Splitting a large table into smaller tables to reduce partition size",
+        "Storing related data in nested JSON columns to avoid creating separate tables"
+      ],
+      "ans": 1,
+      "expl": "Because Cassandra has no JOINs and serving data from multiple partitions is expensive, related data often needs to be duplicated across tables. For example, Ticketmaster's event_sections table duplicates ticket count and price floor data that could be computed from the tickets table — trading write complexity for fast single-partition reads."
+    },
+    {
+      "cat": "Data Modeling — Discord",
+      "q": "What problem did Discord's original messages schema (partition key: channel_id) encounter and how did they fix it?",
+      "opts": [
+        "The schema couldn't sort messages chronologically; fixed by switching to created_at as the clustering key",
+        "Very active channels created huge partitions that hit performance limits and grew unboundedly; fixed by adding a time-based bucket to the partition key to cap partition size",
+        "The schema required scatter-gather queries across all nodes; fixed by adding message_id to the partition key",
+        "Replication was too slow for busy channels; fixed by increasing the replication factor for the messages keyspace"
+      ],
+      "ans": 1,
+      "expl": "With only channel_id as the partition key, all messages for a channel lived in one partition that grew forever. Busy Discord channels caused large, slow partitions. Discord added a bucket (10-day window aligned to DISCORD_EPOCH) to the partition key — capping partition size and preventing unbounded growth while usually keeping recent message queries to a single partition."
+    },
+    {
+      "cat": "Data Modeling — Ticketmaster",
+      "q": "Why did the Ticketmaster tickets schema change from PRIMARY KEY (event_id, seat_id) to PRIMARY KEY ((event_id, section_id), seat_id)?",
+      "opts": [
+        "To enable sorting tickets by price within each section",
+        "To distribute an event's tickets across multiple partitions (one per section) — reducing partition size and better matching the UX which queries by section",
+        "To allow cross-section queries to run from a single partition",
+        "To add section_id as a secondary index for filtered queries"
+      ],
+      "ans": 1,
+      "expl": "The original schema put all tickets for an event (potentially 10,000+) in one partition, requiring expensive aggregations. Adding section_id to the partition key splits the data — one partition per (event, section). This reduces partition size, distributes load across nodes, and matches the UX: users first view sections, then drill into a specific section's seats."
+    },
+    {
+      "cat": "Data Modeling — Ticketmaster",
+      "q": "What does the event_sections table in the Ticketmaster example illustrate about Cassandra design?",
+      "opts": [
+        "That Cassandra supports materialized aggregations automatically via triggers",
+        "That denormalizing summary data (ticket count, price floor per section) into a separate table enables efficient top-level queries without forcing Cassandra to aggregate across many partitions",
+        "That Cassandra can efficiently compute aggregations like SUM and COUNT across partitions",
+        "That separate tables should be used whenever data has more than one access pattern in any database"
+      ],
+      "ans": 1,
+      "expl": "The event_sections table pre-stores aggregated stats (num_tickets, price_floor) per section — data that could be computed from the tickets table but would require expensive cross-partition aggregation. By denormalizing this into a separate table partitioned by event_id, the top-level venue view is served from a single partition read. The consistency tradeoff (eventual updates) is acceptable since Ticketmaster shows approximate counts anyway."
+    },
+    {
+      "cat": "Advanced Features",
+      "q": "What are Storage Attached Indexes (SAI) and when are they useful?",
+      "opts": [
+        "SAIs are SSTable compression indexes that reduce disk I/O for frequently accessed partitions",
+        "SAIs are global secondary indexes on non-partition-key columns — useful for less frequent query patterns where creating a full denormalized table isn't worth the overhead",
+        "SAIs are in-memory bloom filters that speed up Memtable lookups for hot keys",
+        "SAIs are synchronous replication indexes that ensure consistent reads across all replicas"
+      ],
+      "ans": 1,
+      "expl": "SAIs allow querying on columns that aren't the partition key without creating a full denormalized table. They're useful for less frequent query patterns where the overhead of maintaining a separate denormalized table isn't justified. Performance is worse than partition-key-based queries but still acceptable for lower-frequency access patterns."
+    },
+    {
+      "cat": "Advanced Features",
+      "q": "What are Cassandra Materialized Views and what problem do they solve?",
+      "opts": [
+        "Read-only cached snapshots of query results stored in memory for faster re-execution",
+        "Automatically maintained denormalized tables that Cassandra keeps in sync with a source table — reducing application complexity by avoiding manual multi-table writes",
+        "Pre-computed aggregations stored on disk and updated during compaction",
+        "Virtual tables that combine data from multiple source tables at query time"
+      ],
+      "ans": 1,
+      "expl": "Materialized views let Cassandra automatically maintain denormalized tables based on a source table. Normally, denormalization requires your application to write to multiple tables whenever data changes. With materialized views, Cassandra handles that synchronization — reducing application complexity while still enabling query-driven data modeling."
+    },
+    {
+      "cat": "When to Use Cassandra",
+      "q": "For which type of system is Cassandra an especially strong choice?",
+      "opts": [
+        "Systems requiring complex multi-table JOINs and ad-hoc aggregation queries",
+        "Systems prioritizing availability over consistency with high write throughput needs — particularly where the access patterns are clear and the schema can be designed around them",
+        "Systems requiring strict ACID transactions across multiple entities",
+        "Systems with small datasets where query flexibility matters more than scale"
+      ],
+      "ans": 1,
+      "expl": "Cassandra excels when: (1) availability is prioritized over strict consistency, (2) write throughput is high (LSM tree is write-optimized), (3) the data is large-scale and horizontally distributed, (4) access patterns are well-defined and the schema can be modeled around them. It's not a good fit for strict consistency needs, complex JOINs, or ad-hoc queries."
+    },
+    {
+      "cat": "When to Use Cassandra",
+      "q": "What are the main limitations that make Cassandra a poor fit for some systems?",
+      "opts": [
+        "Cassandra can't handle more than 100 nodes in a cluster, limiting scalability",
+        "Cassandra lacks ACID transactions, doesn't support JOINs or cross-partition queries, and is biased toward availability — making it poor for strict consistency requirements or complex query patterns",
+        "Cassandra is limited to key-value lookups and can't support range queries",
+        "Cassandra requires fixed schemas with no optional columns, limiting flexibility"
+      ],
+      "ans": 1,
+      "expl": "Cassandra's limitations: no multi-row transactions (no ACID), no JOINs, no cross-partition queries, no ad-hoc aggregations, and eventual consistency by default. Systems requiring strong consistency, complex relational queries, or transactional guarantees should use a different database. Cassandra's query model requires knowing access patterns upfront."
+    },
+    {
+      "cat": "When to Use Cassandra",
+      "q": "Why is Cassandra described as 'write-optimized' compared to databases using B-tree indexes?",
+      "opts": [
+        "Cassandra uses faster SSDs than B-tree-based databases by default",
+        "Cassandra's LSM tree turns writes into sequential appends to the Memtable and Commit Log rather than random-access B-tree updates — making writes extremely fast regardless of dataset size",
+        "Cassandra batches all writes until the Memtable is full, reducing write overhead",
+        "Cassandra uses a write buffer that deduplicates redundant writes before persisting them"
+      ],
+      "ans": 1,
+      "expl": "B-tree writes require finding the right leaf page on disk, reading it, modifying it, and writing it back — random I/O. Cassandra's LSM tree writes are sequential appends to the Commit Log and Memtable — extremely fast. The trade-off is that reads may need to check multiple SSTables, making reads comparatively more expensive."
+    },
+    {
+      "cat": "When to Use Cassandra",
+      "q": "What is the CAP theorem trade-off Cassandra makes by default?",
+      "opts": [
+        "Cassandra chooses Consistency and Partition Tolerance (CP) — sacrificing Availability",
+        "Cassandra chooses Availability and Partition Tolerance (AP) — sacrificing strict Consistency, though consistency can be tuned via consistency levels",
+        "Cassandra achieves all three of CAP by using quorum reads and writes",
+        "Cassandra defaults to Consistency and Availability (CA) — requiring a fully connected cluster"
+      ],
+      "ans": 1,
+      "expl": "Cassandra defaults to AP — Availability and Partition Tolerance — sacrificing strict consistency. It's 'always available, eventually consistent.' However, users can tune consistency via consistency levels (ONE through ALL, including QUORUM) to trade some availability for stronger consistency guarantees when the use case demands it."
+    }
+  ]
+}
